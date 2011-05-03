@@ -103,7 +103,7 @@ jQuery.fn.extend({
 jQuery.sheet = {
 	createInstance: function(s, I, origParent) { //s = jQuery.sheet settings, I = jQuery.sheet Instance Integer
 		var jS = {
-			version: '2.0.0 trunk',
+			version: '2.0.0',
 			i: 0,
 			I: I,
 			sheetCount: 0,
