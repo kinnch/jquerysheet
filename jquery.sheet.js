@@ -1000,7 +1000,9 @@ jQuery.sheet = {
 						
 						jS.setNav(true);
 						
-						jQuery(document).keydown(jS.evt.keyDownHandler.documentKeydown);
+						jQuery(document)
+							.unbind('keydown')
+							.keydown(jS.evt.keyDownHandler.documentKeydown);
 					}
 					
 					firstRowTr.appendTo(firstRow);
@@ -3437,6 +3439,8 @@ jQuery.sheet = {
 						});
 
 						document += '<document title="' + table.attr('title') + '">' +
+
+
 									'<metadata>' +
 										'<columns>' + colCount + '</columns>' +  //length is 1 based, index is 0 based
 										'<rows>' + rowCount + '</rows>' +  //length is 1 based, index is 0 based
@@ -4054,7 +4058,7 @@ jQuery.sheet = {
 			jS.calc = emptyFN;
 		}
 		
-		if (!Raphael) {
+		if (!window.Raphael) {
 			jSE.chart = emptyFN;
 		}
 		
@@ -4240,6 +4244,7 @@ jQuery.sheet = {
 						} catch (e) {}
 					
 						tr.append(cur_td);
+
 
 					}
 				}
@@ -4531,6 +4536,7 @@ var jSE = jQuery.sheet.engine = { //Calculations Engine
 								this.tags.push(r.g.tag(this.x, this.y[i], this.values[i], 0, 10).insertBefore(this).attr([{
 									fill: "#fff"
 								}, {
+
 									fill: this.symbols[i].attr("fill")
 								}]));
 							}
