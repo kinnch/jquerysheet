@@ -1012,7 +1012,9 @@ jQuery.sheet = {
 						
 						jS.setNav(true);
 						
-						jQuery(document).keydown(jS.evt.keyDownHandler.documentKeydown);
+						jQuery(document)
+							.unbind('keydown')
+							.keydown(jS.evt.keyDownHandler.documentKeydown);
 					}
 					
 					firstRowTr.appendTo(firstRow);
