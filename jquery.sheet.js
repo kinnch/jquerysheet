@@ -3967,6 +3967,7 @@ jQuery.sheet = {
 					var oldTds = tds.clone().each(function() {
 						var o = jQuery(this);
 						var id = o.attr('id');
+						if (!id) return;
 						o
 							.removeAttr('id') //id can only exist in one location, on the sheet, so here we use the id as the attr 'undoable'
 							.attr('undoable', id)
