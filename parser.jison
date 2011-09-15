@@ -31,22 +31,20 @@
 ")" 				{return ')';}
 ">" 				{return '>';}
 "<" 				{return '<';}
-">=" 				{return '>=';}
-"<=" 				{return '<=';}
-"<>"				{return '<>';}
 "NOT"				{return 'NOT';}
 "PI"				{return 'PI';}
 "E"				{return 'E';}
 '"'				{return '"';}
 "'"				{return "'";}
 "!"				{return "!";}
-<<EOF>>				{return 'EOF';}
 "="				{return '=';}
+<<EOF>>				{return 'EOF';}
 
 
 /lex
 
 /* operator associations and precedence (low-top, high- bottom) */
+%left '='
 %left '<=' '>=' '<>' 'NOT' '||'
 %left '>' '<'
 %left '+' '-'
@@ -65,12 +63,14 @@ expressions
  ;
 
 e
-	: e '<=' e
-		{$$ = ($1 * 1) <= ($3 * 1);}
-	| e '>=' e
-		{$$ = ($1 * 1) >= ($3 * 1);}
-	| e '<>' e
-		{$$ = ($1 * 1) != ($3 * 1);}
+	: e '=' e
+		{$$ = ($1 * 1) == ($3 * 1);}
+	| e '<' '=' e
+		{$$ = ($1 * 1) <= ($4 * 1);}
+	| e '>' '=' e
+		{$$ = ($1 * 1) >= ($4 * 1);}
+	| e '<' '>' e
+		{$$ = ($1 * 1) != ($4 * 1);}
 	| e NOT e
 		{$$ = ($1 * 1) != ($3 * 1);}
 	| e '>' e
