@@ -2885,10 +2885,9 @@ jQuery.sheet = {
 					var loc = jSE.parseLocation(id);
 					return jS.updateCellValue(this.sheet, loc.row, loc.col);
 				},
-				cellRangeValue: function(ids) {//Example: A1:B1
-					ids = ids.split(':');
-					var start = jSE.parseLocation(ids[0]);
-					var end = jSE.parseLocation(ids[1]);
+				cellRangeValue: function(start, end) {//Example: A1:B1
+					start = jSE.parseLocation(start);
+					end = jSE.parseLocation(end);
 					var result = [];
 					
 					for (var i = start.row; i <= end.row; i++) {
@@ -2899,28 +2898,23 @@ jQuery.sheet = {
 					return [result];
 				},
 				fixedCellValue: function(id) {
-					return jS.cellHandlers.cellValue.apply(this, [(id + '').replace(/[$]/g, '')]);
+					id = id.replace(/\$/g, '');
+					return jS.cellHandlers.cellValue.apply(this, [id]);
 				},
-				fixedCellRangeValue: function(ids) {
-					return jS.cellHandlers.cellRangeValue.apply(this, [(ids + '').replace(/[$]/g, '')]);
+				fixedCellRangeValue: function(start, end) {
+					start = start.replace(/\$/g, '');
+					end = end.replace(/\$/g, '');
+					return jS.cellHandlers.cellRangeValue.apply(this, [start, end]);
 				},
-				remoteCellValue: function(id) {//Example: SHEET1:A1
-					var sheet, loc;
-					id = id.replace(jSE.regEx.remoteCell, function(ignored1, ignored2, I, col, row) {
-						sheet = (I * 1) - 1;
-						loc = jSE.parseLocation(col + row);
-						return ignored1;
-					});
+				remoteCellValue: function(sheet, id) {//Example: SHEET1:A1
+					var loc = jSE.parseLocation(id);
+					sheet = ((sheet + '').replace('SHEET','') * 1) - 1;
 					return jS.updateCellValue(sheet, loc.row, loc.col);
 				},
-				remoteCellRangeValue: function(ids) {//Example: SHEET1:A1:B2
-					var sheet, start, end;
-					ids = ids.replace(jSE.regEx.remoteCellRange, function(ignored1, ignored2, I, startCol, startRow, endCol, endRow) {
-						sheet = (I * 1) - 1;
-						start = jSE.parseLocation(startCol + startRow);
-						end = jSE.parseLocation(endCol + endRow);
-						return ignored1;
-					});
+				remoteCellRangeValue: function(sheet, start, end) {//Example: SHEET1:A1:B2
+					sheet = ((sheet + '').replace('SHEET','') * 1) - 1;
+					start = jSE.parseLocation(start);
+					end = jSE.parseLocation(end);
 					
 					var result = [];
 					
