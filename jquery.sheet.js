@@ -1350,6 +1350,9 @@ jQuery.sheet = {
 						return jS.evt.cellSetFocusFromXY(left, top);
 					},
 					formulaKeydown: function(e) {
+						if (jS.readOnly[jS.i]) return false;
+						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+						
 						switch (e.keyCode) {
 							case key.ESCAPE: 	jS.evt.cellEditAbandon();
 								break;
@@ -1359,6 +1362,9 @@ jQuery.sheet = {
 						}
 					},
 					documentKeydown: function(e) {
+						if (jS.readOnly[jS.i]) return false;
+						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+						
 						if (jS.nav) {
 							switch (e.keyCode) {
 								case key.TAB: 		jS.evt.keyDownHandler.tab(e);
@@ -3287,7 +3293,12 @@ jQuery.sheet = {
 											i: int, a sheet integer desired to show;
 											*/
 				i = (i ? i : 0);
-
+				
+				if (jS.cellLast.row > -1 || jS.cellLast.col > -1) {
+					jS.evt.cellEditDone();
+					jS.obj.formula().val('');
+				}
+				
 				jS.obj.tableControlAll().hide().eq(i).show();
 				jS.i = i;			
 				
@@ -3714,10 +3725,6 @@ jQuery.sheet = {
 				jS.highlightedLast.colStart = first.col;
 				jS.highlightedLast.rowEnd = last.row;
 				jS.highlightedLast.colEnd = last.col;
-			},
-			sheetClearActive: function() { /* clears formula and bars from being highlighted */
-				jS.obj.formula().val('');
-				jS.obj.barSelected().removeClass(jS.cl.barSelected);
 			},
 			getTdRange: function(e, v, newFn, notSetFormula) { /* gets a range of selected cells, then returns it */
 				jS.cellLast.isEdit = true;
