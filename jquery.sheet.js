@@ -1421,6 +1421,7 @@ jQuery.sheet = {
 								doc.keyup();
 							});
 						
+						jS.setDirty(true);
 						return true;
 					}
 				},
@@ -2197,9 +2198,7 @@ jQuery.sheet = {
 						jS.spreadsheets[sheet][row][col].value = newV;
 						
 						td.removeAttr('formula').html(newV);
-						
-						if (!isNaN(newV)) 
-							newV++;
+						if (!isNaN(newV) && newV != '') newV++;
 					};
 				}
 				
