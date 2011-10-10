@@ -1396,6 +1396,7 @@ jQuery.sheet = {
 								case key.CAPS_LOCK:
 								case key.SHIFT:
 								case key.ALT:
+												jS.obj.formula().focus().select(); return true;
 									break;
 								default:		jS.obj.cellActive().dblclick(); return true;
 							}
