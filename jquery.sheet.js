@@ -1361,6 +1361,13 @@ jQuery.sheet = {
 							default: 			jS.cellLast.isEdit = true;
 						}
 					},
+					formulaKeydownIf: function(ifTrue, e) {
+						if (ifTrue) {
+							jS.obj.cellActive().dblclick();
+							return true;
+						}
+						return false;
+					},
 					documentKeydown: function(e) {
 						if (jS.readOnly[jS.i]) return false;
 						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
@@ -1382,15 +1389,15 @@ jQuery.sheet = {
 								case key.HOME:
 								case key.END:		jS.evt.cellSetFocusFromKeyCode(e);
 									break;
-								case key.V:		jS.evt.pasteOverCells(e);
+								case key.V:		return jS.evt.keyDownHandler.formulaKeydownIf(!jS.evt.pasteOverCells(e), e);
 									break;
-								case key.Y:		jS.evt.keyDownHandler.redo(e);
+								case key.Y:		return jS.evt.keyDownHandler.formulaKeydownIf(!jS.evt.keyDownHandler.redo(e), e);
 									break;
-								case key.Z:		jS.evt.keyDownHandler.undo(e);
+								case key.Z:		return jS.evt.keyDownHandler.formulaKeydownIf(!jS.evt.keyDownHandler.undo(e), e);
 									break;
 								case key.ESCAPE: 	jS.evt.cellEditAbandon();
 									break;
-								case key.F:		jS.evt.keyDownHandler.findCell(e);
+								case key.F:		return jS.evt.keyDownHandler.formulaKeydownIf(jS.evt.keyDownHandler.findCell(e), e);
 									break;
 								case key.CONTROL: //we need to filter these to keep cell state
 								case key.CAPS_LOCK:
