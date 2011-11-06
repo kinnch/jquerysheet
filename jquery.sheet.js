@@ -68,6 +68,12 @@ jQuery.fn.extend({
 				alertFormulaErrors:	false
 			}, settings);
 			
+			var jS = parent.getSheet();
+			if (jS) {
+				jS.obj.tabContainer().remove();
+				parent.html('');
+			}
+			
 			if (jQuery.sheet.instance) {
 				parent.sheetInstance = jQuery.sheet.createInstance(set, jQuery.sheet.instance.length, parent);
 				jQuery.sheet.instance.push(parent.sheetInstance);
@@ -108,7 +114,7 @@ jQuery.fn.extend({
 jQuery.sheet = {
 	createInstance: function(s, I, origParent) { //s = jQuery.sheet settings, I = jQuery.sheet Instance Integer
 		var jS = {
-			version: '2.0.x trunk',
+			version: '2.0.x',
 			i: 0,
 			I: I,
 			sheetCount: 0,
@@ -974,6 +980,7 @@ jQuery.sheet = {
 						} else {
 							jQuery('<div />').load(s.urlMenu, function() {
 								makeMenu(jQuery(this).html());
+								jS.sheetSyncSize();
 							});
 						}
 						
@@ -1986,7 +1993,7 @@ jQuery.sheet = {
 										sheet: object, table object;
 										i: integer, sheet index
 									*/
-				if (!o || !sheet) {
+				if (!sheet) {
 					sheet = jS.obj.sheet();
 					i = jS.i;
 				}
@@ -3363,6 +3370,8 @@ jQuery.sheet = {
 									fnAfter(i, sheets.length);
 								}, true);
 							});
+							
+							jS.sheetSyncSize();
 						});
 					} else {
 						var sheets = jQuery('<div />').html(o).children('table');
@@ -4031,12 +4040,23 @@ jQuery.sheet = {
 				}
 				
 				jS.calc();
+			},
+			buildSheet: function() {
+				if (jS.s.buildSheet) {//override urlGet, this has some effect on how the topbar is sized
+					if (typeof(jS.s.buildSheet) == 'object') {
+						return jS.s.buildSheet;
+					} else if (jS.s.buildSheet == true || jS.s.buildSheet == 'true') {
+						return jQuery(jS.s.parent.html());
+					} else if (jS.s.buildSheet.match(/x/i)) {
+						return jQuery.sheet.makeTable.fromSize(jS.s.buildSheet);
+					}
+				}
 			}
 		};
 
 		var $window = jQuery(window);
 		
-		var o; var emptyFN = function() {};
+		var emptyFN = function() {};
 		
 		//ready the sheet's parser
 		jS.lexer = function() {};
@@ -4049,16 +4069,6 @@ jQuery.sheet = {
 		
 		jS.Parser = new jS.parser;
 		
-		if (s.buildSheet) {//override urlGet, this has some effect on how the topbar is sized
-			if (typeof(s.buildSheet) == 'object') {
-				o = s.buildSheet;
-			} else if (s.buildSheet == true || s.buildSheet == 'true') {
-				o = jQuery(s.parent.html());
-			} else if (s.buildSheet.match(/x/i)) {
-				o = jQuery.sheet.makeTable.fromSize(s.buildSheet);
-			}
-		}
-		
 		//We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
 		//jQuery(this).html(s.loading);
 		s.origParent = origParent;
@@ -4067,9 +4077,11 @@ jQuery.sheet = {
 			.addClass(jS.cl.parent);
 		
 		origParent
+			.unbind('switchSpreadsheet')
 			.bind('switchSpreadsheet', function(e, js, i){
 				jS.switchSpreadsheet(i);
 			})
+			.unbind('renameSpreadsheet')
 			.bind('renameSpreadsheet', function(e, js, i){
 				jS.renameSpreadsheet(i);
 			});
@@ -4143,8 +4155,8 @@ jQuery.sheet = {
 			jS.alertFormulaError = emptyFN;
 		}
 		
-		jS.openSheet(o, s.forceColWidthsOnStartup);
 		jS.s = s;
+		jS.openSheet(jS.buildSheet(), s.forceColWidthsOnStartup);
 		
 		return jS;
 	},
