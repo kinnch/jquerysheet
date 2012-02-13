@@ -11,7 +11,7 @@ var $0 = $$.length - 1;
 switch (yystate) {
 case 1:return $$[$0-1];
 break;
-case 2:this.$ = ($$[$0-2] * 1) == ($$[$0] * 1);
+case 2:this.$ = ($$[$0-2]) == ($$[$0]);
 break;
 case 3:this.$ = ($$[$0-3] * 1) <= ($$[$0] * 1);
 break;

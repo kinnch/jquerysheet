@@ -1,1041 +1,170 @@
 <?php
 /* Jison generated parser */
-class parser {
-	function parser() {
-		$this->lexer = new lexer;
-	}
-	
-	function trace() {}
-	
-	var $yy;
-	
-	var $symbols_ = array(
-		"error"=> 2,
-		"expressions"=> 3,
-		"e"=> 4,
-		"EOF"=> 5,
-		"<="=> 6,
-		">="=> 7,
-		"<>"=> 8,
-		"NOT"=> 9,
-		">"=> 10,
-		"<"=> 11,
-		"+"=> 12,
-		"-"=> 13,
-		"*"=> 14,
-		"/"=> 15,
-		"^"=> 16,
-		"("=> 17,
-		")"=> 18,
-		"PERCENT"=> 19,
-		"DATE"=> 20,
-		"NUMBER"=> 21,
-		"E"=> 22,
-		"FIXEDCELL"=> 23,
-		"FIXEDCELLRANGE"=> 24,
-		"CELL"=> 25,
-		"CELLRANGE"=> 26,
-		"REMOTECELL"=> 27,
-		"REMOTECELLRANGE"=> 28,
-		"STRING"=> 29,
-		"IDENTIFIER"=> 30,
-		"expseq"=> 31,
-		";"=> 32,
-		","=> 33,
-		'$accept'=> 0,
-		'$end'=> 1
-	);
-	
-	var $terminals_ = array(
-		"2"=> "error",
-		"5"=> "EOF",
-		"6"=> "<=",
-		"7"=> ">=",
-		"8"=> "<>",
-		"9"=> "NOT",
-		"10"=> ">",
-		"11"=> "<",
-		"12"=> "+",
-		"13"=> "-",
-		"14"=> "*",
-		"15"=> "/",
-		"16"=> "^",
-		"17"=> "(",
-		"18"=> ")",
-		"19"=> "PERCENT",
-		"20"=> "DATE",
-		"21"=> "NUMBER",
-		"22"=> "E",
-		"23"=> "FIXEDCELL",
-		"24"=> "FIXEDCELLRANGE",
-		"25"=> "CELL",
-		"26"=> "CELLRANGE",
-		"27"=> "REMOTECELL",
-		"28"=> "REMOTECELLRANGE",
-		"29"=> "STRING",
-		"30"=> "IDENTIFIER",
-		"32"=> ";",
-		"33"=> ","
-	);
-	
-	var $productions_ = array(0,
-		array(3, 2),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 3),
-		array(4, 2),
-		array(4, 3),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 1),
-		array(4, 3),
-		array(4, 4),
-		array(31, 1),
-		array(31, 3),
-		array(31, 3)
-	);
-	
-	function performAction($thisSS, $yytext, $yyleng, $yylineno, $yy, $SS, $S) {
-		$O = count($S);
-		$r = 0;
-		$thisS = 0;
-		switch ($SS) {
-			case 1:
-				$r = $S[$O- 2 + 1 - 1];
-				break;
-			case 2:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) <= ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 3:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) >= ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 4:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) != ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 5:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) != ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 6:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) > ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 7:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) < ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 8:
-				$F = $S[$O- 3 + 1 - 1];
-				$FF = $S[$O- 3 + 3 - 1];
-				$FFF = $F + $FF;
-				$thisS = $S[$O- 3 + 1 - 1] + $S[$O- 3 + 3 - 1];
-				//$thisS = jSE.cFN.sanitize($S[$O- 3 + 1 - 1]) + jSE.cFN.sanitize($S[$O- 3 + 3 - 1]);
-				break;
-			case 9:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) - ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 10:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) * ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 11:
-				$thisS = ($S[$O- 3 + 1 - 1] * 1) / ($S[$O- 3 + 3 - 1] * 1);
-				break;
-			case 12:
-				//$thisS = Math.pow(($S[$O- 3 + 1 - 1] * 1), ($S[$O- 3 + 3 - 1] * 1));
-				break;
-			case 13:
-				$thisS = $S[$O- 2 + 2 - 1] * -1;
-				break;
-			case 14:
-				$thisS = $S[$O- 3 + 2 - 1];
-				break;
-			case 15:
-				//$thisS = (str_replace("%", "", $S[$O- 1 + 1 - 1]) * 1) / 100;
-				break;
-			case 16:
-				/*this.$ = new Date($S[$0-1+1-1]).toString();*/
-				break;
-			case 17:
-				$thisS = (float)$yytext;
-				break;
-			case 18:
-				//$thisS = Math.E;
-				break;
-			case 19:
-				//$this->S = $arguments[6].fixedCellValue.apply(arguments[7], [$S[$O- 1 + 1 - 1]]);
-				break;
-			case 20:
-				//$this->S = $arguments[6].fixedCellRangeValue.apply(arguments[7], [$S[$O- 1 + 1 - 1]]);
-				break;
-			case 21:
-				//$this->S = $arguments[6].cellValue.apply(arguments[7], [$S[$O- 1 + 1 - 1]]);
-				break;
-			case 22:
-				//$this->S = $arguments[6].cellRangeValue.apply(arguments[7], [$S[$O- 1 + 1 - 1]]);
-				break;
-			case 23:
-				//$this->S = $arguments[6].remoteCellValue.apply(arguments[7], [$S[$O- 1 + 1 - 1]]);
-				break;
-			case 24:
-				//$this->S = $arguments[6].remoteCellRangeValue.apply(arguments[7], [$S[$O- 1 + 1 - 1]]);
-				break;
-			case 25:
-				//$this->S = $S[$O- 1 + 1 - 1].substring(1, $S[$O- 1 + 1 - 1].length - 1);
-				break;
-			case 26:
-				//$this->S = $arguments[6].callFunction($S[$O- 3 + 1 - 1], '', arguments[7]);
-				break;
-			case 27:
-				//$this->S = $arguments[6].callFunction($S[$O- 4 + 1 - 1], $S[$O- 4 + 3 - 1], arguments[7]);
-				break;
-			case 29:
-				$thisS = (is_array($S[$O- 3 + 3 - 1]) ? $S[$O- 3 + 3 - 1] : array($S[$O- 3 + 3 - 1]));
-				$this.push($S[$O- 3 + 1 - 1]);
 
-				break;
-			case 30:
-				$thisS = (is_array($S[$O- 3 + 3 - 1]) ? $S[$O- 3 + 3 - 1] : array($S[$O- 3 + 3 - 1]));
-				$thisS.push($S[$O- 3 + 1 - 1]);
+class Parser
+{
+	var $symbols_ = array();
+	var $terminals_ = array();
+	var $productions_ = array();
+	var $table = array();
+	var $defaultActions = array();
+	var $debug = false;
+	
+	function __construct()
+	{
+		//ini_set('error_reporting', E_ALL);
+		//ini_set('display_errors', 1);
+		
+		$accept = 'accept';
+		$end = 'end';
+		
+		//parser
+		$this->symbols_ = 		json_decode('{"error":2,"expressions":3,"e":4,"EOF":5,"=":6,"<":7,">":8,"NOT":9,"+":10,"-":11,"*":12,"/":13,"^":14,"(":15,")":16,"%":17,"NUMBER":18,"E":19,"FIXEDCELL":20,":":21,"CELL":22,"SHEET":23,"!":24,"STRING":25,"IDENTIFIER":26,"expseq":27,";":28,",":29,"$accept":0,"$end":1}', true);
+		$this->terminals_ = 	json_decode('{"2":"error","5":"EOF","6":"=","7":"<","8":">","9":"NOT","10":"+","11":"-","12":"*","13":"/","14":"^","15":"(","16":")","17":"%","18":"NUMBER","19":"E","20":"FIXEDCELL","21":":","22":"CELL","23":"SHEET","24":"!","25":"STRING","26":"IDENTIFIER","28":";","29":","}', true);
+		$this->productions_ = 	json_decode('[0,[3,2],[4,3],[4,4],[4,4],[4,4],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,2],[4,2],[4,3],[4,2],[4,1],[4,1],[4,1],[4,3],[4,1],[4,3],[4,3],[4,5],[4,1],[4,3],[4,4],[27,1],[27,3],[27,3]]', true);
+		$this->table = 			json_decode('[{"3":1,"4":2,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"1":[3]},{"5":[1,13],"6":[1,14],"7":[1,15],"8":[1,16],"9":[1,17],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"17":[1,23]},{"4":24,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":25,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":26,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"5":[2,18],"6":[2,18],"7":[2,18],"8":[2,18],"9":[2,18],"10":[2,18],"11":[2,18],"12":[2,18],"13":[2,18],"14":[2,18],"16":[2,18],"17":[2,18],"28":[2,18],"29":[2,18]},{"5":[2,19],"6":[2,19],"7":[2,19],"8":[2,19],"9":[2,19],"10":[2,19],"11":[2,19],"12":[2,19],"13":[2,19],"14":[2,19],"16":[2,19],"17":[2,19],"28":[2,19],"29":[2,19]},{"5":[2,20],"6":[2,20],"7":[2,20],"8":[2,20],"9":[2,20],"10":[2,20],"11":[2,20],"12":[2,20],"13":[2,20],"14":[2,20],"16":[2,20],"17":[2,20],"21":[1,27],"28":[2,20],"29":[2,20]},{"5":[2,22],"6":[2,22],"7":[2,22],"8":[2,22],"9":[2,22],"10":[2,22],"11":[2,22],"12":[2,22],"13":[2,22],"14":[2,22],"16":[2,22],"17":[2,22],"21":[1,28],"28":[2,22],"29":[2,22]},{"24":[1,29]},{"5":[2,26],"6":[2,26],"7":[2,26],"8":[2,26],"9":[2,26],"10":[2,26],"11":[2,26],"12":[2,26],"13":[2,26],"14":[2,26],"16":[2,26],"17":[2,26],"28":[2,26],"29":[2,26]},{"15":[1,30]},{"1":[2,1]},{"4":31,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":34,"6":[1,32],"8":[1,33],"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":36,"6":[1,35],"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":37,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":38,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":39,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":40,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":41,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":42,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"5":[2,17],"6":[2,17],"7":[2,17],"8":[2,17],"9":[2,17],"10":[2,17],"11":[2,17],"12":[2,17],"13":[2,17],"14":[2,17],"16":[2,17],"17":[2,17],"28":[2,17],"29":[2,17]},{"5":[2,14],"6":[2,14],"7":[2,14],"8":[2,14],"9":[2,14],"10":[2,14],"11":[2,14],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,14],"17":[1,23],"28":[2,14],"29":[2,14]},{"5":[2,15],"6":[2,15],"7":[2,15],"8":[2,15],"9":[2,15],"10":[2,15],"11":[2,15],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,15],"17":[1,23],"28":[2,15],"29":[2,15]},{"6":[1,14],"7":[1,15],"8":[1,16],"9":[1,17],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[1,43],"17":[1,23]},{"20":[1,44]},{"22":[1,45]},{"22":[1,46]},{"4":49,"10":[1,4],"11":[1,3],"15":[1,5],"16":[1,47],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12],"27":48},{"5":[2,2],"6":[2,2],"7":[1,15],"8":[1,16],"9":[1,17],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,2],"17":[1,23],"28":[2,2],"29":[2,2]},{"4":50,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"4":51,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"5":[2,8],"6":[2,8],"7":[2,8],"8":[2,8],"9":[2,8],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,8],"17":[1,23],"28":[2,8],"29":[2,8]},{"4":52,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12]},{"5":[2,7],"6":[2,7],"7":[2,7],"8":[2,7],"9":[2,7],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,7],"17":[1,23],"28":[2,7],"29":[2,7]},{"5":[2,6],"6":[2,6],"7":[1,15],"8":[1,16],"9":[2,6],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,6],"17":[1,23],"28":[2,6],"29":[2,6]},{"5":[2,9],"6":[2,9],"7":[2,9],"8":[2,9],"9":[2,9],"10":[2,9],"11":[2,9],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,9],"17":[1,23],"28":[2,9],"29":[2,9]},{"5":[2,10],"6":[2,10],"7":[2,10],"8":[2,10],"9":[2,10],"10":[2,10],"11":[2,10],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,10],"17":[1,23],"28":[2,10],"29":[2,10]},{"5":[2,11],"6":[2,11],"7":[2,11],"8":[2,11],"9":[2,11],"10":[2,11],"11":[2,11],"12":[2,11],"13":[2,11],"14":[1,22],"16":[2,11],"17":[1,23],"28":[2,11],"29":[2,11]},{"5":[2,12],"6":[2,12],"7":[2,12],"8":[2,12],"9":[2,12],"10":[2,12],"11":[2,12],"12":[2,12],"13":[2,12],"14":[1,22],"16":[2,12],"17":[1,23],"28":[2,12],"29":[2,12]},{"5":[2,13],"6":[2,13],"7":[2,13],"8":[2,13],"9":[2,13],"10":[2,13],"11":[2,13],"12":[2,13],"13":[2,13],"14":[2,13],"16":[2,13],"17":[1,23],"28":[2,13],"29":[2,13]},{"5":[2,16],"6":[2,16],"7":[2,16],"8":[2,16],"9":[2,16],"10":[2,16],"11":[2,16],"12":[2,16],"13":[2,16],"14":[2,16],"16":[2,16],"17":[2,16],"28":[2,16],"29":[2,16]},{"5":[2,21],"6":[2,21],"7":[2,21],"8":[2,21],"9":[2,21],"10":[2,21],"11":[2,21],"12":[2,21],"13":[2,21],"14":[2,21],"16":[2,21],"17":[2,21],"28":[2,21],"29":[2,21]},{"5":[2,23],"6":[2,23],"7":[2,23],"8":[2,23],"9":[2,23],"10":[2,23],"11":[2,23],"12":[2,23],"13":[2,23],"14":[2,23],"16":[2,23],"17":[2,23],"28":[2,23],"29":[2,23]},{"5":[2,24],"6":[2,24],"7":[2,24],"8":[2,24],"9":[2,24],"10":[2,24],"11":[2,24],"12":[2,24],"13":[2,24],"14":[2,24],"16":[2,24],"17":[2,24],"21":[1,53],"28":[2,24],"29":[2,24]},{"5":[2,27],"6":[2,27],"7":[2,27],"8":[2,27],"9":[2,27],"10":[2,27],"11":[2,27],"12":[2,27],"13":[2,27],"14":[2,27],"16":[2,27],"17":[2,27],"28":[2,27],"29":[2,27]},{"16":[1,54]},{"6":[1,14],"7":[1,15],"8":[1,16],"9":[1,17],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,29],"17":[1,23],"28":[1,55],"29":[1,56]},{"5":[2,3],"6":[2,3],"7":[2,3],"8":[2,3],"9":[2,3],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,3],"17":[1,23],"28":[2,3],"29":[2,3]},{"5":[2,5],"6":[2,5],"7":[2,5],"8":[2,5],"9":[2,5],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,5],"17":[1,23],"28":[2,5],"29":[2,5]},{"5":[2,4],"6":[2,4],"7":[2,4],"8":[2,4],"9":[2,4],"10":[1,18],"11":[1,19],"12":[1,20],"13":[1,21],"14":[1,22],"16":[2,4],"17":[1,23],"28":[2,4],"29":[2,4]},{"22":[1,57]},{"5":[2,28],"6":[2,28],"7":[2,28],"8":[2,28],"9":[2,28],"10":[2,28],"11":[2,28],"12":[2,28],"13":[2,28],"14":[2,28],"16":[2,28],"17":[2,28],"28":[2,28],"29":[2,28]},{"4":49,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12],"27":58},{"4":49,"10":[1,4],"11":[1,3],"15":[1,5],"18":[1,6],"19":[1,7],"20":[1,8],"22":[1,9],"23":[1,10],"25":[1,11],"26":[1,12],"27":59},{"5":[2,25],"6":[2,25],"7":[2,25],"8":[2,25],"9":[2,25],"10":[2,25],"11":[2,25],"12":[2,25],"13":[2,25],"14":[2,25],"16":[2,25],"17":[2,25],"28":[2,25],"29":[2,25]},{"16":[2,30]},{"16":[2,31]}]', true);
+		$this->defaultActions = json_decode('{"13":[2,1],"58":[2,30],"59":[2,31]}', true);
+		
+		//lexer
+		$this->rules = 			array("/^\\s+/","/^\"(\\\\[\"]|[^\"])*\"/","/^'(\\\\[']|[^'])*'/","/^SHEET[0-9]+/","/^\\$[A-Za-z]+\\$[0-9]+/","/^[A-Za-z]+[0-9]+/","/^[A-Za-z]+/","/^[0-9]+(\\.[0-9]+)?/","/^\\$/","/^ /","/^\\./","/^:/","/^;/","/^,/","/^\\*/","/^\\//","/^-/","/^\\+/","/^\\^/","/^\\(/","/^\\)/","/^>/","/^</","/^NOT\\b/","/^PI\\b/","/^E\\b/","/^\"/","/^'/","/^!/","/^=/","/^%/","/^$/");
+		$this->conditions = 	json_decode('{"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],"inclusive":true}}', true);
+	}
+	
+	function trace()
+	{
+		
+	}
+	
+	function parser_performAction(&$thisS, $yytext, $yyleng, $yylineno, $yystate, $S, $_S, $O)
+	{
+		
 
-				break;
-		}
-		
-		return (object)array("r" => $r, "S" => $thisS);
+
+switch ($yystate) {
+case 1:return $S[$O-1];
+break;
+case 2:$thisS = ($S[$O-2]) == ($S[$O]);
+break;
+case 3:$thisS = ($S[$O-3] * 1) <= ($S[$O] * 1);
+break;
+case 4:$thisS = ($S[$O-3] * 1) >= ($S[$O] * 1);
+break;
+case 5:$thisS = ($S[$O-3] * 1) != ($S[$O] * 1);
+break;
+case 6:$thisS = ($S[$O-2] * 1) != ($S[$O] * 1);
+break;
+case 7:$thisS = ($S[$O-2] * 1) > ($S[$O] * 1);
+break;
+case 8:$thisS = ($S[$O-2] * 1) < ($S[$O] * 1);
+break;
+case 9:$thisS = jSE.cFN.sanitize($S[$O-2]) + jSE.cFN.sanitize($S[$O]);
+break;
+case 10:$thisS = ($S[$O-2] * 1) - ($S[$O] * 1);
+break;
+case 11:$thisS = ($S[$O-2] * 1) * ($S[$O] * 1);
+break;
+case 12:$thisS = ($S[$O-2] * 1) / ($S[$O] * 1);
+break;
+case 13:$thisS = Math.pow(($S[$O-2] * 1), ($S[$O] * 1));
+break;
+case 14:$thisS = $S[$O] * -1;
+break;
+case 15:$thisS = $S[$O] * 1;
+break;
+case 16:$thisS = $S[$O-1];
+break;
+case 17:$thisS = $S[$O-1] * 0.01;
+break;
+case 18:$thisS = Number(yytext);
+break;
+case 19:$thisS = Math.E;
+break;
+case 20:$thisS = yy->lexer.cellHandler.fixedCellValue.apply(yy->lexer.cell, [$S[$O]]);
+break;
+case 21:$thisS = yy->lexer.cellHandler.fixedCellRangeValue.apply(yy->lexer.cell, [$S[$O-2], $S[$O]]);
+break;
+case 22:$thisS = yy->lexer.cellHandler.cellValue.apply(yy->lexer.cell, [$S[$O]]);
+break;
+case 23:$thisS = yy->lexer.cellHandler.cellRangeValue.apply(yy->lexer.cell, [$S[$O-2], $S[$O]]);
+break;
+case 24:$thisS = yy->lexer.cellHandler.remoteCellValue.apply(yy->lexer.cell, [$S[$O-2], $S[$O]]);
+break;
+case 25:$thisS = yy->lexer.cellHandler.remoteCellRangeValue.apply(yy->lexer.cell, [$S[$O-4], $S[$O-2], $S[$O]]);
+break;
+case 26:$thisS = $S[$O].substring(1, $S[$O].length - 1);
+break;
+case 27:$thisS = yy->lexer.cellHandler.callFunction($S[$O-2], '', yy->lexer.cell);
+break;
+case 28:$thisS = yy->lexer.cellHandler.callFunction($S[$O-3], $S[$O-1], yy->lexer.cell);
+break;
+case 30:
+ 		$thisS = ($.isArray($S[$O]) ? $S[$O] : [$S[$O]]);
+	 	$thisS.push($S[$O-2]);
+ 	
+break;
+case 31:
+ 		$thisS = ($.isArray($S[$O]) ? $S[$O] : [$S[$O]]);
+	 	$thisS.push($S[$O-2]);
+ 	
+break;
+}
+
 	}
+
+	function parser_lex()
+	{
+		$token = $this->lexer_lex(); // $end = 1
+		$token = (isset($token) ? $token : 1);
 		
-	var $table = array(
-		array(
-			"3"=> 1,
-			"4"=> 2,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"1"=> array(3)
-		), array(
-			"5"=> array(1, 17),
-			"6"=> array(1, 18),
-			"7"=> array(1, 19),
-			"8"=> array(1, 20),
-			"9"=> array(1, 21),
-			"10"=> array(1, 22),
-			"11"=> array(1, 23),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28)
-		), array(
-			"4"=> 29,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 30,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"5"=> array(2, 15),
-			"6"=> array(2, 15),
-			"7"=> array(2, 15),
-			"8"=> array(2, 15),
-			"9"=> array(2, 15),
-			"10"=> array(2, 15),
-			"11"=> array(2, 15),
-			"12"=> array(2, 15),
-			"13"=> array(2, 15),
-			"14"=> array(2, 15),
-			"15"=> array(2, 15),
-			"16"=> array(2, 15),
-			"18"=> array(2, 15),
-			"32"=> array(2, 15),
-			"33"=> array(2, 15)
-		), array(
-			"5"=> array(2, 16),
-			"6"=> array(2, 16),
-			"7"=> array(2, 16),
-			"8"=> array(2, 16),
-			"9"=> array(2, 16),
-			"10"=> array(2, 16),
-			"11"=> array(2, 16),
-			"12"=> array(2, 16),
-			"13"=> array(2, 16),
-			"14"=> array(2, 16),
-			"15"=> array(2, 16),
-			"16"=> array(2, 16),
-			"18"=> array(2, 16),
-			"32"=> array(2, 16),
-			"33"=> array(2, 16)
-		), array(
-			"5"=> array(2, 17),
-			"6"=> array(2, 17),
-			"7"=> array(2, 17),
-			"8"=> array(2, 17),
-			"9"=> array(2, 17),
-			"10"=> array(2, 17),
-			"11"=> array(2, 17),
-			"12"=> array(2, 17),
-			"13"=> array(2, 17),
-			"14"=> array(2, 17),
-			"15"=> array(2, 17),
-			"16"=> array(2, 17),
-			"18"=> array(2, 17),
-			"32"=> array(2, 17),
-			"33"=> array(2, 17)
-		), array(
-			"5"=> array(2, 18),
-			"6"=> array(2, 18),
-			"7"=> array(2, 18),
-			"8"=> array(2, 18),
-			"9"=> array(2, 18),
-			"10"=> array(2, 18),
-			"11"=> array(2, 18),
-			"12"=> array(2, 18),
-			"13"=> array(2, 18),
-			"14"=> array(2, 18),
-			"15"=> array(2, 18),
-			"16"=> array(2, 18),
-			"18"=> array(2, 18),
-			"32"=> array(2, 18),
-			"33"=> array(2, 18)
-		), array(
-			"5"=> array(2, 19),
-			"6"=> array(2, 19),
-			"7"=> array(2, 19),
-			"8"=> array(2, 19),
-			"9"=> array(2, 19),
-			"10"=> array(2, 19),
-			"11"=> array(2, 19),
-			"12"=> array(2, 19),
-			"13"=> array(2, 19),
-			"14"=> array(2, 19),
-			"15"=> array(2, 19),
-			"16"=> array(2, 19),
-			"18"=> array(2, 19),
-			"32"=> array(2, 19),
-			"33"=> array(2, 19)
-		), array(
-			"5"=> array(2, 20),
-			"6"=> array(2, 20),
-			"7"=> array(2, 20),
-			"8"=> array(2, 20),
-			"9"=> array(2, 20),
-			"10"=> array(2, 20),
-			"11"=> array(2, 20),
-			"12"=> array(2, 20),
-			"13"=> array(2, 20),
-			"14"=> array(2, 20),
-			"15"=> array(2, 20),
-			"16"=> array(2, 20),
-			"18"=> array(2, 20),
-			"32"=> array(2, 20),
-			"33"=> array(2, 20)
-		), array(
-			"5"=> array(2, 21),
-			"6"=> array(2, 21),
-			"7"=> array(2, 21),
-			"8"=> array(2, 21),
-			"9"=> array(2, 21),
-			"10"=> array(2, 21),
-			"11"=> array(2, 21),
-			"12"=> array(2, 21),
-			"13"=> array(2, 21),
-			"14"=> array(2, 21),
-			"15"=> array(2, 21),
-			"16"=> array(2, 21),
-			"18"=> array(2, 21),
-			"32"=> array(2, 21),
-			"33"=> array(2, 21)
-		), array(
-			"5"=> array(2, 22),
-			"6"=> array(2, 22),
-			"7"=> array(2, 22),
-			"8"=> array(2, 22),
-			"9"=> array(2, 22),
-			"10"=> array(2, 22),
-			"11"=> array(2, 22),
-			"12"=> array(2, 22),
-			"13"=> array(2, 22),
-			"14"=> array(2, 22),
-			"15"=> array(2, 22),
-			"16"=> array(2, 22),
-			"18"=> array(2, 22),
-			"32"=> array(2, 22),
-			"33"=> array(2, 22)
-		), array(
-			"5"=> array(2, 23),
-			"6"=> array(2, 23),
-			"7"=> array(2, 23),
-			"8"=> array(2, 23),
-			"9"=> array(2, 23),
-			"10"=> array(2, 23),
-			"11"=> array(2, 23),
-			"12"=> array(2, 23),
-			"13"=> array(2, 23),
-			"14"=> array(2, 23),
-			"15"=> array(2, 23),
-			"16"=> array(2, 23),
-			"18"=> array(2, 23),
-			"32"=> array(2, 23),
-			"33"=> array(2, 23)
-		), array(
-			"5"=> array(2, 24),
-			"6"=> array(2, 24),
-			"7"=> array(2, 24),
-			"8"=> array(2, 24),
-			"9"=> array(2, 24),
-			"10"=> array(2, 24),
-			"11"=> array(2, 24),
-			"12"=> array(2, 24),
-			"13"=> array(2, 24),
-			"14"=> array(2, 24),
-			"15"=> array(2, 24),
-			"16"=> array(2, 24),
-			"18"=> array(2, 24),
-			"32"=> array(2, 24),
-			"33"=> array(2, 24)
-		), array(
-			"5"=> array(2, 25),
-			"6"=> array(2, 25),
-			"7"=> array(2, 25),
-			"8"=> array(2, 25),
-			"9"=> array(2, 25),
-			"10"=> array(2, 25),
-			"11"=> array(2, 25),
-			"12"=> array(2, 25),
-			"13"=> array(2, 25),
-			"14"=> array(2, 25),
-			"15"=> array(2, 25),
-			"16"=> array(2, 25),
-			"18"=> array(2, 25),
-			"32"=> array(2, 25),
-			"33"=> array(2, 25)
-		), array(
-			"17"=> array(1, 31)
-		), array(
-			"1"=> array(2, 1)
-		), array(
-			"4"=> 32,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 33,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 34,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 35,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 36,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 37,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 38,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 39,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 40,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 41,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"4"=> 42,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16)
-		), array(
-			"5"=> array(2, 13),
-			"6"=> array(2, 13),
-			"7"=> array(2, 13),
-			"8"=> array(2, 13),
-			"9"=> array(2, 13),
-			"10"=> array(2, 13),
-			"11"=> array(2, 13),
-			"12"=> array(2, 13),
-			"13"=> array(2, 13),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 13),
-			"32"=> array(2, 13),
-			"33"=> array(2, 13)
-		), array(
-			"6"=> array(1, 18),
-			"7"=> array(1, 19),
-			"8"=> array(1, 20),
-			"9"=> array(1, 21),
-			"10"=> array(1, 22),
-			"11"=> array(1, 23),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(1, 43)
-		), array(
-			"4"=> 46,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"18"=> array(1, 44),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16),
-			"31"=> 45
-		), array(
-			"5"=> array(2, 2),
-			"6"=> array(2, 2),
-			"7"=> array(2, 2),
-			"8"=> array(2, 2),
-			"9"=> array(2, 2),
-			"10"=> array(1, 22),
-			"11"=> array(1, 23),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 2),
-			"32"=> array(2, 2),
-			"33"=> array(2, 2)
-		), array(
-			"5"=> array(2, 3),
-			"6"=> array(2, 3),
-			"7"=> array(2, 3),
-			"8"=> array(2, 3),
-			"9"=> array(2, 3),
-			"10"=> array(1, 22),
-			"11"=> array(1, 23),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 3),
-			"32"=> array(2, 3),
-			"33"=> array(2, 3)
-		), array(
-			"5"=> array(2, 4),
-			"6"=> array(2, 4),
-			"7"=> array(2, 4),
-			"8"=> array(2, 4),
-			"9"=> array(2, 4),
-			"10"=> array(1, 22),
-			"11"=> array(1, 23),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 4),
-			"32"=> array(2, 4),
-			"33"=> array(2, 4)
-		), array(
-			"5"=> array(2, 5),
-			"6"=> array(2, 5),
-			"7"=> array(2, 5),
-			"8"=> array(2, 5),
-			"9"=> array(2, 5),
-			"10"=> array(1, 22),
-			"11"=> array(1, 23),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 5),
-			"32"=> array(2, 5),
-			"33"=> array(2, 5)
-		), array(
-			"5"=> array(2, 6),
-			"6"=> array(2, 6),
-			"7"=> array(2, 6),
-			"8"=> array(2, 6),
-			"9"=> array(2, 6),
-			"10"=> array(2, 6),
-			"11"=> array(2, 6),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 6),
-			"32"=> array(2, 6),
-			"33"=> array(2, 6)
-		), array(
-			"5"=> array(2, 7),
-			"6"=> array(2, 7),
-			"7"=> array(2, 7),
-			"8"=> array(2, 7),
-			"9"=> array(2, 7),
-			"10"=> array(2, 7),
-			"11"=> array(2, 7),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 7),
-			"32"=> array(2, 7),
-			"33"=> array(2, 7)
-		), array(
-			"5"=> array(2, 8),
-			"6"=> array(2, 8),
-			"7"=> array(2, 8),
-			"8"=> array(2, 8),
-			"9"=> array(2, 8),
-			"10"=> array(2, 8),
-			"11"=> array(2, 8),
-			"12"=> array(2, 8),
-			"13"=> array(2, 8),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 8),
-			"32"=> array(2, 8),
-			"33"=> array(2, 8)
-		), array(
-			"5"=> array(2, 9),
-			"6"=> array(2, 9),
-			"7"=> array(2, 9),
-			"8"=> array(2, 9),
-			"9"=> array(2, 9),
-			"10"=> array(2, 9),
-			"11"=> array(2, 9),
-			"12"=> array(2, 9),
-			"13"=> array(2, 9),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 9),
-			"32"=> array(2, 9),
-			"33"=> array(2, 9)
-		), array(
-			"5"=> array(2, 10),
-			"6"=> array(2, 10),
-			"7"=> array(2, 10),
-			"8"=> array(2, 10),
-			"9"=> array(2, 10),
-			"10"=> array(2, 10),
-			"11"=> array(2, 10),
-			"12"=> array(2, 10),
-			"13"=> array(2, 10),
-			"14"=> array(2, 10),
-			"15"=> array(2, 10),
-			"16"=> array(1, 28),
-			"18"=> array(2, 10),
-			"32"=> array(2, 10),
-			"33"=> array(2, 10)
-		), array(
-			"5"=> array(2, 11),
-			"6"=> array(2, 11),
-			"7"=> array(2, 11),
-			"8"=> array(2, 11),
-			"9"=> array(2, 11),
-			"10"=> array(2, 11),
-			"11"=> array(2, 11),
-			"12"=> array(2, 11),
-			"13"=> array(2, 11),
-			"14"=> array(2, 11),
-			"15"=> array(2, 11),
-			"16"=> array(1, 28),
-			"18"=> array(2, 11),
-			"32"=> array(2, 11),
-			"33"=> array(2, 11)
-		), array(
-			"5"=> array(2, 12),
-			"6"=> array(2, 12),
-			"7"=> array(2, 12),
-			"8"=> array(2, 12),
-			"9"=> array(2, 12),
-			"10"=> array(2, 12),
-			"11"=> array(2, 12),
-			"12"=> array(2, 12),
-			"13"=> array(2, 12),
-			"14"=> array(2, 12),
-			"15"=> array(2, 12),
-			"16"=> array(2, 12),
-			"18"=> array(2, 12),
-			"32"=> array(2, 12),
-			"33"=> array(2, 12)
-		), array(
-			"5"=> array(2, 14),
-			"6"=> array(2, 14),
-			"7"=> array(2, 14),
-			"8"=> array(2, 14),
-			"9"=> array(2, 14),
-			"10"=> array(2, 14),
-			"11"=> array(2, 14),
-			"12"=> array(2, 14),
-			"13"=> array(2, 14),
-			"14"=> array(2, 14),
-			"15"=> array(2, 14),
-			"16"=> array(2, 14),
-			"18"=> array(2, 14),
-			"32"=> array(2, 14),
-			"33"=> array(2, 14)
-		), array(
-			"5"=> array(2, 26),
-			"6"=> array(2, 26),
-			"7"=> array(2, 26),
-			"8"=> array(2, 26),
-			"9"=> array(2, 26),
-			"10"=> array(2, 26),
-			"11"=> array(2, 26),
-			"12"=> array(2, 26),
-			"13"=> array(2, 26),
-			"14"=> array(2, 26),
-			"15"=> array(2, 26),
-			"16"=> array(2, 26),
-			"18"=> array(2, 26),
-			"32"=> array(2, 26),
-			"33"=> array(2, 26)
-		), array(
-			"18"=> array(1, 47)
-		), array(
-			"6"=> array(1, 18),
-			"7"=> array(1, 19),
-			"8"=> array(1, 20),
-			"9"=> array(1, 21),
-			"10"=> array(1, 22),
-			"11"=> array(1, 23),
-			"12"=> array(1, 24),
-			"13"=> array(1, 25),
-			"14"=> array(1, 26),
-			"15"=> array(1, 27),
-			"16"=> array(1, 28),
-			"18"=> array(2, 28),
-			"32"=> array(1, 48),
-			"33"=> array(1, 49)
-		), array(
-			"5"=> array(2, 27),
-			"6"=> array(2, 27),
-			"7"=> array(2, 27),
-			"8"=> array(2, 27),
-			"9"=> array(2, 27),
-			"10"=> array(2, 27),
-			"11"=> array(2, 27),
-			"12"=> array(2, 27),
-			"13"=> array(2, 27),
-			"14"=> array(2, 27),
-			"15"=> array(2, 27),
-			"16"=> array(2, 27),
-			"18"=> array(2, 27),
-			"32"=> array(2, 27),
-			"33"=> array(2, 27)
-		), array(
-			"4"=> 46,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16),
-			"31"=> 50
-		), array(
-			"4"=> 46,
-			"13"=> array(1, 3),
-			"17"=> array(1, 4),
-			"19"=> array(1, 5),
-			"20"=> array(1, 6),
-			"21"=> array(1, 7),
-			"22"=> array(1, 8),
-			"23"=> array(1, 9),
-			"24"=> array(1, 10),
-			"25"=> array(1, 11),
-			"26"=> array(1, 12),
-			"27"=> array(1, 13),
-			"28"=> array(1, 14),
-			"29"=> array(1, 15),
-			"30"=> array(1, 16),
-			"31"=> 51
-		), array(
-			"18"=> array(2, 29)
-		), array(
-			"18"=> array(2, 30)
-		)
-	);
-	
-	var $defaultActions = array(
-		"17"=> array(2, 1),
-		"50"=> array(2, 29),
-		"51"=> array(2, 30)
-	);
-	
-	function popStack($n, $stack, $vstack) {
-		array_slice($stack, 0, 2 * $n);
-		array_slice($vstack, 0, $n);
-		//$stack.length = $stack.length - 2 * $n;
-		//$vstack.length = $vstack.length - $n;
-	}
-	
-	function lex() {
-		$token = $this->lexer->lex(); // $end = 1
-		$token = (empty($token) ? 1 : $token);
 		// if token isn't its numeric value, convert
-		if (!is_numeric($token)) {
-			$token = (array_key_exists($token, $this->symbols_) ? $this->symbols_[$token] : $token);
-		}
+		if (isset($this->symbols_[$token]))
+			return $this->symbols_[$token];
+		
 		return $token;
 	}
 	
-	function parseError($str, $hash) {
+	function parseError($str = "", $hash = array())
+	{
 		throw new Exception($str);
 	}
 	
-	function parse($input, $fn, $cell) {
-		$self = $this;
+	function parse($input)
+	{
 		$stack = array(0);
+		$stackCount = 1;
+		
 		$vstack = array(null);
+		$vstackCount = 1;
 		// semantic value stack
-		$table = $this->table;
-		$yytext = '';
-		$yylineno = 0;
-		$yyleng = 0;
+		
+		$lstack = array($this->yyloc);
+		$lstackCount = 1;
+		//location stack
+		
 		$shifts = 0;
 		$reductions = 0;
 		$recovering = 0;
 		$TERROR = 2;
 		$EOF = 1;
 		
-		$this->yy = (object)array();
-		$this->lexer->setInput($input);
-		$this->lexer->yy = $this->yy;
-		$this->yy->lexer = $this->lexer;
-
-		//$parseError = $this->lexer->parseError;
-
-		//$symbol, $preErrorSymbol, $state, $action, $a, $r, $yyval = array();
-		//$p, $len, $newState, $expected, $recovered = false;
+		$this->setInput($input);
 		
 		$yyval = (object)array();
 		$recovered = false;
 		
 		while (true) {
 			// retreive state number from top of stack
-			$state = $stack[count($stack) - 1];
+			$state = $stack[$stackCount - 1];
 			// use default actions if available
-			if (array_key_exists($state, $this->defaultActions)) {
+			if (isset($this->defaultActions[$state])) {
 				$action = $this->defaultActions[$state];		
 			} else {
-				if (empty($symbol))
-					$symbol = $this->lex();
-				
+				if (empty($symbol)) {
+					$symbol = $this->parser_lex();
+				}
 				// read action for current state and first input
-				if (array_key_exists($state, $table)) {
-					if (array_key_exists($symbol, $table[$state])) {
-						$action = $table[$state][$symbol];
-					}
+				if (isset($this->table[$state][$symbol])) {
+					$action = $this->table[$state][$symbol];
 				}
 			}
 			
@@ -1043,18 +172,19 @@ class parser {
 				if (empty($recovering) == false) {
 					// Report error
 					$expected = array();
-					foreach($table[$state] as $p) {
+					foreach($this->table[$state] as $p) {
 						if ($p > 2) {
-							array_push($expected, implode($p));
+							$expected[] = implode($p);
 						}
 					}
 					
-					$errStr = 'Parse error on line ' . ($yylineno + 1) . ":\n" . $this->lexer->showPosition() . '\nExpecting ' . implode(', ', $expected);
+					$errStr = 'Parse error on line ' . ($this->yylineno + 1) . ":\n" . $this->showPosition() . '\nExpecting ' . implode(', ', $expected);
 			
-					$this->lexer->parseError($errStr, array(
-						"text"=> $this->lexer->match,
+					$this->parseError($errStr, array(
+						"text"=> $this->match,
 						"token"=> $symbol,
-						"line"=> $this->lexer->yylineno,
+						"line"=> $this->yylineno,
+						"loc"=> $this->yyloc,
 						"expected"=> $expected
 					));
 				}
@@ -1062,64 +192,63 @@ class parser {
 				// just recovered from another error
 				if ($recovering == 3) {
 					if ($symbol == $EOF) {
-						throw new Exception($errStr || 'Parsing halted.');
+						$this->parseError(isset($errStr) ? $errStr : 'Parsing halted.');
 					}
 		
 					// discard current lookahead and grab another
-					$yyleng = $this->lexer->yyleng;
-					$yytext = $this->lexer->yytext;
-					$yylineno = $this->lexer->yylineno;
-					$symbol = $this->lex();
+					$symbol = $this->parser_lex();
 				}
 	
 				// try to recover from error
 				while (true) {
 					// check for error recovery rule in this state
-					if (array_key_exists($TERROR, $table[$state])) {
+					if (isset($this->table[$state][$TERROR])) {
 						break 2;
 					}
 					if ($state == 0) {
-						throw new Exception($errStr || 'Parsing halted.');
+						$this->parseError(isset($errStr) ? $errStr : 'Parsing halted.');
 					}
-					//$this->popStack(1, $stack, $vstack);
 					
-					array_slice($stack, 0, 2 * 1);
+					array_slice($stack, 0, 2);
+					$stackCount -= 2;
+					
 					array_slice($vstack, 0, 1);
 					
-					$lenn = count($stack) - 1;
-					
-					$state = $stack[count($stack) - 1];
+					$state = $stack[$stackCount - 1];
 				}
 	
 				$preErrorSymbol = $symbol; // save the lookahead token
 				$symbol = $TERROR; // insert generic error symbol as new lookahead
-				$state = $stack[count($stack) - 1];
-				if (array_key_exists($state, $table)) {
-					if (array_key_exists($TERROR, $table[$state])) {
-						$action = $table[$state][$TERROR];
-					}
+				$state = $stack[$stackCount - 1];
+				if (isset($this->table[$state][$TERROR])) {
+					$action = $this->table[$state][$TERROR];
 				}
 				$recovering = 3; // allow 3 real symbols to be shifted before reporting a new error
 			}
 	
 			// this shouldn't happen, unless resolve defaults are off
-			if (is_array($action[0]) && count($action) > 1) {
-				throw new Exception('Parse Error: multiple actions possible at state: ' . $state . ', token: ' . $symbol);
+			if (isset($action[2])) {
+				$this->parseError('Parse Error: multiple actions possible at state: ' . $state . ', token: ' . $symbol);
 			}
 			
-			$a = $action;
-			switch ($a[0]) {
+			switch ($action[0]) {
 				case 1:
 					// shift
-					$shifts++;
-					array_push($stack, $symbol);
-					array_push($vstack, $this->lexer->yytext); // semantic values or junk only, no terminals
-					array_push($stack, $a[1]); // push state
+					//$this->shiftCount++;
+					$stack[] = $symbol;
+					$stackCount++;
+					
+					$vstack[] = $this->yytext;
+					$vstackCount++;
+					
+					$lstack[] = $this->yyloc;
+					$lstackCount++;
+					
+					$stack[] = $action[1]; // push state
+					$stackCount++;
+
 					$symbol = "";
 					if (empty($preErrorSymbol)) { // normal execution/no error
-						$yyleng = $this->lexer->yyleng;
-						$yytext = $this->lexer->yytext;
-						$yylineno = $this->lexer->yylineno;
 						if ($recovering > 0) $recovering--;
 					} else { // error just occurred, resume old lookahead f/ before error
 						$symbol = $preErrorSymbol;
@@ -1129,36 +258,54 @@ class parser {
 		
 				case 2:
 					// reduce
-					$reductions++;
-					$len = $this->productions_[$a[1]][1];
+					$len = $this->productions_[$action[1]][1];
 					// perform semantic action
-					$yyval->S = $vstack[count($vstack) - $len]; // default to $S = $1					
-					$r = $this->performAction($yyval->S, $yytext, $yyleng, $yylineno, $this->yy, $a[1], $vstack, $fn, $cell);
+					$yyval->S = $vstack[$vstackCount - $len];// default to $S = $1
+					// default location, uses first token for firsts, last for lasts
+					$yyval->_S = array(
+                        "first_line"=> 		$lstack[$lstackCount - (isset($len) ? $len : 1)]['first_line'],
+                        "last_line"=> 		$lstack[$lstackCount - 1]['last_line'],
+                        "first_column"=> 	$lstack[$lstackCount - (isset($len) ? $len : 1)]['first_column'],
+                        "last_column"=> 	$lstack[$lstackCount - 1]['last_column']
+                    );
 					
-					if (empty($r->r) == false) {
-						return $r->r;
+					$r = $this->parser_performAction($yyval->S, $this->yytext, $this->yyleng, $this->yylineno, $action[1], $vstack, $lstack, $vstackCount - 1);
+					
+					if (empty($r) == false) {
+						return $r;
 					}
-					
-					$yyval->S = $r->S;
 					
 					// pop off stack		
 					if ($len > 0) {
 						$stack = array_slice($stack, 0, -1 * $len * 2);
+						$stackCount -= $len * 2;
+					
 						$vstack = array_slice($vstack, 0, -1 * $len);
+						$vstackCount -= $len;
+						
+						$lstack = array_slice($lstack, 0, -1 * $len);
+						$lstackCount -= $len;
 					}
 					
-					array_push($stack, $this->productions_[$a[1]][0]); // push nonterminal (reduce)
-					array_push($vstack, $yyval->S);
+					$stack[] = $this->productions_[$action[1]][0]; // push nonterminal (reduce)
+					$stackCount++;
+					
+					$vstack[] = $yyval->S;
+					$vstackCount++;
+					
+					$lstack[] = $yyval->_S;
+					$lstackCount++;
 					
 					// goto new state = table[STATE][NONTERMINAL]
-					$newState = $table[$stack[count($stack) - 2]][$stack[count($stack) - 1]];
-					array_push($stack, $newState);
+					$newState = $this->table[$stack[$stackCount - 2]][$stack[$stackCount - 1]];
+					
+					$stack[] = $newState;
+					$stackCount++;
+					
 					break;
 		
 				case 3:
 					// accept
-					$this->reductionCount = $reductions;
-					$this->shiftCount = $shifts;
 					return true;
 			}
 
@@ -1166,61 +313,76 @@ class parser {
 
 		return true;
 	}
-}
 
-/* Jison generated lexer */
-class lexer {
-	var $EOF = "";
+
+	/* Jison generated lexer */
+	var $EOF = 1;
 	var $S = "";
 	var $yy = "";
 	var $yylineno = "";
 	var $yyleng = "";
 	var $yytext = "";
-	var $matched = "";
 	var $match = "";
+	var $matched = "";
+	var $matches = "";
+	var $yyloc = array();
+	var $conditionsStack = array();
+	var $conditionStackCount = 0;
+	var $rules = array();
+	var $conditions = array();
+	var $done = false;
+	var $less;
+	var $more;
+	var $_input;
 	
-	function lexer() {}
-	
-	function parseError($str, $hash) {
-		throw new Exception($str);
-	}
-	
-	function setInput($input) {
+	function setInput($input)
+	{
 		$this->_input = $input;
-		$this->_more = $this->_less = $this->done = false;
+		$this->more = $this->less = $this->done = false;
 		$this->yylineno = $this->yyleng = 0;
 		$this->yytext = $this->matched = $this->match = '';
-		return $this;
+		$this->conditionStack = array('INITIAL');
+		$this->yyloc = array(
+			"first_line"=> 1,
+			"first_column"=> 0,
+			"last_line"=> 1,
+			"last_column"=> 0
+		);
 	}
 	
-	function input() {
+	function input()
+	{
 		$ch = $this->_input[0];
-		$this->yytext += $ch;
+		$this->yytext .= $ch;
 		$this->yyleng++;
-		$this->match += $ch;
-		$this->matched += $ch;
-		$lines = preg_match("\n", $ch);
+		$this->match .= $ch;
+		$this->matched .= $ch;
+		$lines = preg_match("/\n/", $ch);
 		if (count($lines) > 0) $this->yylineno++;
 		array_slice($this->_input, 1);
 		return $ch;
 	}
 	
-	function unput($ch) {
-		$this->_input = $ch + $this->_input;
+	function unput($ch)
+	{
+		$this->_input = $ch . $this->_input;
 		return $this;
 	}
 	
-	function more() {
-		$this->_more = true;
+	function more()
+	{
+		$this->more = true;
 		return $this;
 	}
 	
-	function pastInput() {
+	function pastInput()
+	{
 		$past = substr($this->matched, 0, count($this->matched) - count($this->match));
 		return (strlen($past) > 20 ? '...' : '') . preg_replace("/\n/", "", substr($past, -20));
 	}
 	
-	function upcomingInput() {
+	function upcomingInput()
+	{
 		$next = $this->match;
 		if (strlen($next) < 20) {
 			$next .= substr($this->_input, 0, 20 - strlen($next));
@@ -1228,39 +390,46 @@ class lexer {
 		return preg_replace("/\n/", "", substr($next, 0, 20) . (strlen($next) > 20 ? '...' : ''));
 	}
 	
-	function showPosition() {
+	function showPosition()
+	{
 		$pre = $this->pastInput();
 		$c = implode(array(strlen($pre) + 1), "-");
 		return $pre . $this->upcomingInput() . "\n" . $c . "^";
 	}
 	
-	function next() {
-		if ($this->done == true) {
-			return $this->EOF;
-		}
+	function next()
+	{
+		if ($this->done == true) return $this->EOF;
 		
-		if ($this->_input == false) $this->_input = "";
 		if (empty($this->_input)) $this->done = true;
 
-		if ($this->_more == false) {
+		if ($this->more == false) {
 			$this->yytext = '';
 			$this->match = '';
 		}
 		
-		for ($i = 0; $i < count($this->rules); $i++) {
-			preg_match($this->rules[$i], $this->_input, $match);
-			
-			if ( isset($match) && isset($match[0]) ) {
-				preg_match_all("/\n/", $match[0], $lines, PREG_PATTERN_ORDER);
-				if (count($lines) > 1) $this->yylineno += count($lines);
+		$rules = $this->_currentRules();
+		for ($i = 0, $j = count($rules); $i < $j; $i++) {
+			preg_match($this->rules[$rules[$i]], $this->_input, $match);
+			if ( isset($match[0]) ) {
+				$matchCount = strlen($match[0]);
+				$lineCount = preg_match("/\n.*/", $match[0], $lines);
+				
+				if ($lineCount > 1) $this->yylineno += $lineCount;
+				$this->yyloc = array(
+					"first_line"=> $this->yyloc['last_line'],
+					"last_line"=> $this->yylineno + 1,
+					"first_column"=> $this->yyloc['last_column'],
+					"last_column"=> $lines ? count($lines[$lineCount - 1]) - 1 : $this->yyloc['last_column'] + $matchCount
+				);
 				$this->yytext .= $match[0];
 				$this->match .= $match[0];
 				$this->matches = $match[0];
 				$this->yyleng = strlen($this->yytext);
-				$this->_more = false;
-				$this->_input = substr($this->_input, strlen($match[0]), strlen($this->_input));
+				$this->more = false;
+				$this->_input = substr($this->_input, $matchCount, strlen($this->_input));
 				$this->matched .= $match[0];
-				$token = $this->performAction($this->S, $this->yy, $this->yyleng, $i);
+				$token = $this->lexer_performAction($this->yy, $this, $rules[$i], $this->conditionStack[$this->conditionStackCount]);
 				
 				if (empty($token) == false) {
 					return $token;
@@ -1281,207 +450,110 @@ class lexer {
 		}
 	}
 	
-	function lex() {
+	function lexer_lex()
+	{
 		$r = $this->next();
-		if (empty($r) == false) {
-			return $r;
-		} else if ($this->done != true) {
-			return $this->lex();
+		
+		while (empty($r) && $this->done == false) {
+			$r = $this->next();
 		}
+		
+		return $r;
 	}
 	
-	function performAction($S, $yy, $yy_, $i) {
+	function begin($condition)
+	{
+		$this->conditionStackCount++;
+		$this->conditionStack[] = $condition;
+	}
+	
+	function popState()
+	{
+		$this->conditionStackCount--;
+		return array_pop($this->conditionStack);
+	}
+	
+	function _currentRules()
+	{
+		return $this->conditions[
+			$this->conditionStack[
+				$this->conditionStackCount
+			]
+		]['rules'];
+	}
+	
+	function lexer_performAction(&$yy, $yy_, $avoiding_name_collisions, $YY_START = null)
+	{
+		$YYSTATE = $YY_START;
+		
 
-		switch ($i) {
-			case 0:
-			/* skip whitespace */
-			break;
-			case 1:
-			return 29;
-			break;
-			case 2:
-			return 29;
-			break;
-			case 3:
-			return 24;
-			break;
-			case 4:
-			return 23;
-			break;
-			case 5:
-			return 28;
-			break;
-			case 6:
-			return 27;
-			break;
-			case 7:
-			return 26;
-			break;
-			case 8:
-			return 25;
-			break;
-			case 9:
-			return 30;
-			break;
-			case 10:
-			return 20;
-			break;
-			case 11:
-			return 19;
-			break;
-			case 12:
-			return 21;
-			break;
-			case 13:
-			/* skip whitespace */
-			break;
-			case 14:
-			return ' ';
-			break;
-			case 15:
-			return '.';
-			break;
-			case 16:
-			return ':';
-			break;
-			case 17:
-			return 32;
-			break;
-			case 18:
-			return 33;
-			break;
-			case 19:
-			return 14;
-			break;
-			case 20:
-			return 15;
-			break;
-			case 21:
-			return 13;
-			break;
-			case 22:
-			return 12;
-			break;
-			case 23:
-			return 16;
-			break;
-			case 24:
-			return 17;
-			break;
-			case 25:
-			return 18;
-			break;
-			case 26:
-			return 10;
-			break;
-			case 27:
-			return 11;
-			break;
-			case 28:
-			return 7;
-			break;
-			case 29:
-			return 6;
-			break;
-			case 30:
-			return 8;
-			break;
-			case 31:
-			return 9;
-			break;
-			case 32:
-			return 'PI';
-			break;
-			case 33:
-			return 22;
-			break;
-			case 34:
-			return '"';
-			break;
-			case 35:
-			return "'";
-			break;
-			case 36:
-			return "!";
-			break;
-			case 37:
-			return 5;
-			break;
-			case 38:
-			return '=';
-			break;
-		}
-	}
-	
-	var $rules = array(
-		'/^\s+/',
-		'/^"(\\["]|[^"])*"/',
-		"/^'(\\[']|[^'])*'/",
-		'/^\$[A-Za-z]+\$[0-9]+[:]\$[A-Za-z]+\$[0-9]+/',
-		'/^\$[A-Za-z]+\$[0-9]+/',
-		"/^SHEET[0-9]+[:!][A-Za-z]+[0-9]+[:][A-Za-z]+[0-9]+/",
-		"/^SHEET[0-9]+[:!][A-Za-z]+[0-9]+/",
-		"/^[A-Za-z]+[0-9]+[:][A-Za-z]+[0-9]+/",
-		"/^[A-Za-z]+[0-9]+/",
-		"/^[A-Za-z]+/",
-		"/^[0-9]([0-9]?)[-][0-9]([0-9]?)[-][0-9]([0-9]?)([0-9]?)([0-9]?)/",
-		"/^[0-9]+[%]/",
-		"/^[0-9]+(\.[0-9]+)?/",
-		'/^\$/',
-		"/^ /",
-		"/^\./",
-		"/^:/",
-		"/^;/",
-		"/^,/",
-		"/^\*/",
-		"/^\//",
-		"/^-/",
-		"/^\+/",
-		"/^\^/",
-		"/^\(/",
-		"/^\)/",
-		"/^>/",
-		"/^</",
-		"/^>=/",
-		"/^<=/",
-		"/^<>/",
-		"/^NOT\b/",
-		"/^PI\b/",
-		"/^E\b/",
-		'/^"/',
-		"/^'/",
-		"/^!/",
-		'/^$/',
-		"/^=/"
-	);
+
+switch($avoiding_name_collisions) {
+case 0:/* skip whitespace */
+break;
+case 1:return 25;
+break;
+case 2:return 25;
+break;
+case 3:return 23;
+break;
+case 4:return 20;
+break;
+case 5:return 22;
+break;
+case 6:return 26;
+break;
+case 7:return 18;
+break;
+case 8:/* skip whitespace */
+break;
+case 9:return ' ';
+break;
+case 10:return '.';
+break;
+case 11:return 21;
+break;
+case 12:return 28;
+break;
+case 13:return 29;
+break;
+case 14:return 12;
+break;
+case 15:return 13;
+break;
+case 16:return 11;
+break;
+case 17:return 10;
+break;
+case 18:return 14;
+break;
+case 19:return 15;
+break;
+case 20:return 16;
+break;
+case 21:return 8;
+break;
+case 22:return 7;
+break;
+case 23:return 9;
+break;
+case 24:return 'PI';
+break;
+case 25:return 19;
+break;
+case 26:return '"';
+break;
+case 27:return "'";
+break;
+case 28:return "!";
+break;
+case 29:return 6;
+break;
+case 30:return 17;
+break;
+case 31:return 5;
+break;
 }
 
-if (isset($require)) {
-	$exports = array(
-		"parser"=> $parser,
-		"parse"=> function () {
-			return $parser->parse.apply($parser, $arguments);
-		},
-		"main"=> function ($args) {
-			if (!$args[1]) throw new Exception('Usage: ' + $args[0] + ' FILE');
-			if (isset($process)) {
-				$source = require('fs').readFileSync(require('path').join($process.cwd(), $args[1]), "utf8");
-			} else {
-				/*$cwd = require("file")->path(require("file").cwd());
-				$source = $cwd.join(args[1]).read({
-					charset: "utf-8"
-				});*/
-			}
-			return $exports->parser->parse($source);
-		}
-	);
-	
-	if (isset($module) && $require->main === $module) {
-		$exports->main(isset($process) ? array_slice($process->argv, 1) : $require("system")->args);
 	}
 }
-
-//this is for testing, and should be removed when it goes production
-$parser = new parser;
-
-print_r($parser->parse("100+98","",""));
