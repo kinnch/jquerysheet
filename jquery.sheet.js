@@ -4124,7 +4124,7 @@ jQuery.sheet = {
 			jS.calc = emptyFN;
 		}
 		
-		if (!Raphael) {
+		if (!window.Raphael) {
 			jSE.chart = emptyFN;
 		}
 		
