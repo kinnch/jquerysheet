@@ -2562,6 +2562,8 @@ jQuery.sheet = {
 													o: object, any object that neds resizing;
 													settings: object, the settings used with jQuery ui resizable;
 												*/
+				if (!o.resizable) return;
+				
 				if (o.attr('resizable')) {
 					o.resizable("destroy");
 				}
