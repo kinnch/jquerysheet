@@ -1022,7 +1022,15 @@ jQuery.sheet = {
 						
 						jQuery(document)
 							.unbind('keydown')
-							.keydown(jS.evt.keyDownHandler.documentKeydown);
+							.keydown(jS.evt.keyDownHandler.documentKeydown)
+							.click(function(e) {
+								var target = jQuery(e.target);
+								if (target.is(':input') && !target.hasClass(jS.cl.inPlaceEdit) && !target.hasClass(jS.cl.formula)) {
+									document.jSKeydownSkip = true;
+								} else {
+									document.jSKeydownSkip = false;
+								}
+							});
 					}
 					
 					firstRowTr.appendTo(firstRow);
@@ -1377,6 +1385,7 @@ jQuery.sheet = {
 						return false;
 					},
 					documentKeydown: function(e) {
+						if (document.jSKeydownSkip) return true;
 						if (jS.readOnly[jS.i]) return false;
 						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
 						
@@ -2847,6 +2856,7 @@ jQuery.sheet = {
 				
 				if (cell.state) throw("Error: Loop Detected");
 				cell.state = "red";
+				cell.html = "";
 				
 				if (cell.calcCount < 1 && cell.calcLast != jS.calcLast) {
 					cell.calcLast = jS.calcLast;
