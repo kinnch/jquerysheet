@@ -3041,7 +3041,6 @@ jQuery.sheet = {
 				jS.trigger('deleteSheet', [oldI]);
 			},
 			deleteRow: function(skipCalc) { /* removes the currently selected row */
-				var lastRow = jS.rowLast;
 				jS.obj.barLeft().children().eq(jS.rowLast).remove();
 				jQuery(jS.getTd(jS.i, jS.rowLast, 0)).parent().remove();
 				
@@ -3061,10 +3060,9 @@ jQuery.sheet = {
 				
 				jS.evt.cellEditAbandon();
 				
-				jS.trigger('deleteRow', lastRow);
+				jS.trigger('deleteRow', jS.rowLast);
 			},
 			deleteColumn: function(skipCalc) { /* removes the currently selected column */
-				var colLast = jS.colLast;
 				jS.obj.barHelper().remove();
 				jS.obj.barTop().children().eq(jS.colLast).remove();
 				jS.obj.sheet().find('colgroup col').eq(jS.colLast).remove();
@@ -3091,7 +3089,7 @@ jQuery.sheet = {
 				
 				jS.evt.cellEditAbandon();
 				
-				jS.trigger('deleteColumn', lastCol);
+				jS.trigger('deleteColumn', jS.colLast);
 			},
 			sheetTab: function(get) { /* manages a tabs inner value
 											get: bool, makes return the current value of the tab;
