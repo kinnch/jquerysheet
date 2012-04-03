@@ -25,7 +25,10 @@ case 7:this.$ = ($$[$0-2] * 1) > ($$[$0] * 1);
 break;
 case 8:this.$ = ($$[$0-2] * 1) < ($$[$0] * 1);
 break;
-case 9:this.$ = jSE.cFN.sanitize($$[$0-2]) + jSE.cFN.sanitize($$[$0]);
+case 9:
+			this.$ = jSE.cFN.sanitize($$[$0-2]) + jSE.cFN.sanitize($$[$0]); //js
+			//php this.$ = $$[$0-2] + $$[$0];
+		
 break;
 case 10:this.$ = ($$[$0-2] * 1) - ($$[$0] * 1);
 break;
@@ -33,7 +36,10 @@ case 11:this.$ = ($$[$0-2] * 1) * ($$[$0] * 1);
 break;
 case 12:this.$ = ($$[$0-2] * 1) / ($$[$0] * 1);
 break;
-case 13:this.$ = Math.pow(($$[$0-2] * 1), ($$[$0] * 1));
+case 13:
+			this.$ = Math.pow(($$[$0-2] * 1), ($$[$0] * 1));//js
+			//php this.$ = pow(($$[$0-2] * 1), ($$[$0] * 1));
+		
 break;
 case 14:this.$ = $$[$0] * -1;
 break;
@@ -43,36 +49,75 @@ case 16:this.$ = $$[$0-1];
 break;
 case 17:this.$ = $$[$0-1] * 0.01;
 break;
-case 18:this.$ = Number(yytext);
+case 18:
+			this.$ = Number(yytext);//js
+			//php (float)yytext;
+		
 break;
-case 19:this.$ = Math.E;
+case 19:
+			this.$ = Math.E;//js
+			//php this.$ = M_E;
+		
 break;
-case 20:this.$ = yy.lexer.cellHandler.fixedCellValue.apply(yy.lexer.cell, [$$[$0]]);
+case 20:
+			this.$ = yy.lexer.cellHandler.fixedCellValue.apply(yy.lexer.cell, [$$[$0]]);//js
+			//php this.$ = this->fixedCellValue($$[$0]);
+		
 break;
-case 21:this.$ = yy.lexer.cellHandler.fixedCellRangeValue.apply(yy.lexer.cell, [$$[$0-2], $$[$0]]);
+case 21:
+			this.$ = yy.lexer.cellHandler.fixedCellRangeValue.apply(yy.lexer.cell, [$$[$0-2], $$[$0]]);//js
+			//php this.$ = this->fixedCellRangeValue($$[$0-2], $$[$0]);
+		
 break;
-case 22:this.$ = yy.lexer.cellHandler.cellValue.apply(yy.lexer.cell, [$$[$0]]);
+case 22:
+			this.$ = yy.lexer.cellHandler.cellValue.apply(yy.lexer.cell, [$$[$0]]);//js
+			//php this.$ = this->cellValue($$[$0]);
+		
 break;
-case 23:this.$ = yy.lexer.cellHandler.cellRangeValue.apply(yy.lexer.cell, [$$[$0-2], $$[$0]]);
+case 23:
+			this.$ = yy.lexer.cellHandler.cellRangeValue.apply(yy.lexer.cell, [$$[$0-2], $$[$0]]);//js
+			//php this.$ = this->cellRangeValue($$[$0-2], $$[$0]);
+		
 break;
-case 24:this.$ = yy.lexer.cellHandler.remoteCellValue.apply(yy.lexer.cell, [$$[$0-2], $$[$0]]);
+case 24:
+			this.$ = yy.lexer.cellHandler.remoteCellValue.apply(yy.lexer.cell, [$$[$0-2], $$[$0]]);//js
+			//php this.$ = this->remoteCellValue($$[$0-2], $$[$0]);
+		
 break;
-case 25:this.$ = yy.lexer.cellHandler.remoteCellRangeValue.apply(yy.lexer.cell, [$$[$0-4], $$[$0-2], $$[$0]]);
+case 25:
+			this.$ = yy.lexer.cellHandler.remoteCellRangeValue.apply(yy.lexer.cell, [$$[$0-4], $$[$0-2], $$[$0]]);//js
+			//php this.$ = this->remoteCellRangeValue($$[$0-4], $$[$0-2], $$[$0]);
+		
 break;
-case 26:this.$ = $$[$0].substring(1, $$[$0].length - 1);
+case 26:
+			this.$ = $$[$0].substring(1, $$[$0].length - 1);//js
+			//php this.$ = substr($$[$0], 1, -1);
+		
 break;
-case 27:this.$ = yy.lexer.cellHandler.callFunction($$[$0-2], '', yy.lexer.cell);
+case 27:
+			this.$ = yy.lexer.cellHandler.callFunction($$[$0-2], '', yy.lexer.cell);//js
+			//php this.$ = this->callFunction($$[$0-2]);
+		
 break;
-case 28:this.$ = yy.lexer.cellHandler.callFunction($$[$0-3], $$[$0-1], yy.lexer.cell);
+case 28:
+			this.$ = yy.lexer.cellHandler.callFunction($$[$0-3], $$[$0-1], yy.lexer.cell);//js
+			//php this.$ = this->callFunction($$[$0-3], $$[$0-1]);
+		
 break;
 case 30:
- 		this.$ = ($.isArray($$[$0]) ? $$[$0] : [$$[$0]]);
-	 	this.$.push($$[$0-2]);
+ 		this.$ = ($.isArray($$[$0]) ? $$[$0] : [$$[$0]]);//js
+	 	this.$.push($$[$0-2]);//js
+		
+		//php this.$ = (is_array($$[$0]) ? $$[$0] : array());
+		//php this.$[] = $$[$0-2];
  	
 break;
 case 31:
- 		this.$ = ($.isArray($$[$0]) ? $$[$0] : [$$[$0]]);
-	 	this.$.push($$[$0-2]);
+ 		this.$ = ($.isArray($$[$0]) ? $$[$0] : [$$[$0]]);//js
+	 	this.$.push($$[$0-2]);//js
+		
+		//php this.$ = (is_array($$[$0]) ? $$[$0] : array());
+		//php this.$[] = $$[$0-2];
  	
 break;
 }
@@ -122,7 +167,7 @@ parse: function parse(input) {
             token = self.symbols_[token] || token;
         }
         return token;
-    };
+    }
 
     var symbol, preErrorSymbol, state, action, a, r, yyval={},p,len,newState, expected;
     while (true) {
@@ -140,6 +185,7 @@ parse: function parse(input) {
         }
 
         // handle parse error
+        _handle_error:
         if (typeof action === 'undefined' || !action.length || !action[0]) {
 
             if (!recovering) {
@@ -150,7 +196,7 @@ parse: function parse(input) {
                 }
                 var errStr = '';
                 if (this.lexer.showPosition) {
-                    errStr = 'Parse error on line '+(yylineno+1)+":\n"+this.lexer.showPosition()+'\nExpecting '+expected.join(', ');
+                    errStr = 'Parse error on line '+(yylineno+1)+":\n"+this.lexer.showPosition()+"\nExpecting "+expected.join(', ') + ", got '" + this.terminals_[symbol]+ "'";
                 } else {
                     errStr = 'Parse error on line '+(yylineno+1)+": Unexpected " +
                                   (symbol == 1 /*EOF*/ ? "end of input" :
@@ -264,8 +310,10 @@ parse: function parse(input) {
     }
 
     return true;
-}};/* Jison generated lexer */
-var lexer = (function(){var lexer = ({EOF:1,
+}};
+/* Jison generated lexer */
+var lexer = (function(){
+var lexer = ({EOF:1,
 parseError:function parseError(str, hash) {
         if (this.yy.parseError) {
             this.yy.parseError(str, hash);
@@ -301,6 +349,9 @@ more:function () {
         this._more = true;
         return this;
     },
+less:function (n) {
+        this._input = this.match.slice(n) + this._input;
+    },
 pastInput:function () {
         var past = this.matched.substr(0, this.matched.length - this.match.length);
         return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
@@ -325,6 +376,8 @@ next:function () {
 
         var token,
             match,
+            tempMatch,
+            index,
             col,
             lines;
         if (!this._more) {
@@ -333,25 +386,29 @@ next:function () {
         }
         var rules = this._currentRules();
         for (var i=0;i < rules.length; i++) {
-            match = this._input.match(this.rules[rules[i]]);
-            if (match) {
-                lines = match[0].match(/\n.*/g);
-                if (lines) this.yylineno += lines.length;
-                this.yylloc = {first_line: this.yylloc.last_line,
-                               last_line: this.yylineno+1,
-                               first_column: this.yylloc.last_column,
-                               last_column: lines ? lines[lines.length-1].length-1 : this.yylloc.last_column + match[0].length}
-                this.yytext += match[0];
-                this.match += match[0];
-                this.matches = match;
-                this.yyleng = this.yytext.length;
-                this._more = false;
-                this._input = this._input.slice(match[0].length);
-                this.matched += match[0];
-                token = this.performAction.call(this, this.yy, this, rules[i],this.conditionStack[this.conditionStack.length-1]);
-                if (token) return token;
-                else return;
+            tempMatch = this._input.match(this.rules[rules[i]]);
+            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
+                match = tempMatch;
+                index = i;
+                if (!this.options.flex) break;
             }
+        }
+        if (match) {
+            lines = match[0].match(/\n.*/g);
+            if (lines) this.yylineno += lines.length;
+            this.yylloc = {first_line: this.yylloc.last_line,
+                           last_line: this.yylineno+1,
+                           first_column: this.yylloc.last_column,
+                           last_column: lines ? lines[lines.length-1].length-1 : this.yylloc.last_column + match[0].length}
+            this.yytext += match[0];
+            this.match += match[0];
+            this.yyleng = this.yytext.length;
+            this._more = false;
+            this._input = this._input.slice(match[0].length);
+            this.matched += match[0];
+            token = this.performAction.call(this, this.yy, this, rules[index],this.conditionStack[this.conditionStack.length-1]);
+            if (token) return token;
+            else return;
         }
         if (this._input === "") {
             return this.EOF;
@@ -376,7 +433,14 @@ popState:function popState() {
     },
 _currentRules:function _currentRules() {
         return this.conditions[this.conditionStack[this.conditionStack.length-1]].rules;
+    },
+topState:function () {
+        return this.conditionStack[this.conditionStack.length-2];
+    },
+pushState:function begin(condition) {
+        this.begin(condition);
     }});
+lexer.options = {};
 lexer.performAction = function anonymous(yy,yy_,$avoiding_name_collisions,YY_START) {
 
 var YYSTATE=YY_START
@@ -448,7 +512,8 @@ break;
 }
 };
 lexer.rules = [/^\s+/,/^"(\\["]|[^"])*"/,/^'(\\[']|[^'])*'/,/^SHEET[0-9]+/,/^\$[A-Za-z]+\$[0-9]+/,/^[A-Za-z]+[0-9]+/,/^[A-Za-z]+/,/^[0-9]+(\.[0-9]+)?/,/^\$/,/^ /,/^\./,/^:/,/^;/,/^,/,/^\*/,/^\//,/^-/,/^\+/,/^\^/,/^\(/,/^\)/,/^>/,/^</,/^NOT\b/,/^PI\b/,/^E\b/,/^"/,/^'/,/^!/,/^=/,/^%/,/^$/];
-lexer.conditions = {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],"inclusive":true}};return lexer;})()
+lexer.conditions = {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],"inclusive":true}};
+return lexer;})()
 parser.lexer = lexer;
 return parser;
 })();

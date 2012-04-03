@@ -57,7 +57,9 @@ case 7:$thisS = ($S[$O-2] * 1) > ($S[$O] * 1);
 break;
 case 8:$thisS = ($S[$O-2] * 1) < ($S[$O] * 1);
 break;
-case 9:$thisS = jSE.cFN.sanitize($S[$O-2]) + jSE.cFN.sanitize($S[$O]);
+case 9:
+			$thisS = $S[$O-2] + $S[$O];
+		
 break;
 case 10:$thisS = ($S[$O-2] * 1) - ($S[$O] * 1);
 break;
@@ -65,7 +67,9 @@ case 11:$thisS = ($S[$O-2] * 1) * ($S[$O] * 1);
 break;
 case 12:$thisS = ($S[$O-2] * 1) / ($S[$O] * 1);
 break;
-case 13:$thisS = Math.pow(($S[$O-2] * 1), ($S[$O] * 1));
+case 13:
+			$thisS = pow(($S[$O-2] * 1), ($S[$O] * 1));
+		
 break;
 case 14:$thisS = $S[$O] * -1;
 break;
@@ -75,36 +79,60 @@ case 16:$thisS = $S[$O-1];
 break;
 case 17:$thisS = $S[$O-1] * 0.01;
 break;
-case 18:$thisS = Number(yytext);
+case 18:
+			(float)yytext;
+		
 break;
-case 19:$thisS = Math.E;
+case 19:
+			$thisS = M_E;
+		
 break;
-case 20:$thisS = yy->lexer.cellHandler.fixedCellValue.apply(yy->lexer.cell, [$S[$O]]);
+case 20:
+			$thisS = $this->fixedCellValue($S[$O]);
+		
 break;
-case 21:$thisS = yy->lexer.cellHandler.fixedCellRangeValue.apply(yy->lexer.cell, [$S[$O-2], $S[$O]]);
+case 21:
+			$thisS = $this->fixedCellRangeValue($S[$O-2], $S[$O]);
+		
 break;
-case 22:$thisS = yy->lexer.cellHandler.cellValue.apply(yy->lexer.cell, [$S[$O]]);
+case 22:
+			$thisS = $this->cellValue($S[$O]);
+		
 break;
-case 23:$thisS = yy->lexer.cellHandler.cellRangeValue.apply(yy->lexer.cell, [$S[$O-2], $S[$O]]);
+case 23:
+			$thisS = $this->cellRangeValue($S[$O-2], $S[$O]);
+		
 break;
-case 24:$thisS = yy->lexer.cellHandler.remoteCellValue.apply(yy->lexer.cell, [$S[$O-2], $S[$O]]);
+case 24:
+			$thisS = $this->remoteCellValue($S[$O-2], $S[$O]);
+		
 break;
-case 25:$thisS = yy->lexer.cellHandler.remoteCellRangeValue.apply(yy->lexer.cell, [$S[$O-4], $S[$O-2], $S[$O]]);
+case 25:
+			$thisS = $this->remoteCellRangeValue($S[$O-4], $S[$O-2], $S[$O]);
+		
 break;
-case 26:$thisS = $S[$O].substring(1, $S[$O].length - 1);
+case 26:
+			$thisS = substr($S[$O], 1, -1);
+		
 break;
-case 27:$thisS = yy->lexer.cellHandler.callFunction($S[$O-2], '', yy->lexer.cell);
+case 27:
+			$thisS = $this->callFunction($S[$O-2]);
+		
 break;
-case 28:$thisS = yy->lexer.cellHandler.callFunction($S[$O-3], $S[$O-1], yy->lexer.cell);
+case 28:
+			$thisS = $this->callFunction($S[$O-3], $S[$O-1]);
+		
 break;
 case 30:
- 		$thisS = ($.isArray($S[$O]) ? $S[$O] : [$S[$O]]);
-	 	$thisS.push($S[$O-2]);
+		
+		$thisS = (is_array($S[$O]) ? $S[$O] : array());
+		$thisS[] = $S[$O-2];
  	
 break;
 case 31:
- 		$thisS = ($.isArray($S[$O]) ? $S[$O] : [$S[$O]]);
-	 	$thisS.push($S[$O-2]);
+		
+		$thisS = (is_array($S[$O]) ? $S[$O] : array());
+		$thisS[] = $S[$O-2];
  	
 break;
 }
