@@ -1762,7 +1762,7 @@ jQuery.sheet = {
 								return false;
 							})
 							.parent()
-							.mouseover(function(e) {
+							.mouseenter(function(e) {
 								if (jQuery(e.target).attr('id')) return false;
 								var i = jS.getBarLeftIndex(e.target);
 								if (i == -1) return false;
@@ -1815,7 +1815,7 @@ jQuery.sheet = {
 								return false;
 							})
 							.parent()
-							.mouseover(function(e) {
+							.mouseenter(function(e) {
 								if (jQuery(e.target).attr('id')) return false;
 								var i = jS.getBarTopIndex(e.target);
 								if (i == -1) return false;
