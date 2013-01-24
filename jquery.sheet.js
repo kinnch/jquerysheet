@@ -765,7 +765,7 @@ jQuery.sheet = {
 			 * @name version
 			 * @type {String}
 			 */
-			version: 'trunk',
+			version: '3.x',
 
 			/**
 			 * The active sheet index within the a set of sheets
