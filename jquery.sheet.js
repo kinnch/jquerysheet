@@ -433,88 +433,88 @@ jQuery.fn.extend({
 					allowCellsLineBreaks: true,
 					frozenAt: [],
 					contextmenuTop: {
-						"Toggle freeze columns to here": function() {
+						"Toggle freeze columns to here": function(jS) {
 							var col = jS.getTdLocation(jS.obj.cellActive()).col;
 							jS.frozenAt().col = (jS.frozenAt().col == col ? 0 : col);
 						},
-						"Insert column after": function(){
+						"Insert column after": function(jS){
 							jS.controlFactory.addColumn(jS.colLast);
 							return false;
 						},
-						"Insert column before": function(){
+						"Insert column before": function(jS){
 							jS.controlFactory.addColumn(jS.colLast, true);
 							return false;
 						},
-						"Add column to end": function(){
+						"Add column to end": function(jS){
 							jS.controlFactory.addColumn();
 							return false;
 						},
-						"Delete this column": function(){
+						"Delete this column": function(jS){
 							jS.deleteColumn();
 							return false;
 						}
 					},
 					contextmenuLeft: {
-						"Toggle freeze rows to here": function() {
+						"Toggle freeze rows to here": function(jS) {
 							var row = jS.getTdLocation(jS.obj.cellActive()).row;
 							jS.frozenAt().row = (jS.frozenAt().row == row ? 0 : row);
 						},
-						"Insert row after": function(){
+						"Insert row after": function(jS){
 							jS.controlFactory.addRow(jS.rowLast);
 							return false;
 						},
-						"Insert row before": function(){
+						"Insert row before": function(jS){
 							jS.controlFactory.addRow(jS.rowLast, true);
 							return false;
 						},
-						"Add row to end": function(){
+						"Add row to end": function(jS){
 							jS.controlFactory.addRow();
 							return false;
 						},
-						"Delete this row": function(){
+						"Delete this row": function(jS){
 							jS.deleteRow();
 							return false;
 						}
 					},
 					contextmenuCell: {
-						"Insert column after": function(){
+						"Insert column after": function(jS){
 							jS.controlFactory.addColumn(jS.colLast);
 							return false;
 						},
-						"Insert column before": function(){
+						"Insert column before": function(jS){
 							jS.controlFactory.addColumn(jS.colLast, true);
 							return false;
 						},
-						"Add column to end": function(){
+						"Add column to end": function(jS){
 							jS.controlFactory.addColumn();
 							return false;
 						},
-						"Delete this column": function(){
+						"Delete this column": function(jS){
 							jS.deleteColumn();
 							return false;
 						},
 						"line1": "line",
-						"Insert row after": function(){
+						"Insert row after": function(jS){
 							jS.controlFactory.addRow();
 							return false;
 						},
-						"Insert row before": function(){
+						"Insert row before": function(jS){
 							jS.controlFactory.addRow(jS.rowLast, true);
 							return false;
 						},
-						"Add row to end": function(){
+						"Add row to end": function(jS){
 							jS.controlFactory.addRow();
 							return false;
 						},
-						"Delete this row": function(){
+						"Delete this row": function(jS){
 							jS.deleteRow();
 							return false;
 						},
 						"line2": 'line',
-						"Add spreadsheet": function() {
+						"Add spreadsheet": function(jS) {
 							jS.addSheet('5x10');
 						},
-						"Delete spreadsheet": function() {
+						"Delete spreadsheet": function(jS) {
 							jS.deleteSheet();
 						}
 					},
@@ -1088,6 +1088,11 @@ jQuery.sheet = {
 					.removeClass(jS.cl.uiParent)
 					.html('')
 					.removeData('sheetInstance');
+
+				for(var i in $.sheet.events) {
+					s.parent.unbind($.sheet.events[i]);
+				}
+
 				$.sheet.instance[I] = null;
 				jS = null;
 			},
@@ -1654,7 +1659,7 @@ jQuery.sheet = {
 							$('<div />')
 								.text(i)
 								.click(function() {
-									menuItems[i]();
+									menuItems[i](jS);
 									return false;
 								})
 								.appendTo(menu);
@@ -6644,9 +6649,11 @@ jQuery.sheet = {
 					s.editable = !s.editable;
 
 					jS.kill();
-					$(s.parent)
+
+					s.parent
 						.html(tables)
 						.sheet(s);
+					s = null;
 				}
 			},
 
