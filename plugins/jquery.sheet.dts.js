@@ -71,7 +71,8 @@
 				var tables = $([]);
 
 				$.each(json, function() {
-					var table = $('<table />').attr('title', this['title'] || '');
+					var table = $('<table />');
+					if (this['title']) table.attr('title', this['title'] || '');
 
 					tables = tables.add(table);
 
