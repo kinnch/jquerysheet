@@ -543,8 +543,6 @@ jQuery.fn.extend({
 
 			jS = jQuery.sheet.createInstance(jQuery, jQuery.extend(defaults, settings), jQuery.sheet.instance.length);
 			jQuery.sheet.instance = jQuery.sheet.instance.add(jS);
-
-			me.data('sheetInstance', jS);
 		});
 		return this;
 	},
@@ -650,6 +648,22 @@ jQuery.fn.extend({
 			return true;
 		} else {
 			return false;
+		}
+	},
+
+	/**
+	 * Get inputs serialized from spreadsheet type_sheet-index_row-index_column-index_instance-index (dropdown_0_1_1_0 = sheet 1, row 1, column A, instance 0
+	 * @param {Boolean} array, return serialized as array (true) or string (false, default false
+	 * @methodOf jQueryPlugins
+	 * @returns {*}
+	 */
+	serializeCellInputs: function(array) {
+		var jS = $(this).getSheet(),
+			inputs = jS.obj.sheets().find(':input');
+		if (array) {
+			return inputs.serializeArray();
+		} else {
+			return inputs.serialize();
 		}
 	}
 });
@@ -6653,6 +6667,7 @@ jQuery.sheet = {
 			}
 		};
 		jS.setBusy(true);
+		s.parent.data('sheetInstance', jS);
 
 		//got tired of ie crashing when console not available
 		if (!window.console) window.console = {log: function(){}};
