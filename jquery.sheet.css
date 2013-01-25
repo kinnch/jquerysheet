@@ -26,6 +26,11 @@
 	margin: 0px;
 }
 
+.jSHeader img
+{
+	border: none;
+}
+
 /* Menu */
 .jSBarHelper {
 	float: right;
