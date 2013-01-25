@@ -1653,21 +1653,22 @@ jQuery.sheet = {
 						})
 						.appendTo($body)
 						.hide();
-					
-					$.each(menuItems, function(i) {
-						if ($.isFunction(menuItems[i])) {
-							$('<div />')
-								.text(i)
-								.click(function() {
-									menuItems[i](jS);
-									return false;
-								})
-								.appendTo(menu);
+					for(var msg in menuItems) {
+						if (menuItems[msg]) {
+							if ($.isFunction(menuItems[msg])) {
+								$('<div />')
+									.text(msg)
+									.click(function() {
+										menuItems[msg](jS);
+										return false;
+									})
+									.appendTo(menu);
 
-						} else if (menuItems[i] == 'line') {
-							$('<hr />').appendTo(menu);
+							} else if (menuItems[msg] == 'line') {
+								$('<hr />').appendTo(menu);
+							}
 						}
-					});
+					}
 					
 					return menu;
 				},
