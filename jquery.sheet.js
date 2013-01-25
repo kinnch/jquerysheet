@@ -6634,7 +6634,7 @@ jQuery.sheet = {
 			 */
 			toggleState:  function(replacementTables) {
 				if (s.allowToggleState) {
-					var tables = replacementTables || jS.tables();
+					var tables = replacementTables || jS.tables().detach();
 					if (s.editable) {
 						jS.evt.cellEditAbandon();
 						jS.trigger('sheetSave', [tables]);
@@ -6643,8 +6643,10 @@ jQuery.sheet = {
 					jS.setChanged(true);
 					s.editable = !s.editable;
 
-					s.parent.html('');
-					jS.openSheet(tables);
+					jS.kill();
+					$(s.parent)
+						.html(tables)
+						.sheet(s);
 				}
 			},
 
