@@ -319,11 +319,15 @@
 							if (this['value']) Column['value'] = this['value'];
 							if (this.td.attr('style')) Column['style'] = this.td.attr('style');
 
-							var cl = $.trim(this.td.attr('class'));
+							var cl = $.trim(
+								(this.td.attr('class') || '')
+									.replace(jS.cl.uiCellActive , '')
+									.replace(jS.cl.uiCellHighlighted, '')
+
+							);
+
 							if (cl.length) {
-								Column['class'] = (this.td.attr('class') + '')
-									.replace(jS.cl.uiCellActive, '')
-									.replace(jS.cl.uiCellHighlighted, '');
+								Column['class'] = cl;
 							}
 
 							if (row * 1 == 1) {
