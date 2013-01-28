@@ -318,10 +318,13 @@
 							if (this['formula']) Column['formula'] = this['formula'];
 							if (this['value']) Column['value'] = this['value'];
 							if (this.td.attr('style')) Column['style'] = this.td.attr('style');
-							if ($.trim(this.td.attr('class')))
+
+							var cl = $.trim(this.td.attr('class'));
+							if (cl.length) {
 								Column['class'] = (this.td.attr('class') + '')
 									.replace(jS.cl.uiCellActive, '')
 									.replace(jS.cl.uiCellHighlighted, '');
+							}
 
 							if (row * 1 == 1) {
 								spreadsheet.metadata.widths.push($(jS.col(null, column)).css('width'));
