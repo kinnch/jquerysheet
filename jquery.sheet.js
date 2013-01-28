@@ -1653,13 +1653,15 @@ jQuery.sheet = {
 						})
 						.appendTo($body)
 						.hide();
+
 					for(var msg in menuItems) {
 						if (menuItems[msg]) {
 							if ($.isFunction(menuItems[msg])) {
 								$('<div />')
 									.text(msg)
+									.data('msg', msg)
 									.click(function() {
-										menuItems[msg](jS);
+										menuItems[$(this).data('msg')](jS);
 										return false;
 									})
 									.appendTo(menu);
