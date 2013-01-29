@@ -348,8 +348,6 @@ jQuery.fn.extend({
 	 *
 	 * encode {Function} default is a special characters handler for strings only, is a 1 way encoding of the html if entered manually by the editor.  If you want to use html with a function, return an object rather than a string
 	 *
-	 * allowCellsLineBreaks {Boolean} default true, allows cells to accept line breaks, otherwise they are stripped
-	 *
 	 * frozenAt {Object} default [{row: 0,col: 0}], Gives the ability to freeze cells at a certain row/col
 	 *
 	 * contextmenuTop {Object} default is standard list of commands for context menus when right click or click on menu dropdown
@@ -430,7 +428,6 @@ jQuery.fn.extend({
 							.replace(/\t/g, '&nbsp;&nbsp;')
 							.replace(/ /g, '&nbsp;');
 					},
-					allowCellsLineBreaks: true,
 					frozenAt: [],
 					contextmenuTop: {
 						"Toggle freeze columns to here": function(jS) {
@@ -2512,6 +2509,7 @@ jQuery.sheet = {
 
 								if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
 									cell.formula = col[j].substring(1, cell.formula.length - 1);
+									cell.value = '';
 									td.data('formula', col[j]);
 								} else {
 									cell.formula = '';
@@ -6859,10 +6857,6 @@ jQuery.sheet = {
 		
 		if (!s.alertFormulaErrors) {
 			jS.alertFormulaError = emptyFN;
-		}
-
-		if (!s.allowCellsLineBreaks) {
-			s.parent.addClass('noBreak');
 		}
 
 		s.title = s.title || s.parent.attr('title') || '';
