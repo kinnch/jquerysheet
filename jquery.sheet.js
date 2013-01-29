@@ -2648,6 +2648,45 @@ jQuery.sheet = {
 						return true;
 					},
 
+
+					copy: function(e) {
+						var tds = jS.obj.cellHighlighted(),
+							cells = [],
+							cellsTsv,
+							formula = jS.obj.formula(),
+							oldValue = formula.val(),
+							firstRowI = 0;
+
+						tds.each(function(i) {
+							var loc = jS.getTdLocation(tds[i]),
+								cell = jS.spreadsheets[jS.i][loc.row][loc.col],
+								value = (cell.formula ? '=' + cell.formula : cell.value);
+
+							if (!firstRowI) firstRowI = loc.row;
+
+							if (!cells[loc.row - firstRowI]) cells[loc.row - firstRowI] = [];
+
+							cells[loc.row - firstRowI].push(value ? '"' + value + '"' : '');
+						});
+
+						for( var i in cells ) {
+							cells[i] = cells[i].join('\t');
+						}
+
+						cellsTsv = cells.join('\n');
+						formula
+							.val(cellsTsv)
+							.focus()
+							.select();
+
+						$document
+							.one('keyup', function() {
+								jS.evt.cellEditAbandon();
+							});
+
+						return true;
+					},
+
 					/**
 					 * Manages the page up and down buttons
 					 * @param {Boolean} reverse Go up or down
@@ -2694,6 +2733,13 @@ jQuery.sheet = {
 						jS.trigger('sheetFormulaKeydown', [false]);
 
 						switch (e.keyCode) {
+							case key.C:
+								if (e.ctrlKey) {
+									return jS.evt.keydownHandler.copy(e);
+								} else {
+									jS.obj.cellActive().dblclick();
+									return true;
+								}
 							case key.ESCAPE: 	jS.evt.cellEditAbandon();
 								break;
 							case key.ENTER:		jS.evt.cellSetFocusFromKeyCode(e); return false;
@@ -8277,6 +8323,7 @@ var key = { /* key objects, makes it easier to develop */
 	SPACE: 				32,
 	TAB: 				9,
 	UP: 				38,
+	C:                  67,
 	F:					70,
 	V:					86,
 	Y:					89,
