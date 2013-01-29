@@ -2514,7 +2514,7 @@ jQuery.sheet = {
 									cell.formula = col[j].substring(1, cell.formula.length - 1);
 									td.data('formula', col[j]);
 								} else {
-									cell.formula = null;
+									cell.formula = '';
 									cell.value = col[j];
 
 									td
@@ -2649,7 +2649,7 @@ jQuery.sheet = {
 					},
 
 
-					copy: function(e) {
+					copy: function(e, clearValue) {
 						var tds = jS.obj.cellHighlighted(),
 							cells = [],
 							cellsTsv,
@@ -2666,7 +2666,17 @@ jQuery.sheet = {
 
 							if (!cells[loc.row - firstRowI]) cells[loc.row - firstRowI] = [];
 
-							cells[loc.row - firstRowI].push(value ? '"' + value + '"' : '');
+							if (value.match(/\n/)) {
+								value = '"' + value + '"';
+							}
+
+							cells[loc.row - firstRowI].push(value || '');
+
+							if (clearValue) {
+								cell.formula = '';
+								cell.value = '';
+								jS.calcDependencies(jS.i, loc.row, loc.col);
+							}
 						});
 
 						for( var i in cells ) {
@@ -2685,6 +2695,10 @@ jQuery.sheet = {
 							});
 
 						return true;
+					},
+
+					cut: function(e) {
+						return this.copy(e, true);
 					},
 
 					/**
@@ -2736,6 +2750,13 @@ jQuery.sheet = {
 							case key.C:
 								if (e.ctrlKey) {
 									return jS.evt.keydownHandler.copy(e);
+								} else {
+									jS.obj.cellActive().dblclick();
+									return true;
+								}
+							case key.X:
+								if (e.ctrlKey) {
+									return jS.evt.keydownHandler.cut(e);
 								} else {
 									jS.obj.cellActive().dblclick();
 									return true;
@@ -3870,7 +3891,7 @@ jQuery.sheet = {
 					fn = function(sheet, row, col){
 						td = $(this);
 						
-						jS.spreadsheets[sheet][row][col].formula = null;
+						jS.spreadsheets[sheet][row][col].formula = '';
 						jS.spreadsheets[sheet][row][col].value = newV;
 						
 						td.removeData('formula').html(newV);
@@ -8326,6 +8347,7 @@ var key = { /* key objects, makes it easier to develop */
 	C:                  67,
 	F:					70,
 	V:					86,
+	X:                  88,
 	Y:					89,
 	Z:					90
 };
