@@ -2773,6 +2773,8 @@ jQuery.sheet = {
 
 						if (jS.nav) {
 							switch (e.keyCode) {
+								case key.DELETE:    jS.tdsToTsv(null, true);
+									break;
 								case key.TAB: 		jS.evt.keydownHandler.tab(e);
 									break;
 								case key.ENTER:
@@ -3889,7 +3891,7 @@ jQuery.sheet = {
 					if (clearValue) {
 						cell.formula = '';
 						cell.value = '';
-						jS.calcDependencies(jS.i, loc.row, loc.col);
+						jS.calcDependencies(jS.i, loc.row, loc.col); //TODO: undo redo
 					}
 				};
 				var cells = [],
