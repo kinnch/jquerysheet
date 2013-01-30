@@ -58,7 +58,7 @@
 	background-image: none;
 	border: none ! important;
 	position: absolute;
-	z-index: 999999;
+	z-index: 1001;
 }
 .jSMenu *
 {
@@ -74,7 +74,7 @@
 	padding: 0px ! important;
 	margin: 0px ! important;
 	border: none ! important;
-	z-index: 999999;
+	z-index: 1001;
 	position:relative;
 	margin:0;
 	padding:0;
@@ -129,6 +129,10 @@
 	display:block;
 }
 
+#global-zeroclipboard-html-bridge {
+	opacity:0.01;
+	filter:alpha(opacity=1);
+}
 
 .jSUI
 {

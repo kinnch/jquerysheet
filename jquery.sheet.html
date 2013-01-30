@@ -47,6 +47,9 @@
 			<!--Finance-->
 				<script type="text/javascript" src="plugins/jquery.sheet.financefn.js"></script>
 			<!--/Finance-->
+            <!--Zero Clipboard-->
+            <script type="text/javascript" src="plugins/ZeroClipboard.js"></script>
+            <!--/Zero Clipboard-->
 		<!--/Optional-->
         <script type="text/javascript">
             $(function(){
@@ -75,7 +78,27 @@
                                         },
                                         title: 'Demo',
                                         menuLeft: function(jS) {
-                                            return  results.menuLeft.replace(/sheetInstance/g, "$.sheet.instance[" + jS.I + "]");
+                                            var menu = $(results.menuLeft.replace(/sheetInstance/g, "$.sheet.instance[" + jS.I + "]")),
+                                                copy = menu.find('.jSCopy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+                                                cut = menu.find('.jSCut').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+                                                paste = menu.find('.jSPaste').click(function() {
+                                                    alert('Press Ctrl + V to paste over highlighted cells');
+                                                });
+
+                                            var clip = new ZeroClipboard(copy.add(cut), {
+                                                moviePath: "plugins/ZeroClipboard.swf"
+                                            });
+
+                                            clip.on('mousedown', function(client) {
+                                                clip.setText(jS.tdsToTsv());
+                                                $(this).mousedown();
+                                            });
+
+                                            cut.mousedown(function() {
+                                                jS.tdsToTsv(null, true);
+                                            });
+
+                                            return menu;
                                         },
                                         menuRight: function (jS){
                                             //we want to be able to edit the html for the menu to make them multi-instance

@@ -409,8 +409,9 @@ jQuery.fn.extend({
 					encode:             function(val) {
 						switch( typeof val ) {
 							case 'object':
-							case 'number':
 								return val;
+							case 'number':
+								return Globalize.format(val);
 						}
 
 						if (!val) {
@@ -418,6 +419,10 @@ jQuery.fn.extend({
 						}
 						if (!val.replace) {
 							return val || '';
+						}
+						var num = $.trim(val) * 1;
+						if (!isNaN(num)) {
+							return Globalize.format(num);
 						}
 
 						return val
@@ -474,6 +479,8 @@ jQuery.fn.extend({
 						}
 					},
 					contextmenuCell: {
+						"Copy": false,
+						"Cut": false,
 						"Insert column after": function(jS){
 							jS.controlFactory.addColumn(jS.colLast);
 							return false;
@@ -693,7 +700,8 @@ jQuery.sheet = {
 		elastic: {script: 'plugins/jquery.elastic.min.js'},
 		advancedfn: {script: 'plugins/jquery.sheet.advancedfn.js'},
 		financefn: {script: 'plugins/jquery.sheet.financefn.js'},
-		dts: {script: 'plugins/jquery.sheet.dts.js'}
+		dts: {script: 'plugins/jquery.sheet.dts.js'},
+		zeroclipboard: {script: 'plugins/ZeroClipboard.js'}
 	},
 
 	/**
@@ -1658,7 +1666,7 @@ jQuery.sheet = {
 									.text(msg)
 									.data('msg', msg)
 									.click(function() {
-										menuItems[$(this).data('msg')](jS);
+										menuItems[$(this).data('msg')].apply(this, [jS]);
 										return false;
 									})
 									.appendTo(menu);
@@ -2491,36 +2499,32 @@ jQuery.sheet = {
 
 				if (loc.row == 0 && loc.col == 0) return false; //at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
 
-				var tdsBefore = $('<div />'),
-					tdsAfter = $('<div />'),
-					row = tsv.parse(val);
+				var row = tsv.parse(val);
 
 				for (var i = 0; i < row.length; i++) {
+					jS.cellLast.isEdit = true;
 					var col = row[i];
 					for (var j = 0; j < col.length; j++) {
 						newValCount++;
 						var td = jS.getTd(jS.i, i + loc.row, j + loc.col);
 
+						td.row = loc.row;
+						td.col = loc.col;
+
 						if (td.length) {
 							if (!jS.spreadsheets[jS.i] || !jS.spreadsheets[jS.i][i + loc.row] || !jS.spreadsheets[jS.i][i + loc.row][j + loc.col]) continue;
 							var cell = jS.spreadsheets[jS.i][i + loc.row][j + loc.col];
 							if (cell) {
-								tdsBefore.append(td.clone());
-
 								if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
-									cell.formula = col[j].substring(1, cell.formula.length - 1);
+									cell.formula = col[j].substring(1);
 									cell.value = '';
 									td.data('formula', col[j]);
 								} else {
 									cell.formula = '';
 									cell.value = col[j];
-
-									td
-										.html(col[j])
-										.removeData('formula');
+									td.removeData('formula');
+									jS.calcDependencies(jS.i, loc.row, loc.col);
 								}
-
-								tdsAfter.append(td.clone());
 
 								if (i == 0 && j == 0) { //we have to finish the current edit
 									firstValue = col[j];
@@ -2534,9 +2538,7 @@ jQuery.sheet = {
 					formula.val(firstValue);
 				}
 
-				jS.cellUndoable.add(tdsBefore.children());
 				jS.fillUpOrDown(false, false, firstValue);
-				jS.cellUndoable.add(tdsAfter.children());
 
 				jS.setDirty(true);
 				jS.setChanged(true);
@@ -2649,39 +2651,10 @@ jQuery.sheet = {
 
 					copy: function(e, clearValue) {
 						var tds = jS.obj.cellHighlighted(),
-							cells = [],
-							cellsTsv,
 							formula = jS.obj.formula(),
 							oldValue = formula.val(),
-							firstRowI = 0;
+							cellsTsv = jS.tdsToTsv(tds, clearValue);
 
-						tds.each(function(i) {
-							var loc = jS.getTdLocation(tds[i]),
-								cell = jS.spreadsheets[jS.i][loc.row][loc.col],
-								value = (cell.formula ? '=' + cell.formula : cell.value);
-
-							if (!firstRowI) firstRowI = loc.row;
-
-							if (!cells[loc.row - firstRowI]) cells[loc.row - firstRowI] = [];
-
-							if (value.match(/\n/)) {
-								value = '"' + value + '"';
-							}
-
-							cells[loc.row - firstRowI].push(value || '');
-
-							if (clearValue) {
-								cell.formula = '';
-								cell.value = '';
-								jS.calcDependencies(jS.i, loc.row, loc.col);
-							}
-						});
-
-						for( var i in cells ) {
-							cells[i] = cells[i].join('\t');
-						}
-
-						cellsTsv = cells.join('\n');
 						formula
 							.val(cellsTsv)
 							.focus()
@@ -2689,7 +2662,11 @@ jQuery.sheet = {
 
 						$document
 							.one('keyup', function() {
-								jS.evt.cellEditAbandon();
+								if (clearValue) {
+									formula.val('');
+								} else {
+									formula.val(oldValue);
+								}
 							});
 
 						return true;
@@ -2915,54 +2892,39 @@ jQuery.sheet = {
 
 				/**
 				 * Updates a cell after edit afterward event "sheetCellEdited" is called w/ params (td, row, col, spreadsheetIndex, sheetIndex)
-				 * @param {Boolean} forceCalc if set to true forces a calculation of the selected sheet
+				 * @param {Boolean} force if set to true forces a calculation of the selected sheet
 				 * @methodOf jS.evt
 				 * @name cellEditDone
 				 */
-				cellEditDone: function(forceCalc) {
+				cellEditDone: function(force) {
 					jS.obj.inPlaceEdit().trigger('destroy');
-					if (jS.cellLast.isEdit || forceCalc) {
+					if (jS.cellLast.isEdit || force) {
 						var formula = jS.obj.formula(),
 							td = jS.obj.cellActive();
 
 						if (jS.isFormulaEditable(td)) {
 							//Lets ensure that the cell being edited is actually active
 							if (td && jS.cellLast.row > 0 && jS.cellLast.col > 0) {
-								//first, let's make it undoable before we edit it
-								jS.cellUndoable.add(td);
 
 								//This should return either a val from textbox or formula, but if fails it tries once more from formula.
 								var v = formula.val(),
-									prevVal = td.text(),
 									cell = jS.spreadsheets[jS.i][jS.cellLast.row][jS.cellLast.col];
 
-								if (v.charAt(0) == '=') {
-									td
-										.data('formula', v)
-										.html('');
-									cell.value = v;
-									cell.formula = v;
-								} else {
-									td
-										.removeData('formula')
-										.html(s.encode(v));
-									cell.value = v;
-									cell.formula = null;
-								}
-
-								jS.setChanged(true);
-
-								if (v != prevVal || forceCalc) {
-									jS.calcDependencies(jS.i, jS.cellLast.row, jS.cellLast.col);
-								}
-
-								//Save the newest version of that cell
-								jS.cellUndoable.add(td);
+								s.parent.one('sheetPreCalculation', function() {
+									if (v.charAt(0) == '=') {
+										td.data('formula', v);
+										cell.value = v;
+										cell.formula = v;
+									} else {
+										td.removeData('formula');
+										cell.value = v;
+										cell.formula = '';
+									}
+								});
+								jS.calcDependencies(jS.i, jS.cellLast.row, jS.cellLast.col);
 
 								//formula.focus().select();
 								jS.cellLast.isEdit = false;
-
-								jS.setDirty(true);
 
 								//perform final function call
 								jS.trigger('sheetCellEdited', [cell]);
@@ -3048,6 +3010,13 @@ jQuery.sheet = {
 					r = keepInSize(r, size.rows);
 					c = keepInSize(c, size.cols);
 
+					jS.themeRoller.cell.clearHighlighted();
+					//set current bars
+					jS.highlightedLast.colEnd = r;
+					jS.highlightedLast.rowEnd = c;
+
+					//highlight the cells
+					jS.highlightedLast.td = jS.cycleCellsAndMaintainPoint(jS.themeRoller.cell.setHighlighted, jS.getTdLocation(jS.obj.cellActive()), {row: r, col: c});
 					td = jS.getTd(jS.i, r, c)
 						.mousemove()
 						.mouseup();
@@ -3852,6 +3821,13 @@ jQuery.sheet = {
 					startLoc = jS.getTdLocation(cells.first()),
 					endLoc = jS.getTdLocation(cells.last());
 
+				jS.cycleCells(function(sheet, row, col) {
+					cells = cells.add(jS.spreadsheets[sheet][row][col]);
+				}, startLoc, endLoc);
+
+				//Make it undoable
+				jS.cellUndoable.add(cells);
+
 				v = (v ? v : jS.obj.formula().val()); //allow value to be overridden
 				
 				var offset = {
@@ -3905,6 +3881,47 @@ jQuery.sheet = {
 				
 				//Make it redoable
 				jS.cellUndoable.add(cells);
+			},
+
+			tdsToTsv: function(tds, clearValue, fnEach) {
+				tds = tds || jS.obj.cellHighlighted();
+				fnEach = fnEach || function(loc, cell) {
+					if (clearValue) {
+						cell.formula = '';
+						cell.value = '';
+						jS.calcDependencies(jS.i, loc.row, loc.col);
+					}
+				};
+				var cells = [],
+					cellsTsv,
+					formula = jS.obj.formula(),
+					oldValue = formula.val(),
+					firstRowI = 0;
+
+
+				tds.each(function(i) {
+					var loc = jS.getTdLocation(tds[i]),
+						cell = jS.spreadsheets[jS.i][loc.row][loc.col],
+						value = (cell.formula ? '=' + cell.formula : cell.value);
+
+					if (!firstRowI) firstRowI = loc.row;
+
+					if (!cells[loc.row - firstRowI]) cells[loc.row - firstRowI] = [];
+
+					if (value.match(/\n/)) {
+						value = '"' + value + '"';
+					}
+
+					cells[loc.row - firstRowI].push(value || '');
+
+					fnEach.apply(this, [loc, cell]);
+				});
+
+				for( var i in cells ) {
+					cells[i] = cells[i].join('\t');
+				}
+
+				return cells.join('\n');
 			},
 
 			/**
@@ -4661,7 +4678,7 @@ jQuery.sheet = {
 								if ((lastLoc.col != endLoc.col || lastLoc.row != endLoc.row) && ok) { //this prevents this method from firing too much
 									//clear highlighted cells if needed
 									clearHighlightedModel();
-									
+
 									//set current bars
 									jS.highlightedLast.colEnd = endLoc.col;
 									jS.highlightedLast.rowEnd = endLoc.row;
@@ -4743,7 +4760,7 @@ jQuery.sheet = {
 				//Lets check to remove any style classes
 				var tds = jS.obj.cellHighlighted();
 				
-				jS.cellUndoable.add(tds);
+				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 				
 				if (removeClass) {
 					tds.removeClass(removeClass);
@@ -4754,8 +4771,7 @@ jQuery.sheet = {
 				} else {
 					tds.addClass(setClass);
 				}
-				
-				jS.cellUndoable.add(tds);
+
 				return false;
 			},
 
@@ -4778,8 +4794,8 @@ jQuery.sheet = {
 				
 				//Lets check to remove any style classes
 				var uiCell = jS.obj.cellHighlighted();
-				
-				jS.cellUndoable.add(uiCell);
+
+				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 				
 				uiCell.each(function(i) {
 					cell = $(this);
@@ -4787,8 +4803,7 @@ jQuery.sheet = {
 						new_size = parseInt(curr_size ? curr_size : 10) + resize;
 					cell.css("font-size", new_size + "px");
 				});
-				
-				jS.cellUndoable.add(uiCell);
+
 			},
 
 			/**
@@ -4829,10 +4844,11 @@ jQuery.sheet = {
 				if (cell.defer) {//merging creates a defer property, which points the cell to another location to get the other value
 					return this.updateCellValue(cell.defer.sheet, cell.defer.row, cell.defer.col);
 				}
-				
+
 				cell.state = 'updating';
 				cell.html = [];
 				cell.fnCount = 0;
+				cell.result = null;
 				
 				if (cell.calcLast != jS.calcLast || cell.calcDependenciesLast != jS.calcDependenciesLast) {
 					cell.calcLast = jS.calcLast;
@@ -5334,6 +5350,10 @@ jQuery.sheet = {
 			 */
 			calcDependencies: function(sheet, row, cell) {
 				jS.calcDependenciesLast = new Date();
+				jS.cellUndoable.add(sheet, row, cell);
+				jS.trigger('sheetPreCalculation', [{which: 'cell', sheet: sheet, row: row, cell: cell}]);
+				jS.setDirty(true);
+				jS.setChanged(true);
 				jS.updateCellValue(sheet, row, cell);
 				jS.updateCellDependencies(sheet, row, cell);
 				jS.trigger('sheetCalculation', [{which: 'cell', sheet: sheet, row: row, cell: cell}]);
@@ -6480,6 +6500,8 @@ jQuery.sheet = {
 				 */
 				i: [],
 
+				last: [],
+
 				/**
 				 * undo stack
 				 * @param undo
@@ -6494,21 +6516,23 @@ jQuery.sheet = {
 				 * @name undoOrRedo
 				 */
 				undoOrRedo: function(undo) {
+					//TODO: refactor using dates from calcDependencyLast or calcLast
 					//hide the autoFiller, it can get confused
 					jS.autoFillerHide();
+					var i = 0;
 
 					if (!this.stack[jS.i]) return;
 					
 					if (undo && this.i[jS.i] > 0) {
-						//this.i[jS.i]--;
-						this.i[jS.i]--;
+						i = this.get(-1);
 					} else if (!undo && this.i[jS.i] < this.stack[jS.i].length) {
-						//this.i[jS.i]++;
-						this.i[jS.i]++;
+						i = this.get(1);
 					}
-					
-					var cells = this.get();
-					console.log(cells);
+
+					var cells = this.stack[jS.i][i];
+
+					console.log(this.stack);
+
 					for(var i in cells) {
 						var td = cells[i].td,
 							loc = jS.getTdLocation(td);
@@ -6520,8 +6544,7 @@ jQuery.sheet = {
 						td
 							.data('formula', cells[i]['formula'])
 							.attr('style', cells[i]['style'])
-							.attr('class', cells[i]['class'])
-							.html('');
+							.attr('class', cells[i]['class']);
 
 						jS.cellLast.td = $([]);
 
@@ -6533,50 +6556,54 @@ jQuery.sheet = {
 
 				/**
 				 * gets the current element
+				 * @param {Integer} increment
 				 * @returns {jQuery|HTMLElement}
 				 * @name get
 				 * @methodOf jS.cellUndoable
 				 */
-				get: function() { //
+				get: function(increment) { //
 					if (!this.stack[jS.i]) this.stack[jS.i] = [];
 					if (!this.i[jS.i]) this.i[jS.i] = 0;
 
-					return this.stack[jS.i][this.i[jS.i]];
+					if (increment) {
+						this.i[jS.i];
+					}
+
+					return this.i[jS.i];
 				},
 
 				/**
 				 * adds elements to the stack
-				 * @param {jQuery|HTMLElement} tds
+				 * @param {Object} cells
 				 * @name add
 				 * @methodOf jS.cellUndoable
 				 */
-				add: function(tds) {
-					var cells = {};
-					$.each(tds, function() {
-						var td = $(this),
-							loc = jS.getTdLocation(this);
+				add: function(sheet, row, col) {
+					var cellsCloned = {};
+					var td = jS.spreadsheets[sheet][row][col].td,
+						loc = jS.getTdLocation(td);
 
-						if (loc.col > 0 & loc.row > 0) {
-							var	cell = jS.spreadsheets[jS.i][loc.row][loc.col];
+					if (loc.col > 0 & loc.row > 0) {
+						var	cell = jS.spreadsheets[jS.i][loc.row][loc.col];
 
-							var id = jS.i + '_' + loc.row + '_' + loc.row;
-							if (!cells[id]) cells[id] = {};
-							for (var attr in cell) {
-								cells[id][attr] = cell[attr];
-							}
-							cells[id]['style'] = td.attr('style');
-							cells[id]['class'] = td.attr('class');
-							cells[id][attr].sheet = jS.i;
+						var id = jS.i + '_' + loc.row + '_' + loc.col;
+						if (!cellsCloned[id]) cellsCloned[id] = {};
+						for (var attr in cell) {
+							cellsCloned[id][attr] = cell[attr];
 						}
-					});
+						cellsCloned[id]['style'] = td.attr('style');
+						cellsCloned[id]['class'] = td.attr('class');
+						cellsCloned[id]['sheet'] = sheet;
+					}
 
-					if (!this.stack[jS.i]) this.stack[jS.i] = [];
-					if (!this.i[jS.i]) this.i[jS.i] = 0;
+					var i = this.get();
+					//console.log(i);
+					//console.log(i);
+					//console.log(this);
+					//this.stack[jS.i][jS.calcDependenciesLast] = cells;
 
-					this.stack[jS.i][this.i[jS.i]++] = cells;
-
-					if (this.stack[jS.i].length > this.i) {
-						for (var i = this.stack[jS.i].length; i > this.i[jS.i]; i--) {
+					if (this.stack[jS.i].length > i) {
+						for (var i = this.stack[jS.i].length; this.stack[jS.i].length < i; i--) {
 							this.stack[jS.i].pop();
 						}
 					}
