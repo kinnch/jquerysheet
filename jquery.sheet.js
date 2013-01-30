@@ -3575,7 +3575,15 @@ jQuery.sheet = {
 					.attr('cellspacing', '0');
 
 				jS.controls.sheets = jS.obj.sheets().add(o);
-				
+
+				//override frozenAt settings with table's data-frozenatrow and data-frozenatcol
+				var frozenAtRow = o.data('frozenatrow'),
+					frozenAtCol = o.data('frozenatcol');
+
+				if (!jS.s.frozenAt[jS.i]) jS.s.frozenAt[jS.i] = {row: 0, col: 0};
+				if (frozenAtRow) jS.s.frozenAt[jS.i].row = frozenAtRow;
+				if (frozenAtCol) jS.s.frozenAt[jS.i].col = frozenAtCol;
+
 				return o;
 			},
 
@@ -6581,6 +6589,7 @@ jQuery.sheet = {
 				 * @methodOf jS.cellUndoable
 				 */
 				add: function(sheet, row, col) {
+					return;
 					var cellsCloned = {};
 					var td = jS.spreadsheets[sheet][row][col].td,
 						loc = jS.getTdLocation(td);
