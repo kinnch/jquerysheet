@@ -318,7 +318,7 @@
 						"rows": [],
 						"metadata": {
 							"widths": [],
-							"frozenAt": jS.frozenAt()
+							"frozenAt": $.extend({}, jS.frozenAt())
 						}
 					};
 					output.push(spreadsheet);
@@ -409,7 +409,7 @@
 				$.each(jS.spreadsheets, function(sheet) {
 					jS.i = sheet;
 					jS.evt.cellEditDone();
-					var frozenAt = jS.frozenAt(),
+					var frozenAt = $.extend({}, jS.frozenAt()),
 						widths = [];
 
 					output += '<spreadsheet title="' + (jS.obj.sheet().attr('title') || '') + '">';

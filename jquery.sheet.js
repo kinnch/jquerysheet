@@ -1576,6 +1576,7 @@ jQuery.sheet = {
 							},
 							stop: function(e, ui) {
 								jS.setBusy(false);
+								jS.setDirty(true);
 								var target = jS.nearest(handle, jS.controls.bar.x.tds());
 								jS.obj.barHelper().remove();
 								jS.frozenAt().col = jS.getTdLocation(target).col - 1;
@@ -1617,6 +1618,7 @@ jQuery.sheet = {
 							},
 							stop: function(e, ui) {
 								jS.setBusy(false);
+								jS.setDirty(true);
 								var target = jS.nearest(handle, jS.controls.bar.y.tds());
 								jS.obj.barHelper().remove();
 								jS.frozenAt().row = jS.getTdLocation(target).row - 1;
@@ -2531,9 +2533,11 @@ jQuery.sheet = {
 									cell.value = '';
 									td.data('formula', col[j]);
 								} else {
-									cell.formula = '';
-									cell.value = col[j];
-									td.removeData('formula');
+									s.parent.one('sheetPreCalculation', function() {
+										cell.formula = '';
+										cell.value = col[j];
+										td.removeData('formula');
+									});
 									jS.calcDependencies(jS.i, loc.row, loc.col);
 								}
 
@@ -3499,6 +3503,7 @@ jQuery.sheet = {
 			 * @name toggleFullScreen
 			 */
 			toggleFullScreen: function() {
+				if (!jS) return;
 				jS.evt.cellEditDone();
 				var fullScreen = jS.obj.fullScreen();
 				if (fullScreen.is(':visible')) {
@@ -3754,21 +3759,23 @@ jQuery.sheet = {
 
 							cellsValue.push(cell.formula ? "(" + cell.formula.substring(1) + ")" : cell.value);
 
-							if (col != tdFirstLoc.col || row != tdFirstLoc.row) {
-								cell.formula = null;
-								cell.value = '';
-								cell.html = '';
-								cell.defer = firstCell;
-								cell.right = cellRight;
-								cell.down = cellDown;
-								cell.left = cellLeft;
-								cell.up = cellUp;
+							s.parent.one('sheetPreCalculation', function() {
+								if (col != tdFirstLoc.col || row != tdFirstLoc.row) {
+									cell.formula = null;
+									cell.value = '';
+									cell.html = '';
+									cell.defer = firstCell;
+									cell.right = cellRight;
+									cell.down = cellDown;
+									cell.left = cellLeft;
+									cell.up = cellUp;
 
-								td
-									.removeData('formula')
-									.html('')
-									.hide();
-							}
+									td
+										.removeData('formula')
+										.html('')
+										.hide();
+								}
+							});
 
 							jS.calcDependencies(jS.i, row, col);
 						}
@@ -3832,19 +3839,10 @@ jQuery.sheet = {
 			fillUpOrDown: function(goUp, skipOffsetForumals, v) {
 				var cells = jS.obj.cellHighlighted(),
 					cellActive = jS.obj.cellActive();
-				//Make it undoable
-				jS.cellUndoable.add(cells);
 				
 				var startFromActiveCell = cellActive.hasClass(jS.cl.uiCellHighlighted),
 					startLoc = jS.getTdLocation(cells.first()),
 					endLoc = jS.getTdLocation(cells.last());
-
-				jS.cycleCells(function(sheet, row, col) {
-					cells = cells.add(jS.spreadsheets[sheet][row][col]);
-				}, startLoc, endLoc);
-
-				//Make it undoable
-				jS.cellUndoable.add(cells);
 
 				v = (v ? v : jS.obj.formula().val()); //allow value to be overridden
 				
@@ -3882,31 +3880,28 @@ jQuery.sheet = {
 					}
 					fn = function(sheet, row, col){
 						td = $(this);
-						
-						jS.spreadsheets[sheet][row][col].formula = '';
-						jS.spreadsheets[sheet][row][col].value = newV;
-						
-						td.removeData('formula').html(newV);
+						s.parent.one('sheetPreCalculation', function() {
+							jS.spreadsheets[sheet][row][col].formula = '';
+							jS.spreadsheets[sheet][row][col].value = newV;
+							td.removeData('formula');
+						});
+						jS.calcDependencies(sheet, row, col);
+
 						if (!isNaN(newV) && newV != '') newV++;
 					};
 				}
 				
 				jS.cycleCells(fn, startLoc, endLoc);
-				
-				jS.setDirty(true);
-				jS.setChanged(true);
-				jS.calc();
-				
-				//Make it redoable
-				jS.cellUndoable.add(cells);
 			},
 
 			tdsToTsv: function(tds, clearValue, fnEach) {
 				tds = tds || jS.obj.cellHighlighted();
 				fnEach = fnEach || function(loc, cell) {
 					if (clearValue) {
-						cell.formula = '';
-						cell.value = '';
+						s.parent.one('sheetPreCalculation', function() {
+							cell.formula = '';
+							cell.value = '';
+						});
 						jS.calcDependencies(jS.i, loc.row, loc.col); //TODO: undo redo
 					}
 				};
@@ -4775,6 +4770,7 @@ jQuery.sheet = {
 			 * @name cellStyleToggle
 			 */
 			cellStyleToggle: function(setClass, removeClass) {
+				jS.setDirty(true);
 				//Lets check to remove any style classes
 				var tds = jS.obj.cellHighlighted();
 				
@@ -5375,6 +5371,7 @@ jQuery.sheet = {
 				jS.updateCellValue(sheet, row, cell);
 				jS.updateCellDependencies(sheet, row, cell);
 				jS.trigger('sheetCalculation', [{which: 'cell', sheet: sheet, row: row, cell: cell}]);
+				jS.cellUndoable.add(sheet, row, cell);
 			},
 
 			/**
@@ -6056,6 +6053,7 @@ jQuery.sheet = {
 			 * @param value
 			 */
 			cellChangeStyle: function(style, value) {
+				jS.setDirty(this);
 				jS.cellUndoable.add(jS.obj.cellHighlighted()); //save state, make it undoable
 				jS.obj.cellHighlighted().css(style, value);
 				jS.cellUndoable.add(jS.obj.cellHighlighted()); //save state, make it redoable
@@ -6518,7 +6516,7 @@ jQuery.sheet = {
 				 */
 				i: [],
 
-				last: [],
+				lastStack: [],
 
 				/**
 				 * undo stack
@@ -6574,30 +6572,32 @@ jQuery.sheet = {
 
 				/**
 				 * gets the current element
-				 * @param {Integer} increment
 				 * @returns {jQuery|HTMLElement}
 				 * @name get
 				 * @methodOf jS.cellUndoable
 				 */
-				get: function(increment) { //
+				pre: function() { //
 					if (!this.stack[jS.i]) this.stack[jS.i] = [];
+					if (!this.lastStack[jS.i]) this.lastStack[jS.i] = {};
 					if (!this.i[jS.i]) this.i[jS.i] = 0;
 
-					if (increment) {
-						this.i[jS.i];
-					}
-
-					return this.i[jS.i];
+					if (!this.lastStack[jS.i][this.i[jS.i]]) this.lastStack[jS.i][this.i[jS.i]] = [];
+					if (!this.stack[jS.i][this.lastStack[jS.i][this.i[jS.i]]]) this.stack[jS.i][this.lastStack[jS.i][this.i[jS.i]]] = [];
 				},
 
 				/**
-				 * adds elements to the stack
-				 * @param {Object} cells
+				 * adds elements to the undoable stack
+				 * @param {Integer} sheet
+				 * @param {Integer} row
+				 * @param {Integer} col
 				 * @name add
 				 * @methodOf jS.cellUndoable
 				 */
 				add: function(sheet, row, col) {
 					return;
+					this.pre();
+					var stack = this.stack[jS.i][this.lastStack[jS.i][this.i[jS.i]]];
+
 					var cellsCloned = {};
 					var td = jS.spreadsheets[sheet][row][col].td,
 						loc = jS.getTdLocation(td);
@@ -6619,7 +6619,7 @@ jQuery.sheet = {
 					//console.log(i);
 					//console.log(i);
 					//console.log(this);
-					//this.stack[jS.i][jS.calcDependenciesLast] = cells;
+					this.stack[jS.i][jS.calcDependenciesLast] = cells;
 
 					if (this.stack[jS.i].length > i) {
 						for (var i = this.stack[jS.i].length; this.stack[jS.i].length < i; i--) {
@@ -6782,11 +6782,9 @@ jQuery.sheet = {
 					loc = jS.getTdLocation(td),
 					cellRef = (ref ? ref : prompt(jS.msg.setCellRef));
 				
-				if (cellRef) {
-					jS.s.formulaVariables[cellRef] = jS.spreadsheets[jS.i][loc.row][loc.col];
+				if (cellRef) { //TODO: need to update value when cell is updated
+					jS.s.formulaVariables[cellRef] = jS.updateCellValue(jS.i, loc.row, loc.col);
 				}
-				
-				jS.calcDependencies(jS.i, loc.row, loc.col);
 			}
 		};
 		jS.setBusy(true);
@@ -8136,7 +8134,6 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 				})
 				.change(function() {
 					cell.value = jQuery(this).val();
-					jS.setChanged(true);
 					jS.calcDependencies(cell.sheet, loc.row, loc.col);
 				});
 		
@@ -8178,7 +8175,6 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 						.val(v[i])
 						.change(function() {
 							cell.value = jQuery(this).val();
-							jS.setChanged(true);
 							jS.calcDependencies(cell.sheet, loc.row, loc.col);
 						});
 					
@@ -8215,7 +8211,6 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 					.val(v)
 					.change(function() {
 						cell.value = (jQuery(this).is(':checked') ? jQuery(this).val() : '');
-						jS.setChanged(true);
 						jS.calcDependencies(cell.sheet, loc.row, loc.col);
 					});
 
