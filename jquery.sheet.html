@@ -36,7 +36,7 @@
 				<script type="text/javascript" src="plugins/jquery.colorPicker.min.js"></script>
 			<!--/ColorPicker-->
 			<!--Theme Switcher Tool-->
-				<!--<script type="text/javascript" src="http://jqueryui.com/themeroller/themeswitchertool/"></script>-->
+				<script type="text/javascript" src="plugins/jquery.themeswitcher.js"></script>
 			<!--/Theme Switcher Tool-->
 			<!--Elastic-->
 				<script type="text/javascript" src="plugins/jquery.elastic.min.js"></script>
@@ -53,6 +53,11 @@
 		<!--/Optional-->
         <script type="text/javascript">
             $(function(){
+
+                $('#themeSwitcher').themeswitcher({
+                    imgpath: "plugins/jquery.themeswitcher.images/",
+                    loadTheme: "start"
+                });
                 //Here is where we initiate the sheets
                 //every time sheet is created it creates a new jQuery.sheet.instance (array), to manipulate each sheet, the jQuery object is returned
 
@@ -196,6 +201,8 @@
         		<img src="images/logo.png" style="position: absolute;top: -20px; left: 20px; border: none;" />
         		jQuery.sheet - The Ajax Spreadsheet, Demo
         	</a>
+            <br />
+            <span id="themeSwitcher"></span>
         </h1>
         <div id="mainWrapper" class="ui-corner-all wrapper">
             <table style="width: 100%;">
@@ -203,7 +210,6 @@
                     <td rowspan="2" style="width: 170px; vertical-align: top;">
                         <div id="lockedMenu" class="ui-widget-header ui-corner-all">
                             <h2 style="width: 100%; text-align: center;">Spreadsheets</h2>
-                            <span id="themeSwitcher"></span>
                             <ul style="padding-left: 15px;">
                                 <li>
                                     <a href="examples/charts.html" onclick="loadSheet(this);return false;">Charts</a>
