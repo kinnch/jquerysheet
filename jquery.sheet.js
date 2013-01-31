@@ -2538,7 +2538,7 @@ jQuery.sheet = {
 										cell.value = col[j];
 										td.removeData('formula');
 									});
-									jS.calcDependencies(jS.i, loc.row, loc.col);
+									jS.calcDependencies(jS.i, i + loc.row, j + loc.col);
 								}
 
 								if (i == 0 && j == 0) { //we have to finish the current edit
@@ -2555,8 +2555,6 @@ jQuery.sheet = {
 
 				jS.fillUpOrDown(false, false, firstValue);
 
-				jS.setDirty(true);
-				jS.setChanged(true);
 				jS.evt.cellEditDone(true);
 			},
 
@@ -2788,7 +2786,7 @@ jQuery.sheet = {
 
 						if (jS.nav) {
 							switch (e.keyCode) {
-								case key.DELETE:    jS.tdsToTsv(null, true);
+								case key.DELETE:    jS.tdsToTsv(null, true); jS.obj.formula().val('');
 									break;
 								case key.TAB: 		jS.evt.keydownHandler.tab(e);
 									break;
@@ -6577,12 +6575,13 @@ jQuery.sheet = {
 				 * @methodOf jS.cellUndoable
 				 */
 				pre: function() { //
-					if (!this.stack[jS.i]) this.stack[jS.i] = [];
-					if (!this.lastStack[jS.i]) this.lastStack[jS.i] = {};
-					if (!this.i[jS.i]) this.i[jS.i] = 0;
 
-					if (!this.lastStack[jS.i][this.i[jS.i]]) this.lastStack[jS.i][this.i[jS.i]] = [];
-					if (!this.stack[jS.i][this.lastStack[jS.i][this.i[jS.i]]]) this.stack[jS.i][this.lastStack[jS.i][this.i[jS.i]]] = [];
+				},
+
+				group: function() {
+					this.pre();
+
+
 				},
 
 				/**
@@ -6595,8 +6594,8 @@ jQuery.sheet = {
 				 */
 				add: function(sheet, row, col) {
 					return;
-					this.pre();
-					var stack = this.stack[jS.i][this.lastStack[jS.i][this.i[jS.i]]];
+					var i = this.pre();
+					var stack = this.stack[jS.i][i];
 
 					var cellsCloned = {};
 					var td = jS.spreadsheets[sheet][row][col].td,
@@ -6631,6 +6630,10 @@ jQuery.sheet = {
 					if (this.stack[jS.i].length > 20) { //undoable count, we want to be careful of too much memory consumption
 						this.stack[jS.i].shift(); //drop the first value
 					}
+
+				},
+
+				clean: function() {
 
 				}
 			},
