@@ -454,6 +454,10 @@ jQuery.fn.extend({
 						"Delete this column": function(jS){
 							jS.deleteColumn();
 							return false;
+						},
+						"Hide column": function(jS) {
+							jS.toggleHide.column();
+							return false;
 						}
 					},
 					contextmenuLeft: {
@@ -475,6 +479,10 @@ jQuery.fn.extend({
 						},
 						"Delete this row": function(jS){
 							jS.deleteRow();
+							return false;
+						},
+						"Hide row": function(jS) {
+							jS.toggleHide.row();
 							return false;
 						}
 					},
@@ -2157,29 +2165,32 @@ jQuery.sheet = {
 				hide: function(enclosure, pane, sheet) {
 					pane = pane || jS.obj.pane();
 
-					var toggleHideStyleY = jS.controls.toggleHide.y[jS.i] = $('<style id="' + jS.id.toggleHideStyleY + jS.i + '"></style>')
+					var toggleHideStyleX = jS.controls.toggleHide.x[jS.i] = $('<style id="' + jS.id.toggleHideStyleX + jS.i + '"></style>')
 							.appendTo(pane)
 							.bind('updateStyle', function(e) {
-								var style = $.sheet.nthCss('tr', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenRows[jS.i], jS.toggleHide.hiddenRows[jS.i].length);
-
-								if (this.styleSheet) {
-									this.styleSheet.cssText = style;
-								} else {
-									toggleHideStyleY.text(style);
-								}
-							}),
-
-						toggleHideStyleX = jS.controls.toggleHide.x[jS.i] = $('<style id="' + jS.id.toggleHideStyleX + jS.i + '"></style>')
-							.appendTo(pane)
-							.bind('updateStyle', function() {
-								var style = $.sheet.nthCss('col', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], jS.toggleHide.hiddenColumns[jS.i].length) +
-									$.sheet.nthCss('td', '#' + jS.id.sheet + jS.i + ' tr', this, jS.toggleHide.hiddenColumns[jS.i], jS.toggleHide.hiddenColumns[jS.i].length);
+								var style = $.sheet.nthCss('col', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], 0) +
+									$.sheet.nthCss('td', '#' + jS.id.sheet + jS.i + ' tr', this, jS.toggleHide.hiddenColumns[jS.i], 0);
 
 								if (this.styleSheet) {
 									this.styleSheet.cssText = style;
 								} else {
 									toggleHideStyleX.text(style);
 								}
+
+								jS.autoFillerGoToTd();
+							}),
+						toggleHideStyleY = jS.controls.toggleHide.y[jS.i] = $('<style id="' + jS.id.toggleHideStyleY + jS.i + '"></style>')
+							.appendTo(pane)
+							.bind('updateStyle', function(e) {
+								var style = $.sheet.nthCss('tr', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenRows[jS.i], 0);
+
+								if (this.styleSheet) {
+									this.styleSheet.cssText = style;
+								} else {
+									toggleHideStyleY.text(style);
+								}
+
+								jS.autoFillerGoToTd();
 							});
 
 					s.hiddenColumns[jS.i] = s.hiddenColumns[jS.i] || [];
@@ -3650,27 +3661,26 @@ jQuery.sheet = {
 				hiddenRows: [],
 				row: function(i) {
 					i = i || jS.rowLast;
+					if (!i) return;
+
 					var row = jS.rows()[i],
 						$row = $(row),
 						style = [];
 
 					if (!this.hiddenRows[jS.i]) this.hiddenRows[jS.i] = [];
 
-					if ($row.length && !$row.data('hidden')) {
-						$row.data('hidden', true);
+					if ($row.length && $.inArray(i + 1, this.hiddenRows[jS.i]) < 0) {
 						this.hiddenRows[jS.i].push(i + 1);
 					} else {
-						$.each(this.hiddenRows[jS.i], function(j) {
-							if ($row.is(this)) {
-								$row.removeData('hidden');
-								jS.toggleHide.hiddenRows[jS.i].splice(j, 1);
-							}
-						});
+						this.hiddenRows[jS.i].splice(this.hiddenRows[jS.i].indexOf(i + 1), 1);
 					}
 
 					jS.obj.toggleHideStyleY().trigger('updateStyle');
 				},
 				rowShowAll: function() {
+					$.each(this.hiddenRows[jS.i], function(j) {
+						$(this).removeData('hidden');
+					});
 					jS.obj.toggleHideStyleY().html('');
 					this.hiddenRows[jS.i] = [];
 				},
@@ -3679,20 +3689,18 @@ jQuery.sheet = {
 				columnIndexOffset: [],
 				column: function(i) {
 					i = i || jS.colLast;
+					if (!i) return;
+
 					var col = jS.cols()[i],
 						$col = $(col),
 						style = [];
 
 					if (!this.hiddenColumns[jS.i]) this.hiddenColumns[jS.i] = [];
 
-					if ($col.length && $col.is(':visible')) {
+					if ($col.length && $.inArray(i + 1, this.hiddenColumns[jS.i]) < 0) {
 						this.hiddenColumns[jS.i].push(i + 1);
 					} else {
-						$.each(this.hiddenColumns[jS.i], function(j) {
-							if ($col.is(this)) {
-								jS.toggleHide.hiddenColumns[jS.i].splice(j, 1);
-							}
-						});
+						this.hiddenColumns[jS.i].splice(this.hiddenColumns[jS.i].indexOf(i + 1), 1);
 					}
 
 					jS.obj.toggleHideStyleX().trigger('updateStyle');
