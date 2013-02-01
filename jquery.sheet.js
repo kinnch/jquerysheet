@@ -2320,6 +2320,7 @@ jQuery.sheet = {
 								return false;
 							})
 							.disableSelectionSpecial()
+							.bind('cellEdit', jS.evt.cellEdit)
 							.dblclick(jS.evt.cellOnDblClick);
 					}
 
@@ -2395,10 +2396,11 @@ jQuery.sheet = {
 				/**
 				 * Creates a teaxtarea for a user to put a value in that floats on top of the current selected cell
 				 * @param {jQuery|HTMLElement} td the td to be edited
+				 * @param {Boolean} noSelect
 				 * @methodOf jS.controlFactory
 				 * @name inPlaceEdit
 				 */
-				inPlaceEdit: function(td) {
+				inPlaceEdit: function(td, noSelect) {
 					td = td || jS.obj.cellActive();
 
 					if (!td.length) {
@@ -2441,12 +2443,15 @@ jQuery.sheet = {
 						.appendTo($body)
 						.val(formula.val())
 						.focus()
-						.select()
 						.bind('destroy', function() {
 							jS.cellLast.isEdit = (textarea.val() != val);
 							textarea.remove();
 							jS.controls.inPlaceEdit[textarea.data('i')] = false;
 						});
+
+					if (!noSelect) {
+						textarea.select();
+					}
 
 					//Make the textarrea resizable automatically
 					if ($.fn.elastic) {
@@ -2529,17 +2534,19 @@ jQuery.sheet = {
 							var cell = jS.spreadsheets[jS.i][i + loc.row][j + loc.col];
 							if (cell) {
 								if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
-									cell.formula = col[j].substring(1);
-									cell.value = '';
-									td.data('formula', col[j]);
+									s.parent.one('sheetPreCalculation', function() {
+										cell.formula = col[j].substring(1);
+										cell.value = '';
+										td.data('formula', col[j]);
+									});
 								} else {
 									s.parent.one('sheetPreCalculation', function() {
 										cell.formula = '';
 										cell.value = col[j];
 										td.removeData('formula');
 									});
-									jS.calcDependencies(jS.i, i + loc.row, j + loc.col);
 								}
+								jS.calcDependencies(jS.i, i + loc.row, j + loc.col);
 
 								if (i == 0 && j == 0) { //we have to finish the current edit
 									firstValue = col[j];
@@ -2807,7 +2814,7 @@ jQuery.sheet = {
 									if (e.ctrlKey) {
 										return jS.evt.keydownHandler.formulaKeydownIf(!jS.evt.pasteOverCells(e), e);
 									} else {
-										jS.obj.cellActive().dblclick();
+										jS.obj.cellActive().trigger('cellEdit');
 										return true;
 									}
 									break;
@@ -2815,7 +2822,7 @@ jQuery.sheet = {
 									if (e.ctrlKey) {
 										return jS.evt.keydownHandler.formulaKeydownIf(!jS.evt.keydownHandler.redo(e), e);
 									} else {
-										jS.obj.cellActive().dblclick();
+										jS.obj.cellActive().trigger('cellEdit');
 										return true;
 									}
 									break;
@@ -2823,7 +2830,7 @@ jQuery.sheet = {
 									if (e.ctrlKey) {
 										return jS.evt.keydownHandler.formulaKeydownIf(!jS.evt.keydownHandler.undo(e), e);
 									} else {
-										jS.obj.cellActive().dblclick();
+										jS.obj.cellActive().trigger('cellEdit');
 										return true;
 									}
 									break;
@@ -2833,7 +2840,7 @@ jQuery.sheet = {
 									if (e.ctrlKey) {
 										return jS.evt.keydownHandler.formulaKeydownIf(jS.evt.keydownHandler.findCell(e), e);
 									} else {
-										jS.obj.cellActive().dblclick();
+										jS.obj.cellActive().trigger('cellEdit');
 										return true;
 									}
 									break;
@@ -2845,7 +2852,7 @@ jQuery.sheet = {
 												jS.obj.formula().focus().select(); return true;
 									break;
 								default:
-									jS.obj.cellActive().dblclick();
+									jS.obj.cellActive().trigger('cellEdit');
 									return true;
 									break;
 							}
@@ -3136,8 +3143,14 @@ jQuery.sheet = {
 				cellOnDblClick: function(e) {
 					if (jS.isBusy()) return false;
 
-					jS.controlFactory.inPlaceEdit();
+					jS.controlFactory.inPlaceEdit(null, true);
 					//jS.log('click, in place edit activated');
+				},
+
+				cellEdit: function(e) {
+					if (jS.isBusy()) return false;
+
+					jS.controlFactory.inPlaceEdit();
 				},
 
 				/**
