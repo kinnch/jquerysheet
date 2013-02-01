@@ -4482,6 +4482,7 @@ jQuery.sheet = {
 							jS.setBusy(false);
 							pane.trigger('resizeScroll');
 							jS.followMe();
+							jS.setDirty(true);
 						}
 					});
 				},
@@ -4529,6 +4530,7 @@ jQuery.sheet = {
 							jS.setBusy(false);
 							pane.trigger('resizeScroll');
 							jS.followMe();
+							jS.setDirty(true);
 						}
 					});
 				},
