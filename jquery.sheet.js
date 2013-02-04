@@ -419,7 +419,7 @@ jQuery.fn.extend({
 							case 'object':
 								return val;
 							case 'number':
-								return Globalize.format(val);
+								return Globalize.format(val, 'n');
 						}
 
 						if (!val) {
@@ -430,7 +430,7 @@ jQuery.fn.extend({
 						}
 						var num = $.trim(val) * 1;
 						if (!isNaN(num)) {
-							return Globalize.format(num);
+							return Globalize.format(num, 'n');
 						}
 
 						return val
@@ -708,6 +708,7 @@ jQuery.sheet = {
 	dependencies:{
 		coreCss:{css:'jquery.sheet.css'},
 		globalize:{script:'plugins/globalize.js'},
+		globalizeCultures:{script:'plugins/globalize.cultures.js'},
 		formulaParser:{script:'parser/formula/formula.js'},
 		tsvParser:{script:'parser/tsv/tsv.js'},
 		mousewheel:{script:'plugins/jquery.mousewheel.min.js'},
