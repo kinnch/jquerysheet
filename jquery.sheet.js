@@ -13,6 +13,12 @@
  * @namespace
  * @name jQuery.fn
  */
+var jQuery = jQuery || {
+	fn: {
+		extend: function () {
+		}
+	}
+};
 jQuery.fn.extend({
 	/**
 	 * @description
@@ -2419,6 +2425,7 @@ jQuery.sheet = {
 								return false;
 							})
 							.disableSelectionSpecial()
+							.bind('cellEdit', jS.evt.cellEdit)
 							.dblclick(jS.evt.cellOnDblClick);
 					}
 
