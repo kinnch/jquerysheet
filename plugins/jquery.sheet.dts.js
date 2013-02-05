@@ -333,19 +333,19 @@
 
 						$.each(jS.spreadsheets[sheet][row], function(column) {
 							if (column == 0) return;
-							var Column = {};
+							var Column = {},
+								style = this.td.attr('style'),
+								cl = $.trim(
+									(this.td.attr('class') || '')
+										.replace(jS.cl.uiCellActive , '')
+										.replace(jS.cl.uiCellHighlighted, '')
+								);
+
 							Row.columns.push(Column);
 
 							if (this['formula']) Column['formula'] = this['formula'];
 							if (this['value']) Column['value'] = this['value'];
-							if (this.td.attr('style')) Column['style'] = this.td.attr('style');
-
-							var cl = $.trim(
-								(this.td.attr('class') || '')
-									.replace(jS.cl.uiCellActive , '')
-									.replace(jS.cl.uiCellHighlighted, '')
-
-							);
+							if (style) Column['style'] = style;
 
 							if (cl.length) {
 								Column['class'] = cl;
@@ -423,16 +423,20 @@
 						$.each(jS.spreadsheets[sheet][row], function(column) {
 							if (column == 0) return;
 
+							var style = this.td.attr('style'),
+								cl = $.trim(
+									(this.td.attr('class') || '')
+										.replace(jS.cl.uiCellActive, '')
+										.replace(jS.cl.uiCellHighlighted, '')
+								);
+
 							output += '<column>';
 
 							if (this.formula) output += '<formula>' + this.formula + '</formula>';
 							if (this.value) output += '<value>' + this.value + '</value>';
-							if (this.td.attr('style')) output += '<style>' + this.td.attr('style') + '</style>';
-							if (this.td.attr('class')) output += '<class>' +
-									(this.td.attr('class') + '')
-										.replace(jS.cl.uiCellActive, '')
-										.replace(jS.cl.uiCellHighlighted, '') +
-								'</class>';
+							if (style) output += '<style>' + style + '</style>';
+							if (cl) output += '<class>' + cl + '</class>';
+
 							output += '</column>';
 
 							if (row * 1 == 1) {

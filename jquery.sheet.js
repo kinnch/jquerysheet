@@ -708,13 +708,13 @@ jQuery.sheet = {
 	dependencies:{
 		coreCss:{css:'jquery.sheet.css'},
 		globalize:{script:'plugins/globalize.js'},
-		globalizeCultures:{script:'plugins/globalize.cultures.js'},
 		formulaParser:{script:'parser/formula/formula.js'},
 		tsvParser:{script:'parser/tsv/tsv.js'},
 		mousewheel:{script:'plugins/jquery.mousewheel.min.js'},
 		nearest:{script:'plugins/jquery.nearest.min.js'}
 	},
 	optional:{
+		globalizeCultures:{script:'plugins/globalize.cultures.js'},
 		raphael:{script:'plugins/raphael-min.js'},
 		gRaphael:{script:'plugins/g.raphael-min.js'},
 		colorPicker:{css:'plugins/jquery.colorPicker.css'},
@@ -732,7 +732,12 @@ jQuery.sheet = {
 	 */
 	events:['sheetAddRow', 'sheetAddColumn', 'sheetSwitch', 'sheetRename', 'sheetTabSortStart', 'sheetTabSortUpdate', 'sheetCellEdit', 'sheetCellEdited', 'sheetCalculation', 'sheetAdd', 'sheetDelete', 'sheetDeleteRow', 'sheetDeleteColumn', 'sheetOpen', 'sheetAllOpened', 'sheetSave', 'sheetFullScreen', 'sheetFormulaKeydown'],
 
-	preLoad:function (path) {
+	preLoad:function (path, settings) {
+		settings = $.extend({
+			skip: ['globalizeCultures']
+		},settings)
+
+
 		var g = function () {
 			if (this.script) {
 				document.write('<script src="' + path + this.script + '"></script>');
@@ -740,6 +745,15 @@ jQuery.sheet = {
 				document.write('<link rel="stylesheet" type="text/css" href="' + path + this.css + '"></link>');
 			}
 		};
+
+		for(var i in settings.skip) {
+			if (this.dependencies[settings.skip[i]]) {
+				this.dependencies[settings.skip[i]] = null;
+			}
+			if (this.optional[settings.skip[i]]) {
+				this.optional[settings.skip[i]] = null;
+			}
+		}
 
 		$.each(this.dependencies, function () {
 			g.apply(this);
@@ -1070,38 +1084,7 @@ jQuery.sheet = {
 			 * @type {Object}
 			 */
 			id:{
-				/*
-				 id = id's references
-				 Note that these are all dynamically set
-				 */
-				autoFiller:'jSAutoFiller_' + I + '_',
-				barCorner:'jSBarCorner_' + I + '_',
-				barLeft:'jSBarLeft_' + I + '_',
-				barHandleFreezeLeft:'jSBarHandleFreezeLeft_' + I + '_',
-				barMenuLeft:'jSBarMenuLeft_' + I,
-				barTop:'jSBarTop_' + I + '_',
-				barTopParent:'jSBarTopParent_' + I + '_',
-				barHandleFreezeTop:'jSBarHandleFreezeTop_' + I + '_',
-				barMenuTop:'jSBarMenuTop_' + I,
-				barMenuParentTop:'jSBarMenuParentTop_' + I,
-				cellMenu:'jSCellMenu_' + I,
-				formula:'jSFormula_' + I,
-				header:'jSHeader_' + I,
-				menuRight:'jSMenuRight_' + I,
-				inPlaceEdit:'jSInPlaceEdit_' + I,
-				label:'jSLoc_' + I,
-				menuLeft:'jSMenuLeft_' + I,
-				pane:'jSEditPane_' + I + '_',
-				scrollStyleX:'jSScrollStyleX_' + I + '_',
-				scrollStyleY:'jSScrollStyleY_' + I + '_',
-				scroll:'jSScroll_' + I + '_',
-				sheet:'jS_' + I + '_',
-				tab:'jSTab_' + I + '_',
-				tabContainer:'jSTabContainer_' + I,
-				toggleHideStyleX:'jSToggleHideX_' + I + '_',
-				toggleHideStyleY:'jSToggleHideY_' + I + '_',
-				title:'jSTitle_' + I,
-				ui:'jSUI_' + I
+				sheet:'jS_' + I + '_'
 			},
 
 			/**
@@ -1663,7 +1646,7 @@ jQuery.sheet = {
 
 						var bar = jS.obj.barTop(jS.frozenAt().col + 1),
 							pos = bar.position(),
-							handle = $('<div id="' + jS.id.barHandleFreezeTop + jS.i + '" class="' + jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop + '" />')
+							handle = $('<div class="' + jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop + '" />')
 								.height(s.colMargin + s.boxModelCorrection)
 								.css('top', pos.top + 'px')
 								.css('left', pos.left + 'px')
@@ -1705,7 +1688,7 @@ jQuery.sheet = {
 
 						var bar = jS.obj.barLeft(jS.frozenAt().row + 1),
 							pos = bar.position(),
-							handle = $('<div id="' + jS.id.barHandleFreezeLeft + jS.i + '" class="' + jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft + '" />')
+							handle = $('<div class="' + jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft + '" />')
 								.width(s.colMargin)
 								.css('top', pos.top + 'px')
 								.css('left', pos.left + 'px')
@@ -1754,15 +1737,15 @@ jQuery.sheet = {
 
 					switch (bar) {
 						case "top":
-							menu = $('<div id="' + jS.id.barMenuTop + '" class="' + jS.cl.uiMenu + ' ' + jS.cl.menu + '" />');
+							menu = $('<div class="' + jS.cl.uiMenu + ' ' + jS.cl.menu + '" />');
 							jS.controls.bar.x.menu[jS.i] = menu;
 							break;
 						case "left":
-							menu = $('<div id="' + jS.id.barMenuLeft + '" class="' + jS.cl.uiMenu + ' ' + jS.cl.menu + '" />');
+							menu = $('<div class="' + jS.cl.uiMenu + ' ' + jS.cl.menu + '" />');
 							jS.controls.bar.y.menu[jS.i] = menu;
 							break;
 						case "cell":
-							menu = $('<div id="' + jS.id.cellMenu + '" class="' + jS.cl.uiMenu + ' ' + jS.cl.menu + '" />');
+							menu = $('<div class="' + jS.cl.uiMenu + ' ' + jS.cl.menu + '" />');
 							jS.controls.cellMenu[jS.i] = menu;
 							break;
 					}
@@ -1831,7 +1814,7 @@ jQuery.sheet = {
 
 						if (!barMenuParentTop.length) {
 
-							barMenuParentTop = $('<div id="' + jS.id.barMenuParentTop + '" class="' + jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper + '">' +
+							barMenuParentTop = $('<div class="' + jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper + '">' +
 								'<span class="ui-icon ui-icon-triangle-1-s" /></span>' +
 								'</div>')
 								.mousedown(function (e) {
@@ -1934,7 +1917,7 @@ jQuery.sheet = {
 					jS.obj.header().remove();
 					jS.obj.tabContainer().remove();
 
-					var header = jS.controls.header = $('<div id="' + jS.id.header + '" class="' + jS.cl.header + '"></div>'),
+					var header = jS.controls.header = $('<div class="' + jS.cl.header + '"></div>'),
 						firstRow = $('<table><tr /></table>').prependTo(header),
 						firstRowTr = $('<tr />');
 
@@ -1975,7 +1958,7 @@ jQuery.sheet = {
 
 					if (jS.isSheetEditable()) {
 						if (s.menuLeft) {
-							jS.controls.menuLeft[jS.i] = $('<td id="' + jS.id.menuLeft + '" class="' + jS.cl.menu + ' ' + jS.cl.menuFixed + '" />')
+							jS.controls.menuLeft[jS.i] = $('<td class="' + jS.cl.menu + ' ' + jS.cl.menuFixed + '" />')
 								.append(makeMenu(s.menuLeft))
 								.prependTo(firstRowTr);
 
@@ -1985,7 +1968,7 @@ jQuery.sheet = {
 						}
 
 						if (s.menuRight) {
-							jS.controls.menuRight[jS.i] = $('<td id="' + jS.id.menuRight + '" class="' + jS.cl.menu + ' ' + jS.cl.menuFixed + '" />')
+							jS.controls.menuRight[jS.i] = $('<td class="' + jS.cl.menu + ' ' + jS.cl.menuFixed + '" />')
 								.append(makeMenu(s.menuRight))
 								.appendTo(firstRowTr);
 
@@ -1994,11 +1977,11 @@ jQuery.sheet = {
 							});
 						}
 
-						var label = $('<td id="' + jS.id.label + '" class="' + jS.cl.label + '"></td>');
+						var label = $('<td class="' + jS.cl.label + '"></td>');
 						jS.controls.label = label;
 
 						//Edit box menu
-						var formula = $('<textarea id="' + jS.id.formula + '" class="' + jS.cl.formula + '"></textarea>')
+						var formula = $('<textarea class="' + jS.cl.formula + '"></textarea>')
 							.keydown(jS.evt.keydownHandler.formulaKeydown)
 							.keyup(function () {
 								jS.obj.inPlaceEdit().val(jS.obj.formula().val());
@@ -2061,7 +2044,7 @@ jQuery.sheet = {
 				 * @name ui
 				 */
 				ui:function () {
-					return jS.controls.ui = $('<div id="' + jS.id.ui + '" class="' + jS.cl.ui + '">');
+					return jS.controls.ui = $('<div class="' + jS.cl.ui + '">');
 				},
 
 
@@ -2071,7 +2054,7 @@ jQuery.sheet = {
 				 * @name tabContainer
 				 */
 				tabContainer:function () {
-					var tabContainer = jS.controls.tabContainer = $('<div id="' + jS.id.tabContainer + '" class="' + jS.cl.tabContainer + '"></div>')
+					var tabContainer = jS.controls.tabContainer = $('<div class="' + jS.cl.tabContainer + '"></div>')
 						.mousedown(function (e) {
 							var i = $(e.target).data('i') * 1;
 							if (i >= 0) {
@@ -2133,7 +2116,7 @@ jQuery.sheet = {
 				 * @name scroll
 				 */
 				scroll:function (enclosure, pane, sheet) {
-					var scroll = jS.controls.scroll[jS.i] = $('<div id="' + jS.id.scroll + jS.i + '" class="' + jS.cl.scroll + '">' +
+					var scroll = jS.controls.scroll[jS.i] = $('<div class="' + jS.cl.scroll + '">' +
 							'<div></div>' +
 						'</div>')
 						.scroll(function () {
@@ -2152,7 +2135,7 @@ jQuery.sheet = {
 					jS.controls.scrolls = jS.obj.scrolls().add(scroll);
 
 					var scrollChild = scroll.children(),
-						scrollStyleX = jS.controls.bar.x.scroll[jS.i] = $('<style type="text/css" id="' + jS.id.scrollStyleX + jS.i + '"></style>')
+						scrollStyleX = jS.controls.bar.x.scroll[jS.i] = $('<style type="text/css"></style>')
 							.bind('updateStyle', function (e, indexes, styleOverride) {
 								indexes = indexes || [];
 
@@ -2169,7 +2152,7 @@ jQuery.sheet = {
 								jS.scrolledArea[jS.i].col.start = indexes[0] || 1;
 								jS.scrolledArea[jS.i].col.end = indexes.pop() || 1;
 							}),
-						scrollStyleY = jS.controls.bar.y.scroll[jS.i] = $('<style type="text/css" id="' + jS.id.scrollStyleY + jS.i + '"></style>')
+						scrollStyleY = jS.controls.bar.y.scroll[jS.i] = $('<style type="text/css"></style>')
 							.bind('updateStyle', function (e, indexes, styleOverride) {
 								indexes = indexes || [];
 
@@ -2273,7 +2256,7 @@ jQuery.sheet = {
 				hide:function (enclosure, pane, sheet) {
 					pane = pane || jS.obj.pane();
 
-					var toggleHideStyleX = jS.controls.toggleHide.x[jS.i] = $('<style id="' + jS.id.toggleHideStyleX + jS.i + '"></style>')
+					var toggleHideStyleX = jS.controls.toggleHide.x[jS.i] = $('<style></style>')
 							.appendTo(pane)
 							.bind('updateStyle', function (e) {
 								var style = $.sheet.nthCss('col', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], 0) +
@@ -2287,7 +2270,7 @@ jQuery.sheet = {
 
 								jS.autoFillerGoToTd();
 							}),
-						toggleHideStyleY = jS.controls.toggleHide.y[jS.i] = $('<style id="' + jS.id.toggleHideStyleY + jS.i + '"></style>')
+						toggleHideStyleY = jS.controls.toggleHide.y[jS.i] = $('<style></style>')
 							.appendTo(pane)
 							.bind('updateStyle', function (e) {
 								var style = $.sheet.nthCss('tr', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenRows[jS.i], 0);
@@ -2488,7 +2471,7 @@ jQuery.sheet = {
 				 */
 				tab:function () {
 					var tab = jS.controls.tab[jS.i] = $('<span class="' + jS.cl.uiTab + ' ui-corner-bottom">' +
-						'<a class="' + jS.cl.tab + '" id="' + jS.id.tab + jS.i + '" data-i="' + jS.i + '">' + jS.sheetTab(true) + '</a>' +
+						'<a class="' + jS.cl.tab + '" data-i="' + jS.i + '">' + jS.sheetTab(true) + '</a>' +
 						'</span>')
 						.insertBefore(
 						jS.obj.tabContainer().find('span:last')
@@ -2524,7 +2507,7 @@ jQuery.sheet = {
 
 					if (!offset) return; //If the td is a dud, we do not want a textarea
 
-					var textarea = jS.controls.inPlaceEdit[jS.i] = $('<textarea id="' + jS.id.inPlaceEdit + '" class="' + jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit + '" data-i="' + jS.i + '"/>')
+					var textarea = jS.controls.inPlaceEdit[jS.i] = $('<textarea class="' + jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit + '" data-i="' + jS.i + '"/>')
 						.css('left', offset.left)
 						.css('top', offset.top)
 						.width(w)
@@ -2574,7 +2557,7 @@ jQuery.sheet = {
 				autoFiller:function () {
 					if (!s.autoFiller) return null;
 
-					jS.controls.autoFiller[jS.i] = $('<div id="' + (jS.id.autoFiller + jS.i) + '" class="' + jS.cl.autoFiller + ' ' + jS.cl.uiAutoFiller + '">' +
+					jS.controls.autoFiller[jS.i] = $('<div class="' + jS.cl.autoFiller + ' ' + jS.cl.uiAutoFiller + '">' +
 							'<div class="' + jS.cl.autoFillerHandle + '" />' +
 							'<div class="' + jS.cl.autoFillerCover + '" />' +
 						'</div>')
@@ -3791,7 +3774,6 @@ jQuery.sheet = {
 									.data('type', 'bar')
 									.data('entity', 'left')
 									.text(row)
-									.attr('id', jS.id.barLeft + row + '_' + jS.i)
 									.attr('class', jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.cl.uiBar);
 							}
 
@@ -3800,7 +3782,6 @@ jQuery.sheet = {
 									.data('type', 'bar')
 									.data('entity', 'top')
 									.text(jSE.columnLabelString(col))
-									.attr('id', jS.id.barTop + col + '_' + jS.i)
 									.attr('class', jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.cl.uiBar);
 							}
 
@@ -3808,7 +3789,6 @@ jQuery.sheet = {
 								jS.controls.bar.corner[jS.i] = td
 									.data('type', 'bar')
 									.data('entity', 'corner')
-									.attr('id', jS.id.barCorner + jS.i)
 									.attr('class', jS.cl.uiBar + ' ' + ' ' + jS.cl.barCorner);
 							}
 						}
