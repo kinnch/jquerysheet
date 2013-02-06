@@ -20,7 +20,7 @@
 				.height($(window).height() - 50)
 				.sheet();
 
-            $('#exportAndCreate').click(function() {
+            $('#exportAndCreate').mousedown(function() {
                 var jS = sheetOrig.getSheet(),
                     dtsType = $('#dtsType').val(),
                     json,
