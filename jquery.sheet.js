@@ -539,7 +539,22 @@ jQuery.fn.extend({
 						}
 					},
 					hiddenRows:[],
-					hiddenColumns:[]
+					hiddenColumns:[],
+					cellStartingHandlers: {
+						'$':function(val, ch) {
+							this.formula = '';
+							this.value = val;
+							this.valueOverride = jFN.DOLLAR.apply(this, [val.substring(1).replace(jS.s.numberGroupingChar, ''), 2, ch || '$']).value;
+							this.td
+								.removeData('formula')
+								.html(val);
+						},
+						'£':function(val) {
+							jS.s.cellStartingHandlers['$'].apply(this, [val, '£']);
+						}
+					},
+					radixPointChar: '.',
+					numberGroupingChar: ','
 				},
 				events = jQuery.sheet.events;
 
@@ -2623,19 +2638,17 @@ jQuery.sheet = {
 							if (!jS.spreadsheets[jS.i] || !jS.spreadsheets[jS.i][i + loc.row] || !jS.spreadsheets[jS.i][i + loc.row][j + loc.col]) continue;
 							var cell = jS.spreadsheets[jS.i][i + loc.row][j + loc.col];
 							if (cell) {
-								if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
-									s.parent.one('sheetPreCalculation', function () {
-										cell.formula = col[j].substring(1);
-										cell.value = '';
-										td.data('formula', col[j]);
-									});
-								} else {
-									s.parent.one('sheetPreCalculation', function () {
-										cell.formula = '';
-										cell.value = col[j];
-										td.removeData('formula');
-									});
-								}
+								s.parent.one('sheetPreCalculation', function () {
+									if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
+											cell.formula = col[j].substring(1);
+											cell.value = '';
+											td.data('formula', col[j]);
+									} else {
+											cell.formula = '';
+											cell.value = col[j];
+											td.removeData('formula');
+									}
+								});
 								jS.calcDependencies(jS.i, i + loc.row, j + loc.col);
 
 								if (i == 0 && j == 0) { //we have to finish the current edit
@@ -4987,7 +5000,8 @@ jQuery.sheet = {
 				if (!jS.spreadsheets[sheet][row]) return s.error({error:jS.msg.notFoundRow});
 				if (!jS.spreadsheets[sheet][row][col]) return s.error({error:jS.msg.notFoundColumn});
 
-				var cell = jS.spreadsheets[sheet][row][col];
+				var cell = jS.spreadsheets[sheet][row][col],
+					fn;
 				cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
 
 				if (cell.result) { //unset the last result if it is set
@@ -4998,7 +5012,7 @@ jQuery.sheet = {
 					case 'updating':
 						return s.error({error:jS.msg.loopDetected});
 					case 'updatingDependencies':
-						return cell.value;
+						return cell.valueOverride || cell.value;
 				}
 
 				if (cell.defer) {//merging creates a defer property, which points the cell to another location to get the other value
@@ -5011,6 +5025,7 @@ jQuery.sheet = {
 				cell.result = null;
 
 				if (cell.calcLast != jS.calcLast || cell.calcDependenciesLast != jS.calcDependenciesLast) {
+					cell.valueOverride = null;
 					cell.calcLast = jS.calcLast;
 					cell.calcDependenciesLast = jS.calcDependenciesLast;
 
@@ -5018,7 +5033,7 @@ jQuery.sheet = {
 					if (cell.formula) {
 						try {
 							if (cell.formula.charAt(0) == '=') {
-								cell.formula = cell.formula.substring(1, cell.formula.length);
+								cell.formula = cell.formula.substring(1);
 							}
 
 							var formulaParser;
@@ -5050,13 +5065,19 @@ jQuery.sheet = {
 							jS.alertFormulaError(cell.value);
 						}
 						jS.callStack--;
+						cell = jS.filterValue(cell, sheet, row, col);
+					} else {
+						fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
+						if (fn) {
+							fn.apply(cell, [cell.value]);
+						} else {
+							cell = jS.filterValue(cell, sheet, row, col);
+						}
 					}
-
-					cell = jS.filterValue(cell, sheet, row, col);
 				}
 
 				cell.state = null;
-				return cell.value;
+				return cell.valueOverride || cell.value;
 			},
 
 			updateCellDependencies:function (sheet, row, col) {
