@@ -438,8 +438,8 @@ jQuery.fn.extend({
 							.replace(/>/gi, '&gt;')
 							.replace(/</gi, '&lt;')
 							.replace(/\n/g, '\n<br>')
-							.replace(/\t/g, '&nbsp;&nbsp;')
-							.replace(/ /g, '&nbsp;');
+							.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
+							.replace(/  /g, '&nbsp; ');
 					},
 					frozenAt:[],
 					contextmenuTop:{
