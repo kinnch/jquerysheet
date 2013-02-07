@@ -45,7 +45,6 @@ class Parser
 
 switch ($yystate) {
 case 1:
-		alert($S[$O-1]);
         return $S[$O-1];
     
 break;
