@@ -5887,12 +5887,14 @@ jQuery.sheet = {
 				if (!td.length) return;
 
 				var pane = jS.obj.pane(),
+					paneHeight = pane.height(),
+					paneWidth = pane.width(),
 					panePos = pane.offset(),
 					visibleFold = {
 						top:panePos.top,
-						bottom:panePos.top + pane.height(),
+						bottom:panePos.top + paneHeight,
 						left:panePos.left,
-						right:panePos.left + pane.width()
+						right:panePos.left + paneWidth
 					},
 					move = true,
 					i = 0,
@@ -5922,6 +5924,8 @@ jQuery.sheet = {
 
 				//$.sheet.debugPositionBox(null, null, visibleFold);
 				if (!jS.scrolledArea[jS.i]) jS.scrolledArea[jS.i] = {col:{start:jS.frozenAt().col, end:jS.frozenAt().col}, row:{start:jS.frozenAt().row, end:jS.frozenAt().row}};
+
+				if (tdHeight > paneHeight || tdWidth > paneWidth) return;
 
 				jS.setBusy(true);
 
