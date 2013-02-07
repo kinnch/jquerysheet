@@ -13,12 +13,6 @@
  * @namespace
  * @name jQuery.fn
  */
-var jQuery = jQuery || {
-	fn: {
-		extend: function () {
-		}
-	}
-};
 jQuery.fn.extend({
 	/**
 	 * @description
