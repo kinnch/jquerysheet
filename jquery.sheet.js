@@ -419,7 +419,7 @@ jQuery.fn.extend({
 							case 'object':
 								return val;
 							case 'number':
-								return Globalize.format(val, 'n');
+								return Globalize.format(val).replace(/[\.,]00$/, "");
 						}
 
 						if (!val) {
@@ -430,7 +430,7 @@ jQuery.fn.extend({
 						}
 						var num = $.trim(val) * 1;
 						if (!isNaN(num)) {
-							return Globalize.format(num, 'n');
+							return Globalize.format(num).replace(/[\.,]00$/, "");
 						}
 
 						return val
@@ -7848,13 +7848,8 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		};
 	},
 	DOLLAR:function (v, decimals, symbol) {
-		if (decimals == null) {
-			decimals = 2;
-		}
-
-		if (symbol == null) {
-			symbol = '$';
-		}
+		decimals = decimals || 2;
+		symbol = symbol || '$';
 
 		var r = jFN.FIXED(v, decimals, false),
 			html;
@@ -7869,50 +7864,8 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		};
 	},
 	FIXED:function (v, decimals, noCommas) {
-		if (decimals == null) {
-			decimals = 2;
-		}
-		var x = Math.pow(10, decimals),
-			n = String(Math.round(jFN.N(v) * x) / x),
-			p = n.indexOf('.'),
-			commaPreDecimal = (noCommas ? '' : ''),
-			commaPostDecimal = (noCommas ? '' : ',');
-
-		if (p < 0) {
-			p = n.length;
-			n += '.';
-		}
-		for (var i = n.length - p - 1; i < decimals; i++) {
-			n += '0';
-		}
-
-		var arr = n.replace('-', '').split('.'),
-			result = [],
-			first = true;
-		while (arr[0].length > 0) { // LHS of decimal point.
-			if (!first) {
-				result.unshift(commaPostDecimal);
-			}
-			result.unshift(arr[0].slice(-3));
-			arr[0] = arr[0].slice(0, -3);
-			first = false;
-		}
-		if (decimals > 0) {
-			result.push('.');
-			var first = true;
-			while (arr[1].length > 0) { // RHS of decimal point.
-				if (!first) {
-					result.push(commaPreDecimal);
-				}
-				result.push(arr[1].slice(0, 3));
-				arr[1] = arr[1].slice(3);
-				first = false;
-			}
-		}
-		if (v < 0) {
-			return '-' + result.join('');
-		}
-		return result.join('');
+		decimals = decimals || 2;
+		return Globalize.format(v, 'n' + decimals)
 	},
 	LEFT:function (v, numberOfChars) {
 		numberOfChars = numberOfChars || 1;
