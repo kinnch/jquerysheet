@@ -412,7 +412,8 @@
 			 * @name xml
 			 */
 			xml: function(jS) {
-				var output = '<spreadsheets>', i = 1 * jS.i;
+				var output = '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">',
+					i = 1 * jS.i;
 
 				for(var sheet in jS.spreadsheets) {
 					jS.i = sheet;
