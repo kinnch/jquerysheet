@@ -1653,7 +1653,7 @@ jQuery.sheet = {
 					 */
 					top:function (pane) {
 						if (jS.isBusy()) return false;
-						if (!(jS.scrolledArea[jS.i].col.end <= (jS.frozenAt().col + 1))) return false;
+						if (!(jS.scrolledTo().col.end <= (jS.frozenAt().col + 1))) return false;
 
 						jS.obj.barHelper().remove();
 
@@ -1695,7 +1695,7 @@ jQuery.sheet = {
 					 */
 					left:function (pane) {
 						if (jS.isBusy()) return false;
-						if (!(jS.scrolledArea[jS.i].row.end <= (jS.frozenAt().row + 1))) return false;
+						if (!(jS.scrolledTo().row.end <= (jS.frozenAt().row + 1))) return false;
 
 						jS.obj.barHelper().remove();
 
@@ -2165,9 +2165,11 @@ jQuery.sheet = {
 									scrollStyleX.text(style);
 								}
 
-								if (!jS.scrolledArea[jS.i]) jS.scrolledArea[jS.i] = {col:{start:0, end:0}, row:{start:0, end:0}};
+								jS.scrolledTo();
 								jS.scrolledArea[jS.i].col.start = indexes[0] || 1;
 								jS.scrolledArea[jS.i].col.end = indexes.pop() || 1;
+
+								jS.obj.barHelper().remove();
 							}),
 						scrollStyleY = jS.controls.bar.y.scroll[jS.i] = $('<style type="text/css"></style>')
 							.bind('updateStyle', function (e, indexes, styleOverride) {
@@ -2184,9 +2186,11 @@ jQuery.sheet = {
 									scrollStyleY.text(style);
 								}
 
-								if (!jS.scrolledArea[jS.i]) jS.scrolledArea[jS.i] = {col:{start:0, end:0}, row:{start:0, end:0}};
+								jS.scrolledTo();
 								jS.scrolledArea[jS.i].row.start = indexes[0] || 1;
 								jS.scrolledArea[jS.i].row.end = indexes.pop() || 1;
+
+								jS.obj.barHelper().remove();
 							});
 
 					var xStyle, yStyle;
@@ -2958,6 +2962,24 @@ jQuery.sheet = {
 								case key.V:
 									if (e.ctrlKey) {
 										return jS.evt.keydownHandler.formulaKeydownIf(!jS.evt.pasteOverCells(e), e);
+									} else {
+										jS.obj.cellActive().trigger('cellEdit');
+										return true;
+									}
+									break;
+								case key.Y:
+									if (e.ctrlKey) {
+										jS.evt.keydownHandler.redo(e);
+										return false;
+									} else {
+										jS.obj.cellActive().trigger('cellEdit');
+										return true;
+									}
+									break;
+								case key.Z:
+									if (e.ctrlKey) {
+										jS.evt.keydownHandler.undo(e);
+										return false;
 									} else {
 										jS.obj.cellActive().trigger('cellEdit');
 										return true;
@@ -4524,6 +4546,11 @@ jQuery.sheet = {
 				return jS.s.frozenAt[jS.i];
 			},
 
+			scrolledTo:function () {
+				if (!jS.scrolledArea[jS.i]) jS.scrolledArea[jS.i] = {col:{start:jS.frozenAt().col, end:jS.frozenAt().col}, row:{start:jS.frozenAt().row, end:jS.frozenAt().row}};
+				return jS.scrolledArea[jS.i];
+			},
+
 			/**
 			 * instance busy state
 			 * @memberOf jS
@@ -5922,17 +5949,15 @@ jQuery.sheet = {
 						down:true,
 						left:true,
 						right:true
-					};
-
-				//$.sheet.debugPositionBox(null, null, visibleFold);
-				if (!jS.scrolledArea[jS.i]) jS.scrolledArea[jS.i] = {col:{start:jS.frozenAt().col, end:jS.frozenAt().col}, row:{start:jS.frozenAt().row, end:jS.frozenAt().row}};
+					},
+					scrolledArea = jS.scrolledTo();
 
 				if (tdHeight > paneHeight || tdWidth > paneWidth) return;
 
 				jS.setBusy(true);
 
 				while (move == true && i < max) {
-					var tempTd = jS.getTd(jS.i, jS.scrolledArea[jS.i].row.end + y, jS.scrolledArea[jS.i].col.end + x),
+					var tempTd = jS.getTd(jS.i, scrolledArea.row.end + y, scrolledArea.col.end + x),
 						xHidden = tdInBottomRowOfSameCol.is(':hidden'),
 						yHidden = tdParent.is(':hidden');
 
@@ -5953,7 +5978,7 @@ jQuery.sheet = {
 						} else {
 							x--;
 							move = true;
-							jS.evt.scroll.scrollTo({axis:'x', value:jS.scrolledArea[jS.i].col.end + x});
+							jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.col.end + x});
 						}
 					} else if (directions.right) {
 						if (onlyCheckIfVisible) {
@@ -5970,7 +5995,7 @@ jQuery.sheet = {
 						} else {
 							y--;
 							move = true;
-							jS.evt.scroll.scrollTo({axis:'y', value:jS.scrolledArea[jS.i].row.end + y});
+							jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.row.end + y});
 						}
 					} else if (directions.down) {
 						if (onlyCheckIfVisible) {
@@ -5993,12 +6018,12 @@ jQuery.sheet = {
 				}
 
 				if (x > 0) { //right
-					jS.evt.scroll.scrollTo({axis:'x', value:(jS.scrolledArea[jS.i].col.end + 1) + x});
+					jS.evt.scroll.scrollTo({axis:'x', value:(scrolledArea.col.end + 1) + x});
 					jS.evt.scroll.stop();
 				}
 
 				if (y > 0) { //down
-					jS.evt.scroll.scrollTo({axis:'y', value:(jS.scrolledArea[jS.i].row.end + 1) + y});
+					jS.evt.scroll.scrollTo({axis:'y', value:(scrolledArea.row.end + 1) + y});
 					jS.evt.scroll.stop();
 				}
 
@@ -6243,7 +6268,7 @@ jQuery.sheet = {
 				jS.setDirty(this);
 				jS.cellUndoable.add(jS.obj.cellHighlighted()); //save state, make it undoable
 				jS.obj.cellHighlighted().css(style, value);
-				jS.cellUndoable.add(jS.obj.cellHighlighted()); //save state, make it redoable
+				jS.cellUndoable.add(jS.obj.cellHighlighted(), true); //save state, make it redoable
 
 			},
 
@@ -6307,13 +6332,14 @@ jQuery.sheet = {
 								break;
 						}
 					},
-					td = $([]);
+					td = $([]),
+					scrolledArea  = jS.scrolledTo();
 
 				switch (type) {
 					case 'top':
 						rows.start = 1;
 						rows.end = size.rows;
-						visibleRow.start = visibleRow.end = jS.scrolledArea[jS.i].row.end;
+						visibleRow.start = visibleRow.end = scrolledArea.row.end;
 
 						cols.start = first;
 						cols.end = last;
@@ -6329,7 +6355,7 @@ jQuery.sheet = {
 
 						cols.start = 1;
 						cols.end = size.cols;
-						visibleCol.start = visibleCol.end = jS.scrolledArea[jS.i].col.end;
+						visibleCol.start = visibleCol.end = scrolledArea.col.end;
 
 						break;
 					case 'corner': //all
@@ -6684,7 +6710,6 @@ jQuery.sheet = {
 
 			/**
 			 * Undoable manager
-			 * TODO: refactor for using jS.spreadsheets
 			 * there should always be 2 cellUndoable.add()'s every time used, one to save the current state, the second to save the new
 			 * @memberOf jS
 			 * @name cellUndoable
@@ -6729,13 +6754,11 @@ jQuery.sheet = {
 						td
 							.data('formula', cells[i].formula)
 							.attr('style', cells[i].style)
-							.attr('class', cells[i].cl);
+							.addClass(cells[i].cl);
 
 						jS.cellLast.td = $([]);
 
 						jS.calcDependencies(jS.i, loc.row, loc.col, null, true);
-
-						jS.cellEdit(td);
 					}
 				},
 
@@ -6746,13 +6769,6 @@ jQuery.sheet = {
 				 * @methodOf jS.cellUndoable
 				 */
 				stack:function () {
-					/*I need 3 items
-					* index tracking
-					* date tracking
-					* stack for a date
-					*
-					* navigate through stack
-					* */
 					if (!this.stacks[jS.i]) this.stacks[jS.i] = {
 						i: 0,
 						max: 20,
