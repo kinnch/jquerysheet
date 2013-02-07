@@ -742,6 +742,7 @@ jQuery.sheet = {
 	events:['sheetAddRow', 'sheetAddColumn', 'sheetSwitch', 'sheetRename', 'sheetTabSortStart', 'sheetTabSortUpdate', 'sheetCellEdit', 'sheetCellEdited', 'sheetCalculation', 'sheetAdd', 'sheetDelete', 'sheetDeleteRow', 'sheetDeleteColumn', 'sheetOpen', 'sheetAllOpened', 'sheetSave', 'sheetFullScreen', 'sheetFormulaKeydown'],
 
 	preLoad:function (path, settings) {
+		path = path || '';
 		settings = $.extend({
 			skip: ['globalizeCultures']
 		},settings)
