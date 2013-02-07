@@ -3515,27 +3515,6 @@ jQuery.sheet = {
 			},
 
 			/**
-			 * Refreshed scroll system
-			 * @param {Object} pos {row, col} needs at least one
-			 * @methodOf jS
-			 * @name scrollRefresh
-			 */
-			scrollRefresh:function (pos) {
-				if (!pos) return;
-				if (pos.row) {
-					jS.evt.scroll.start('x');
-					jS.evt.scroll.scrollTo({axis:'x', value:pos.row});
-					jS.evt.scroll.stop();
-				}
-
-				if (pos.col) {
-					jS.evt.scroll.start('y');
-					jS.evt.scroll.scrollTo({axis:'y', value:pos.col});
-					jS.evt.scroll.stop();
-				}
-			},
-
-			/**
 			 *
 			 * @param {Integer} start index to start from
 			 * @methodOf jS
@@ -5577,6 +5556,8 @@ jQuery.sheet = {
 
 					jS.sheetSyncSize();
 
+					jS.obj.pane().trigger('resizeScroll');
+
 					jS.trigger('sheetAdd', [jS.i]);
 				}
 			},
@@ -6690,21 +6671,12 @@ jQuery.sheet = {
 			 */
 			cellUndoable:{
 				/**
-				 * current undo step
-				 * @memberOf jS.cellUndoable
-				 * @name i
-				 */
-				i:[],
-
-				lastStack:[],
-
-				/**
 				 * undo stack
 				 * @param undo
 				 * @memberOf jS.cellUndoable
-				 * @name stack
+				 * @name stacks
 				 */
-				stack:[],
+				stacks:[],
 
 				/**
 				 * @param {Boolean} undo
@@ -6756,18 +6728,40 @@ jQuery.sheet = {
 				 * @name get
 				 * @methodOf jS.cellUndoable
 				 */
-				pre:function () { //
-					if (!this.i[jS.i]) this.i[jS.i] = 0;
-				},
+				stack:function () {
+					/*I need 3 items
+					* index tracking
+					* date tracking
+					* stack for a date
+					*
+					* navigate through stack
+					* */
+					if (!this.stacks[jS.i]) this.stacks[jS.i] = {
+						i: 0,
+						lasts: [],
+						lastsGroups: [],
+						getGroup: function(last) {
+							var index = this.lasts.indexOf(last);
+							if (index < 0) {
+								var me = this;
+								me.i = this.lasts.length;
+								me.lasts.push(last);
+								index = this.lasts.length - 1
+								me.lastsGroups[index] = [];
 
-				group:function () {
-					this.pre();
+								me.lastsGroups[index].cleanAhead = function() {};
+								this.lastsGroups[index].cleanBehind = function() {};
+							}
+							return this.lastsGroups[index];
+						}
+					};
 
-
+					return this.stacks[jS.i];
 				},
 
 				/**
 				 * adds elements to the undoable stack
+				 * @param {Date} last
 				 * @param {Integer} sheet
 				 * @param {Integer} row
 				 * @param {Integer} col
@@ -6775,54 +6769,27 @@ jQuery.sheet = {
 				 * @name add
 				 * @methodOf jS.cellUndoable
 				 */
-				add:function (sheet, row, col, after) {
+				add:function (last, sheet, row, col, after) {
 					return;
-					this.pre();
+					var stackGroup = this.stack().getGroup(last);
 
-					var i = this.i[jS.i]++;
+					stackGroup.cleanAhead();
 
-					this.clean(true);
+					if (row > 0 & col > 0) {
+						var cellClone = {},
+							cell = jS.spreadsheets[sheet][row][col];
 
-					var stack = this.stack[jS.i][i];
-
-					var cellsCloned = {};
-					var td = jS.spreadsheets[sheet][row][col].td,
-						loc = jS.getTdLocation(td);
-
-					if (loc.col > 0 & loc.row > 0) {
-						var cell = jS.spreadsheets[jS.i][loc.row][loc.col];
-
-						var id = jS.i + '_' + loc.row + '_' + loc.col;
-						if (!cellsCloned[id]) cellsCloned[id] = {};
 						for (var attr in cell) {
-							cellsCloned[id][attr] = cell[attr];
+							cellClone[attr] = cell[attr];
 						}
-						cellsCloned[id]['style'] = td.attr('style');
-						cellsCloned[id]['class'] = td.attr('class');
-						cellsCloned[id]['sheet'] = sheet;
+						cellClone['style'] = cell.td.attr('style');
+						cellClone['class'] = cell.td.attr('class');
+						cellClone['sheet'] = sheet;
 					}
 
-					var i = this.get();
-					//console.log(i);
-					//console.log(i);
-					//console.log(this);
-					this.stack[jS.i][jS.calcDependenciesLast] = cells;
+					stackGroup.push(cell);
 
-					if (this.stack[jS.i].length > i) {
-						for (var i = this.stack[jS.i].length; this.stack[jS.i].length < i; i--) {
-							this.stack[jS.i].pop();
-						}
-					}
-
-
-					if (this.stack[jS.i].length > 20) { //undoable count, we want to be careful of too much memory consumption
-						this.stack[jS.i].shift(); //drop the first value
-					}
-
-				},
-
-				clean:function (ahead) {
-					this.i[jS.i];//TODO: remove those ahead of me
+					stackGroup.cleanBehind();
 				}
 			},
 
