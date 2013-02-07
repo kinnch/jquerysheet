@@ -775,7 +775,12 @@ jQuery.sheet = {
 
 
 	repeat:function (str, num) {
-		return new Array(num).join(str);
+		var result = '';
+		while (num > 0) {
+			if (num & 1) result += str;
+			num >>= 1, str += str;
+		}
+		return result;
 	},
 
 
@@ -784,9 +789,8 @@ jQuery.sheet = {
 		css = css || '{display: none;}';
 		if (me.styleSheet) { //IE compatibility
 			for (var index in indexes) {
-				var nthSelector;
 				if (indexes[index] > min) {
-					style.push(parentSelectorString + ' ' + elementName + ':first-child' + jQuery.sheet.repeat('+' + elementName, indexes[index]));
+					style.push(parentSelectorString + ' ' + elementName + ':first-child' + jQuery.sheet.repeat('+' + elementName, indexes[index] - 1));
 				}
 			}
 			if (style.length) {
@@ -2140,13 +2144,17 @@ jQuery.sheet = {
 						.disableSelectionSpecial()
 						.mousedown(function () {
 							jS.obj.barHelper().remove();
-						});
+						}),
+						x = 0,y = 0;
 					jS.controls.scrolls = jS.obj.scrolls().add(scroll);
 
 					var scrollChild = scroll.children(),
 						scrollStyleX = jS.controls.bar.x.scroll[jS.i] = $('<style type="text/css"></style>')
 							.bind('updateStyle', function (e, indexes, styleOverride) {
 								indexes = indexes || [];
+
+								if (indexes.length == x) return;
+								x = indexes.length;
 
 								var style = styleOverride || $.sheet.nthCss('col', '#' + jS.id.sheet + jS.i, this, indexes, jS.frozenAt().col + 1) +
 									$.sheet.nthCss('td', '#' + jS.id.sheet + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
@@ -2164,6 +2172,9 @@ jQuery.sheet = {
 						scrollStyleY = jS.controls.bar.y.scroll[jS.i] = $('<style type="text/css"></style>')
 							.bind('updateStyle', function (e, indexes, styleOverride) {
 								indexes = indexes || [];
+
+								if (indexes.length == y) return;
+								y = indexes.length;
 
 								var style = styleOverride || $.sheet.nthCss('tr', '#' + jS.id.sheet + jS.i, this, indexes, jS.frozenAt().row + 1);
 
@@ -3463,7 +3474,7 @@ jQuery.sheet = {
 
 						if (!pos.value) {
 							if (!me.p) return;
-							pos.value = me.p[arrHelpers.getClosestValues(me.v, Math.abs(pos.pixel / (me.sheetArea - me.area)) * 100)];
+							pos.value = me.p[arrHelpers.closest(me.v, Math.abs(pos.pixel / (me.sheetArea - me.area)) * 100, me.min)];
 						}
 
 						pos.max = pos.max || me.max;
@@ -8604,15 +8615,22 @@ var arrHelpers = {
 		});
 		return arr;
 	},
-	getClosestValues:function (a, x) {
-		var closest = null;
-		a = a || [];
-		x = x || 0;
-		for (var i = 0; i < a.length; i++) {
-			if (closest == null || Math.abs(a[i] - x) <= Math.abs(closest - x)) {
-				closest = a[i];
+	closest:function (array, num, min) {
+		array = array || [];
+		num = num || 0;
+		min = min || 0;
+
+		var closest = array[min],
+			diff = Math.abs(num - closest);
+
+		for (var i = min; i < array.length; i++) {
+			var newDiff = Math.abs(num - array[i])
+			if (newDiff < diff) {
+				diff = newDiff;
+				closest = array[i];
 			}
 		}
+
 		return closest;
 	}
 };
