@@ -5528,12 +5528,17 @@ jQuery.sheet = {
 			 * @param {Integer} sheet
 			 * @param {Integer} row
 			 * @param {Integer} cell
+			 * @param {Boolean} skipUndoable
 			 * @param {Date} last
 			 */
-			calcDependencies:function (sheet, row, cell, last) {
+			calcDependencies:function (sheet, row, cell, last, skipUndoable) {
 				last = last || new Date();
 				jS.calcDependenciesLast = last;
-				jS.cellUndoable.add(last, sheet, row, cell);
+
+				if (!skipUndoable) {
+					jS.cellUndoable.add(last, sheet, row, cell);
+				}
+
 				jS.trigger('sheetPreCalculation', [
 					{which:'cell', sheet:sheet, row:row, cell:cell}
 				]);
@@ -5544,7 +5549,10 @@ jQuery.sheet = {
 				jS.trigger('sheetCalculation', [
 					{which:'cell', sheet:sheet, row:row, cell:cell}
 				]);
-				jS.cellUndoable.add(last, sheet, row, cell, true);
+
+				if (!skipUndoable) {
+					jS.cellUndoable.add(last, sheet, row, cell, true);
+				}
 			},
 
 			/**
@@ -6710,11 +6718,7 @@ jQuery.sheet = {
 						stack.moveForward();
 					}
 
-					console.log(stack);
-
 					cells = stack.getCells();
-
-					console.log(cells);
 
 					for (var i in cells) {
 						var td = cells[i].td,
@@ -6723,13 +6727,13 @@ jQuery.sheet = {
 						jS.spreadsheets[jS.i][loc.row][loc.col] = cells[i];
 
 						td
-							.data('formula', cells[i]['formula'])
-							.attr('style', cells[i]['style'])
-							.attr('class', cells[i]['class']);
+							.data('formula', cells[i].formula)
+							.attr('style', cells[i].style)
+							.attr('class', cells[i].cl);
 
 						jS.cellLast.td = $([]);
 
-						jS.calcDependencies(jS.i, loc.row, loc.col);
+						jS.calcDependencies(jS.i, loc.row, loc.col, null, true);
 
 						jS.cellEdit(td);
 					}
@@ -6799,7 +6803,7 @@ jQuery.sheet = {
 				 */
 				add:function (last, sheet, row, col, after) {
 					var stack = this.stack(),
-						cells = stack.getCells(last.valueOf() + (after ? '_' : ''));
+						cells = stack.getCells(last.valueOf() + (after ? 1 : 0));
 
 					stack.cleanAhead();
 
@@ -6810,9 +6814,11 @@ jQuery.sheet = {
 						for (var attr in cell) {
 							clone[attr] = cell[attr];
 						}
-						clone['style'] = cell.td.attr('style');
-						clone['class'] = cell.td.attr('class');
-						clone['sheet'] = sheet;
+						clone.style = cell.td.attr('style');
+						clone.cl = (cell.td.attr('class') || '')
+							.replace(jS.cl.uiCellActive , '')
+							.replace(jS.cl.uiCellHighlighted, '');
+						clone.sheet = sheet;
 					}
 
 					cells.push(clone);
