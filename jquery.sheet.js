@@ -6776,7 +6776,7 @@ jQuery.sheet = {
 						lasts: [],
 						lastsCells: [],
 						getCells: function(last) {
-							var index = (last ? this.lasts.indexOf(last) : this.i);
+							var index = (last ? $.inArray(last, this.lasts) : this.i);
 							if (index < 0) {
 								this.i = this.lasts.length;
 								this.lasts.push(last);
