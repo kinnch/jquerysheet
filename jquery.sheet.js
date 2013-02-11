@@ -408,12 +408,19 @@ jQuery.fn.extend({
 					error:function (e) {
 						return e.error;
 					},
+					endOfNumber: false,
 					encode:function (val) {
+						if (!this.endOfNumber) {
+							var radix = Globalize.culture().numberFormat['.'];
+							this.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+						}
 						switch (typeof val) {
 							case 'object':
 								return val;
 							case 'number':
-								return Globalize.format(val).replace(/[\.,]00$/, "");
+								return Globalize.format(val, "n10").replace(this.endOfNumber, function (orig, radix, num) {
+									return (num ? radix : '') + num;
+								});
 						}
 
 						if (!val) {
@@ -424,7 +431,9 @@ jQuery.fn.extend({
 						}
 						var num = $.trim(val) * 1;
 						if (!isNaN(num)) {
-							return Globalize.format(num).replace(/[\.,]00$/, "");
+							return Globalize.format(num, "n10").replace(this.endOfNumber, function (orig, radix, num) {
+								return (num ? radix : '') + num;
+							});
 						}
 
 						return val
@@ -546,9 +555,7 @@ jQuery.fn.extend({
 						'£':function(val) {
 							jS.s.cellStartingHandlers['$'].apply(this, [val, '£']);
 						}
-					},
-					radixPointChar: '.',
-					numberGroupingChar: ','
+					}
 				},
 				events = jQuery.sheet.events;
 
@@ -1411,56 +1418,62 @@ jQuery.sheet = {
 					switch (type) {
 						case "row":
 							o = {
-								cells:function () {
+								el:function () {
 									//table / tbody / tr / td
-									var cells = jS.rowTds(sheet, i);
-									if (!cells || !cells[0]) return [];
-									return cells[0].parentNode;
-								},
-								col:function () {
-									return '';
+									var tds = jS.rowTds(sheet, i);
+									if (!tds || !tds[0]) return [];
+									return [tds[0].parentNode];
 								},
 								size:function () {
-									var cells = o.cells();
-									return cells.children.length - 1;
+									if (!o.Size) {
+										var tr = o.el()[0];
+										o.Size = tr.children.length - 1;
+									}
+									return o.Size;
 								},
 								loc:function () {
-									var cells = o.cells();
-									return jS.getTdLocation(cells.children[0]);
+									var tr = o.el();
+									return jS.getTdLocation(tr[0].children);
 								},
-								newCells:function () {
+								trs: [],
+								newObj:function () {
 									var j = o.size(),
-										newCells = '';
+										tr = document.createElement('tr');
 
+									tr.setAttribute('style', 'height: ' + s.colMargin + 'px;');
 									for (var i = 0; i <= j; i++) {
+										var td = document.createElement('td');
 										if (i == 0) {
-											newCells += '<td class="' + jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.cl.uiBar + '" data-entity="left" data-type="bar">';
-										} else {
-											newCells += '<td />';
+											td.setAttribute('class', jS.cl.barLeft + ' ' + jS.cl.uiBar);
+											td.setAttribute('data-entity', 'left');
+											td.setAttribute('data-type', 'bar');
 										}
+										tr.appendChild(td);
 									}
 
-									return '<tr style="height: ' + s.colMargin + 'px;">' + newCells + '</tr>';
+									o.trs.push(tr);
+
+									return tr;
 								},
-								newCol:'',
 								offset:{row:qty, col:0},
 								start:function () {
 									return {row:(isBefore ? i : i + qty)};
 								},
-								createCells:function (tr) {
-									tr.each(function (row) {
-										var tds = $(this).children(),
-											offset = (isBefore ? 0 : 1) + i;
+								createCells:function () {
+									for (var row = 0; row < o.trs.length; row++) {
+										row = row * 1;
+										var offset = (isBefore ? 0 : 1) + i;
 										jS.spreadsheets[jS.i].splice(row + offset, 0, []);
-										tds.each(function (col) {
-											var obj = jS.controls.bar.y.td[jS.i];
+										for (var col = 0; col < o.trs[row].children.length; col++) {
+											col = col * 1;
+											var td = $(o.trs[row].children[col]);
 											if (col == 0) {//skip bar
-												jS.controls.bar.y.td[jS.i].splice(row + offset, 0, $(this));
+												jS.controls.bar.y.td[jS.i].splice(row + offset, 0, td);
 											} else {
-												jS.createCell($(this), jS.i, row + offset, col);
+												jS.createCell(td, jS.i, row + offset, col);
 											}
-										});
-									});
+										}
+									}
 
 									jS.refreshRowLabels(i);
 								}
@@ -1468,54 +1481,65 @@ jQuery.sheet = {
 							break;
 						case "col":
 							o = {
-								cells:function () {
-									var cellStart = jS.rowTds(sheet, 1)[i],
+								el:function () {
+									var tdStart = jS.rowTds(sheet, 1)[i],
 										lastRow = jS.rowTds(sheet),
-										cellEnd = lastRow[lastRow.length - 1],
+										tdEnd = lastRow[lastRow.length - 1],
 
-										loc1 = jS.getTdLocation(cellStart),
-										loc2 = jS.getTdLocation(cellEnd),
+										loc1 = jS.getTdLocation(tdStart),
+										loc2 = jS.getTdLocation(tdEnd),
 
-									//we get the first cell then get all the other cells directly... faster ;)
-										cells = $([]);
+									//we get the first td then get all the other tds directly... faster ;)
+										tds = [];
 
-									cells = cells.add(jS.obj.barTop(loc1.col));
+									tds.push(jS.obj.barTop(loc1.col)[0]);
 									for (var j = 1; j <= loc2.row; j++) {
-										cells = cells.add(jS.getTd(jS.i, j, loc1.col));
+										tds.push(jS.getTd(jS.i, j, loc1.col)[0]);
 									}
 
-									return cells;
+									return tds;
 								},
 								col:function () {
 									return jS.col(sheet, i);
 								},
-								newCol:'<col />',
-								loc:function (cells) {
-									cells = (cells ? cells : o.cells());
-									return jS.getTdLocation(cells.first());
+								cols: [],
+								newCol:function () {
+									var col = document.createElement('col');
+									o.cols.push(col);
+									return col;
 								},
-								newCells:function () {
-									return '<td />';
+								loc:function (tds) {
+									tds = (tds ? tds : o.el());
+									return jS.getTdLocation(tds[0]);
+								},
+								tds: [],
+								newObj:function () {
+									var td = document.createElement('td');
+									o.tds.push(td);
+									return td;
 								},
 								offset:{row:0, col:qty},
 								start:function () {
 									return {col:(isBefore ? i : i + qty)};
 								},
-								createCells:function (tds, cols) {
-									cols.width(jS.s.newColumnWidth);
+								createCells:function () {
 									var rows = jS.rows(sheet);
 									for (var row = 0; row < rows.length; row++) {
 										var col = (isBefore ? 0 : 1) + i,
-											colMax = col + qty;
+											colMax = col + qty,
+											j = 0;
 										for (col; col < colMax; col++) {
 											var td = $(sheet[0].children[1].children[row].children[col]);
 											if (row == 0) {
 												jS.controls.bar.x.td[jS.i].splice(col, 0, td);
 												td
-													.addClass(jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.cl.uiBar)
+													.addClass(jS.cl.barTop + ' ' + jS.cl.uiBar)
 													.data('type', 'bar')
 													.data('entity', 'top')
 													.text(jSE.columnLabelString(col));
+
+												o.cols[j].setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
+												j++;
 											} else {
 												jS.spreadsheets[jS.i][row].splice(col, 0, {});
 												jS.createCell(td, jS.i, row, col);
@@ -1529,33 +1553,39 @@ jQuery.sheet = {
 							break;
 					}
 
-					var cells = $(o.cells()),
-						loc = o.loc(cells),
-						col = o.col(),
-
-						newCell = o.newCells(),
-						newCol = o.newCol,
-
-						newCols = '',
-						newCells = '';
-
-					for (var j = 0; j < qty; j++) { //by keeping these variables strings temporarily, we cut down on using system resources
-						newCols += newCol;
-						newCells += newCell;
-					}
-
-					newCols = $(newCols);
-					newCells = $(newCells);
+					var el = o.el(),
+						loc = o.loc(el),
+						col;
 
 					if (isBefore) {
-						cells.before(newCells);
-						$(col).before(newCols);
+						for(var j = 0; j < el.length; j++) {
+							for (var k = 0; k < qty; k++) {
+								el[j].parentNode.insertBefore(o.newObj(), el[j]);
+							}
+						}
+
+						if (o.newCol) {
+							col = o.col();
+							for (var j = 0; j < qty; j++) {
+								col.parentNode.insertBefore(o.newCol(), col);
+							}
+						}
 					} else {
-						cells.after(newCells);
-						$(col).after(newCols);
+						for(var j = 0; j < el.length; j++) {
+							for (var k = 0; k < qty; k++) {
+								el[j].parentNode.insertBefore(o.newObj(), el[j].nextSibling);
+							}
+						}
+
+						if (o.newCol) {
+							col = o.col();
+							for (var j = 0; j < qty; j++) {
+								col.parentNode.insertBefore(o.newCol(), col.nextSibling);
+							}
+						}
 					}
 
-					o.createCells(newCells, newCols);
+					o.createCells();
 
 					if (!skipFormulaReparse && isLast != true) {
 						//offset formulas
