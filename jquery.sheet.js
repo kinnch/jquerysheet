@@ -419,7 +419,7 @@ jQuery.fn.extend({
 								return val;
 							case 'number':
 								return Globalize.format(val, "n10").replace(this.endOfNumber, function (orig, radix, num) {
-									return (num ? radix : '') + num;
+									return (num ? radix : '') + (num || '');
 								});
 						}
 
@@ -432,7 +432,7 @@ jQuery.fn.extend({
 						var num = $.trim(val) * 1;
 						if (!isNaN(num)) {
 							return Globalize.format(num, "n10").replace(this.endOfNumber, function (orig, radix, num) {
-								return (num ? radix : '') + num;
+								return (num ? radix : '') + (num || '');
 							});
 						}
 
