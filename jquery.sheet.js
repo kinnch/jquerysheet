@@ -1042,6 +1042,9 @@ jQuery.sheet = {
 				header:function () {
 					return jS.controls.header || $([]);
 				},
+				highlighted: function() {
+					return jS.highlightedLast.obj || $([]);
+				},
 				menuRight:function () {
 					return jS.controls.menuRight[jS.i] || $([]);
 				},
@@ -1697,7 +1700,7 @@ jQuery.sheet = {
 					 */
 					top:function (pane) {
 						if (jS.isBusy()) return false;
-						if (!(jS.scrolledTo().col.end <= (jS.frozenAt().col + 1))) return false;
+						if (!(jS.scrolledTo().col.end <= jS.frozenAt().col + 1)) return false;
 
 						jS.obj.barHelper().remove();
 
@@ -2210,8 +2213,8 @@ jQuery.sheet = {
 								}
 
 								jS.scrolledTo();
-								jS.scrolledArea[jS.i].col.start = indexes[0] || 1;
-								jS.scrolledArea[jS.i].col.end = indexes.pop() || 1;
+								jS.scrolledArea[jS.i].col.start = indexes.pop() || 1;
+								jS.scrolledArea[jS.i].col.end = indexes.shift() || 1;
 
 								jS.obj.barHelper().remove();
 							}),
@@ -2231,8 +2234,8 @@ jQuery.sheet = {
 								}
 
 								jS.scrolledTo();
-								jS.scrolledArea[jS.i].row.start = indexes[0] || 1;
-								jS.scrolledArea[jS.i].row.end = indexes.pop() || 1;
+								jS.scrolledArea[jS.i].row.start = indexes.pop() || 1;
+								jS.scrolledArea[jS.i].row.end = indexes.shift() || 1;
 
 								jS.obj.barHelper().remove();
 							});
@@ -3250,7 +3253,7 @@ jQuery.sheet = {
 					jS.highlightedLast.rowEnd = c;
 
 					//highlight the cells
-					jS.highlightedLast.td = jS.cycleCellsAndMaintainPoint(jS.themeRoller.cell.setHighlighted, jS.getTdLocation(jS.obj.cellActive()), {row:r, col:c});
+					jS.highlightedLast.obj = jS.highlightedLast.td = jS.cycleCellsAndMaintainPoint(jS.themeRoller.cell.setHighlighted, jS.getTdLocation(jS.obj.cellActive()), {row:r, col:c});
 					td = jS.getTd(jS.i, r, c)
 						.mousemove()
 						.mouseup();
@@ -3558,10 +3561,11 @@ jQuery.sheet = {
 						var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min) - 1,
 							indexes = [];
 
-						do {
-							indexes.push(i + me.min);
-						} while(i--);
-
+						if (i > 0) {
+							do {
+								indexes.push(i + me.min);
+							} while(i--);
+						}
 						if (indexes.length) {
 							if (me.scrollStyle) me.scrollStyle.trigger('updateStyle', [indexes]);
 						} else {
@@ -4465,7 +4469,7 @@ jQuery.sheet = {
 					 * @name isHighlighted
 					 */
 					isHighlighted:function () {
-						return (jS.highlightedLast.td.length ? true : false);
+						return (jS.highlightedLast.obj.length || jS.highlightedLast.td.length ? true : false);
 					},
 
 					/**
@@ -4477,6 +4481,8 @@ jQuery.sheet = {
 						if (jS.themeRoller.cell.isHighlighted()) {
 							jS.obj.cellHighlighted()
 								.removeClass(jS.cl.uiCellHighlighted);
+							jS.obj.highlighted()
+								.removeClass(jS.cl.uiCellHighlighted);
 						}
 
 						jS.highlightedLast.rowStart = 0;
@@ -4484,7 +4490,7 @@ jQuery.sheet = {
 
 						jS.highlightedLast.rowEnd = 0;
 						jS.highlightedLast.colEnd = 0;
-						jS.highlightedLast.td = $([]);
+						jS.highlightedLast.obj = jS.highlightedLast.td = $([]);
 					}
 				},
 
@@ -4589,7 +4595,18 @@ jQuery.sheet = {
 			},
 
 			scrolledTo:function () {
-				if (!jS.scrolledArea[jS.i]) jS.scrolledArea[jS.i] = {col:{start:jS.frozenAt().col, end:jS.frozenAt().col}, row:{start:jS.frozenAt().row, end:jS.frozenAt().row}};
+				if (!jS.scrolledArea[jS.i]) {
+					jS.scrolledArea[jS.i] = {
+						col:{
+							start:jS.frozenAt().col - 1,
+							end:jS.frozenAt().col - 1
+						},
+						row:{
+							start:jS.frozenAt().row - 1,
+							end:jS.frozenAt().row - 1
+						}
+					};
+				}
 				return jS.scrolledArea[jS.i];
 			},
 
@@ -4858,7 +4875,7 @@ jQuery.sheet = {
 					jS.themeRoller.bar.clearActive();
 					jS.themeRoller.cell.clearHighlighted();
 
-					jS.highlightedLast.td = td;
+					jS.highlightedLast.obj = jS.highlightedLast.td = td;
 
 					jS.themeRoller.cell.setHighlighted(td); //themeroll the cell and bars
 					jS.themeRoller.bar.setActive('left', jS.cellLast.row);
@@ -4922,7 +4939,7 @@ jQuery.sheet = {
 									selectModel(e.target);
 
 									//highlight the cells
-									jS.highlightedLast.td = jS.cycleCellsAndMaintainPoint(jS.themeRoller.cell.setHighlighted, loc, endLoc);
+									jS.highlightedLast.td = jS.highlightedLast.obj = jS.cycleCellsAndMaintainPoint(jS.themeRoller.cell.setHighlighted, loc, endLoc);
 								}
 
 								lastLoc = endLoc;
@@ -4976,7 +4993,8 @@ jQuery.sheet = {
 			 * @name highlightedLast
 			 */
 			highlightedLast:{
-				td:$([]),
+				obj:$([]),
+				td: $([]),
 				rowStart:0,
 				colStart:0,
 				rowEnd:0,
@@ -6419,8 +6437,9 @@ jQuery.sheet = {
 								break;
 						}
 					},
-					td = $([]),
-					scrolledArea  = jS.scrolledTo();
+					obj = $([]),
+					scrolledArea  = jS.scrolledTo(),
+					sheet = jS.obj.sheet();
 
 				switch (type) {
 					case 'top':
@@ -6433,6 +6452,9 @@ jQuery.sheet = {
 						visibleCol.start = start;
 						visibleCol.end = end;
 
+						for (var col = cols.start; col <= cols.end; col++) { //cols
+							obj = obj.add(jS.col(sheet, col));
+						}
 						break;
 					case 'left':
 						rows.start = first;
@@ -6444,6 +6466,9 @@ jQuery.sheet = {
 						cols.end = size.cols;
 						visibleCol.start = visibleCol.end = scrolledArea.col.end;
 
+						for (var row = rows.start; row <= rows.end; row++) { //rows
+							obj = obj.add(jS.getTd(jS.i, row, 1)[0].parentNode);
+						}
 						break;
 					case 'corner': //all
 						cols.start = 1;
@@ -6451,20 +6476,16 @@ jQuery.sheet = {
 						rows.start = 1;
 						rows.end = size.rows;
 
+						obj = obj.add(sheet);
 						break;
-				}
-
-				for (var row = rows.start; row <= rows.end; row++) { //rows
-					for (var col = cols.start; col <= cols.end; col++) { //cols
-						td = td.add(jS.getTd(jS.i, row, col));
-					}
 				}
 
 				setActive();
 				jS.themeRoller.cell.clearHighlighted();
-				jS.themeRoller.cell.setHighlighted(td);
+				jS.themeRoller.cell.setHighlighted(obj);
 
-				jS.highlightedLast.td = td;
+				jS.highlightedLast.obj = obj;
+				jS.highlightedLast.td = $([]);
 
 				jS.highlightedLast.rowStart = rows.start;
 				jS.highlightedLast.rowEnd = rows.end;
@@ -6487,51 +6508,54 @@ jQuery.sheet = {
 				jS.cellLast.isEdit = true;
 
 				var range = function (loc) {
-					if (loc.first.col > loc.last.col ||
-						loc.first.row > loc.last.row
-						) {
-						return {
-							first:jSE.parseCellName(loc.last.col, loc.last.row),
-							last:jSE.parseCellName(loc.first.col, loc.first.row)
-						};
-					} else {
-						return {
-							first:jSE.parseCellName(loc.first.col, loc.first.row),
-							last:jSE.parseCellName(loc.last.col, loc.last.row)
-						};
-					}
-				};
-				var label = function (loc) {
-					var rangeLabel = range(loc),
-						v2 = v + '';
-					v2 = (v2.match(/=/) ? v2 : '=' + v2); //make sure we can use this value as a formula
+						if (loc.first.col > loc.last.col ||
+							loc.first.row > loc.last.row
+							) {
+							return {
+								first:jSE.parseCellName(loc.last.col, loc.last.row),
+								last:jSE.parseCellName(loc.first.col, loc.first.row)
+							};
+						} else {
+							return {
+								first:jSE.parseCellName(loc.first.col, loc.first.row),
+								last:jSE.parseCellName(loc.last.col, loc.last.row)
+							};
+						}
+					},
+					label = function (loc) {
+						var rangeLabel = range(loc),
+							v2 = v + '';
+						v2 = (v2.match(/=/) ? v2 : '=' + v2); //make sure we can use this value as a formula
 
-					if (newFn || v2.charAt(v2.length - 1) != '(') { //if a function is being sent, make sure it can be called by wrapping it in ()
-						v2 = v2 + (newFn ? newFn : '') + '(';
-					}
+						if (newFn || v2.charAt(v2.length - 1) != '(') { //if a function is being sent, make sure it can be called by wrapping it in ()
+							v2 = v2 + (newFn ? newFn : '') + '(';
+						}
 
-					var formula,
-						lastChar = '';
-					if (rangeLabel.first != rangeLabel.last) {
-						formula = rangeLabel.first + ':' + rangeLabel.last;
-					} else {
-						formula = rangeLabel.first;
-					}
+						var formula,
+							lastChar = '';
+						if (rangeLabel.first != rangeLabel.last) {
+							formula = rangeLabel.first + ':' + rangeLabel.last;
+						} else {
+							formula = rangeLabel.first;
+						}
 
-					if (v2.charAt(v2.length - 1) == '(') {
-						lastChar = ')';
-					}
+						if (v2.charAt(v2.length - 1) == '(') {
+							lastChar = ')';
+						}
 
-					return v2 + formula + lastChar;
-				};
-				var newVal = '';
+						return v2 + formula + lastChar;
+					},
+					newVal = '',
+					loc,
+					sheet,
+					cells;
 
 				if (e) { //if from an event, we use mousemove method
-					var loc = {
+					loc = {
 						first:jS.getTdLocation([e.target])
 					};
 
-					var sheet = jS.obj.sheet().mousemove(function (e) {
+					sheet = jS.obj.sheet().mousemove(function (e) {
 						loc.last = jS.getTdLocation([e.target]);
 
 						newVal = label(loc);
@@ -6547,7 +6571,7 @@ jQuery.sheet = {
 						return newVal;
 					});
 				} else {
-					var cells = jS.obj.cellHighlighted().not(jS.obj.cellActive());
+					cells = jS.obj.cellHighlighted().not(jS.obj.cellActive());
 
 					if (cells.length) {
 						var loc = { //tr/td column and row index
