@@ -1,0 +1,37 @@
+<html>
+<head>
+	<script src="../jquery-1.8.3.min.js"></script>
+	<script src="../parser/tsv/tsv.js"></script>
+	<script>
+		$(function() {
+			function test(string, expected) {
+				var arr = tsv.parse(':::::' + string), same = true;
+				$.each(arr, function(i) {
+					$.each(arr[i], function(j) {
+						if (arr[i][j] != expected[i][j]) {
+							same = false;
+						}
+					});
+				});
+				$('table').append('<tr><td>"' + string.replace(/\t/g, '&#9;').replace(/\n/g, "<br/>") + '"</td><td>' + (same ? 'SUCCESS' : 'FAILURE') + '</td></tr>');
+			}
+
+			test("test'test'test\ntest'test'test", [["test'test'test"], ["test'test'test"]]);
+			test('"Test\nTest\nTest"\ttest\t\ntest\t\t\n\t\t\n\t\t\n\t\t\n\t\ttest\n',[['Test\nTest\nTest', 'test', ''],['test', '', ''], ['','',''], ['','',''], ['','',''], ['', '', 'test']]);
+			test('"Test\nTest\nTest"\tte"st\t\ntest\t\t\n\t\t\n\t\t\n\t\t\n\t\ttest\n',[['Test\nTest\nTest', 'te"st', ''],['test', '', ''], ['','',''], ['','',''], ['','',''], ['', '', 'test']]);
+			test("There are many variation's of passages of Lorem Ipsum available", [["There are many variation's of passages of Lorem Ipsum available"]]);
+			test("There are many variation's of passages of Lore'm Ipsum available", [["There are many variation's of passages of Lore'm Ipsum available"]]);
+			test("There are many variation's of passages of Lore'm Ipsum availa`ble", [["There are many variation's of passages of Lore'm Ipsum availa`ble"]]);
+			test("There are many variation's of passages of Lore'm Ipsum av`aila`ble", [["There are many variation's of passages of Lore'm Ipsum av`aila`ble"]]);
+		});
+	</script>
+</head>
+<body>
+<table>
+	<tr>
+		<th>Test</th>
+		<th>Result</th>
+	</tr>
+</table>
+</body>
+</html>

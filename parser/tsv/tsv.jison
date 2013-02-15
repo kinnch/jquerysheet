@@ -1,136 +1,162 @@
 /* description: Parses a tab separated value to an array */
 
 /* lexical grammar */
+%options flex
 %lex
-%s SINGLE_QUOTATION_ON DOUBLE_QUOTATION_ON INITIAL
+%s SINGLE_QUOTE_ON DOUBLE_QUOTE_ON STRING
 %%
-
 /* single quote handling*/
-<SINGLE_QUOTATION_ON>(\n|"\n")      {return 'CHAR';}
-<SINGLE_QUOTATION_ON>'"'            {return 'CHAR';}
-<SINGLE_QUOTATION_ON>"'" {
+<SINGLE_QUOTE_ON>(\n|"\n")               {return 'CHAR';}
+<SINGLE_QUOTE_ON>('"')              {return 'CHAR';}
+<SINGLE_QUOTE_ON>("'") {
 	this.popState();
-	return 'SINGLE_QUOTATION';
+	this.begin('STRING');
+	return 'QUOTE_OFF';
 }
-<SINGLE_QUOTATION_ON>(?=(\t)) {
+<SINGLE_QUOTE_ON>(?=(\t)) {
 	this.popState();
-	return 'FAKE_DOUBLE_QUOTATION';
+	return 'CHAR';
 }
-<INITIAL>("'") {
-	this.begin('SINGLE_QUOTATION_ON');
-	return 'SINGLE_QUOTATION';
+(":::::'") {
+	this.begin('SINGLE_QUOTE_ON');
+	return 'SINGLE_QUOTE_ON';
 }
-([\t\n]"'") {
-	this.begin('SINGLE_QUOTATION_ON');
-	return 'SINGLE_QUOTATION';
+((\t|\n|"\n")"'") {
+	this.begin('SINGLE_QUOTE_ON');
+	return 'QUOTE_ON';
 }
 
 /* double quote handling*/
-<DOUBLE_QUOTATION_ON>(\n|"\n")      {return 'CHAR';}
-<DOUBLE_QUOTATION_ON>"'"            {return 'CHAR';}
-<DOUBLE_QUOTATION_ON>'"' {
+<DOUBLE_QUOTE_ON>(\n|"\n")             {return 'CHAR';}
+<DOUBLE_QUOTE_ON>("'")              {return 'CHAR';}
+<DOUBLE_QUOTE_ON>('"') {
 	this.popState();
-	return 'DOUBLE_QUOTATION';
+	this.begin('STRING');
+	return 'QUOTE_OFF';
 }
-<DOUBLE_QUOTATION_ON>(?=(\t)) {
+<DOUBLE_QUOTE_ON>(?=(\t)) {
 	this.popState();
-	return 'FAKE_DOUBLE_QUOTATION';
+	return 'CHAR';
 }
-<INITIAL>('"') {
-
- 	this.begin('DOUBLE_QUOTATION_ON');
- 	return 'DOUBLE_QUOTATION';
+(':::::"') {
+ 	this.begin('DOUBLE_QUOTE_ON');
+ 	return 'QUOTE_ON';
 }
-([\t\n]'"') {
-	this.begin('DOUBLE_QUOTATION_ON');
-	return 'DOUBLE_QUOTATION';
+((\t|\n|"\n")'"') {
+	this.begin('DOUBLE_QUOTE_ON');
+	return 'QUOTE_ON';
 }
 
 /*spreadsheet control characters*/
-(\n|"\n")                           {return 'END_OF_LINE';}
-(\t)                                {return 'COLUMN';}
-(\s)								{return 'CHAR';}
-.                                   {return 'CHAR';}
-<<EOF>>								{return 'EOF';}
+(':::::') {
+	return 'BOF';
+}
+<STRING>(\n|"\n") {
+	this.popState();
+	return 'END_OF_LINE';
+}
+<STRING>(\t) {
+	this.popState();
+	return 'COLUMN_STRING';
+}
+(\t)                                {return 'COLUMN_EMPTY';}
+<STRING>(\s)                        {return 'CHAR';}
+<STRING>(.)                         {return 'CHAR';}
+<SINGLE_QUOTE_ON>(.)                {return 'CHAR';}
+<DOUBLE_QUOTE_ON>(.)                {return 'CHAR';}
+(\n|"\n")                                {return 'END_OF_LINE_EMPTY';}
+
+(.) {
+	this.begin('STRING');
+	return 'CHAR';
+}
+<<EOF>>	                            {return 'EOF';}
 
 
 /lex
 
-%start cells
+%start grid
 
 %% /* language grammar */
 
-cells :
-	string EOF {
-        return $1;
-    }
-	| rows EOF {
-        return $1;
-    }
-    | EOF {
-        return '';
-    }
+grid :
+	rows EOF {
+		return $1;
+	}
+	| EOF {
+		return [['']];
+	}
 ;
 
 rows :
 	row {
 		$$ = [$1];
 	}
-	| rows row {
-		$1 = $1 || [];
-		$1.push($2);
-	}
+	| END_OF_LINE {
+        $$ = [];
+    }
+    | END_OF_LINE_EMPTY {
+        $$ = [''];
+    }
+    | rows END_OF_LINE {
+        $$ = $1;
+    }
+    | rows END_OF_LINE_EMPTY {
+        $1[$1.length - 1].push('');
+        $$ = $1;
+    }
+    | rows END_OF_LINE row {
+        $1.push($3);
+        $$ = $1;
+    }
+    | rows END_OF_LINE_EMPTY row {
+        $1[$1.length - 1].push('');
+        $1.push($3);
+        $$ = $1;
+    }
 ;
 
 row :
-	END_OF_LINE {
-		$$ = [];
-	}
-	| column {
+	string {
 		$$ = [$1];
 	}
-	| row column {
-		$1 = $1 || [];
-		$1.push($2);
-		$$ = $1;
+	| COLUMN_EMPTY {
+		$$ = [''];
 	}
-;
-
-column :
-	COLUMN {
-		$$ = '';
-	}
-	| string {
-		$$ = $1;
+	| COLUMN_STRING {
+        //$$ = [];
     }
-    | string COLUMN {
+    | row COLUMN_EMPTY {
+        $1.push('');
+        $$ = $1;
+    }
+    | row COLUMN_STRING {
+        //$1.push('');
+        $$ = $1;
+    }
+    | row COLUMN_EMPTY string {
+        $1.push('');
+        $1.push($3);
+        $$ = $1;
+    }
+    | row COLUMN_STRING string {
+        //$1.push('');
+        $1.push($3);
         $$ = $1;
     }
 ;
 
 string :
-	DOUBLE_QUOTATION chars FAKE_DOUBLE_QUOTATION {
-		$$ = $2 + $3;
+	BOF {
+		$$ = '';
 	}
-	| SINGLE_QUOTATION chars FAKE_SINGLE_QUOTATION {
-		$$ = $2 + $3;
-	}
-	| DOUBLE_QUOTATION chars DOUBLE_QUOTATION {
-		$$ = $2;
-	}
-	| SINGLE_QUOTATION chars SINGLE_QUOTATION {
-		$$ = $2;
-	}
-	| chars {
+	| CHAR {
 		$$ = $1;
 	}
-;
-
-chars :
-	CHAR {
-		$$ = $1;
+	| string CHAR {
+		$$ = $1 + '' + $2;
 	}
-	| chars CHAR {
-		$$ = $1 + $2;
+	| QUOTE_ON string QUOTE_OFF {
+		$$ = $2;
 	}
 ;
