@@ -70,7 +70,7 @@
                         $('<div />')
                                 .data('type', type)
                                 .load(tempUrl, function() {
-			                        if (document.location.match('ROB')) return;
+			                        return;
                             results[$(this).data('type')] = $(this).html();
                             loaded++;
                             if (loadCount == loaded) {
