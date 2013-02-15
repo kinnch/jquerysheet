@@ -726,6 +726,8 @@ jQuery.sheet = {
 
 	dependencies:{
 		coreCss:{css:'jquery.sheet.css'},
+		jQueryUI:{script:'jquery-ui/ui/jquery-ui.min.js'},
+		jQueryUIThemeroller:{css:'jquery-ui/theme/jquery-ui.min.css'},
 		globalize:{script:'plugins/globalize.js'},
 		formulaParser:{script:'parser/formula/formula.js'},
 		tsvParser:{script:'parser/tsv/tsv.js'},
@@ -5414,18 +5416,21 @@ jQuery.sheet = {
 					if ($.sheet.fn[fn]) {
 						jS.spreadsheets[cell.sheet][cell.row][cell.col].fnCount++;
 						var values = [],
-							html = [];
+							html = [],
+							i = args.length;
 
-						for (i in args) {
-							if (args[i]) {
+						if (i) {
+							do {
+								if (args[i] !== u) {
 								if (args[i].value || args[i].html) {
-									values.push(args[i].value);
-									html.push(args[i].html);
+									values.unshift(args[i].value);
+									html.unshift(args[i].html);
 								} else {
-									values.push(args[i]);
-									html.push(args[i]);
+									values.unshift(args[i]);
+									html.unshift(args[i]);
 								}
-							}
+								}
+							} while (i--);
 						}
 
 						cell.html = html;
@@ -7869,7 +7874,8 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		return Math.random();
 	},
 	ROUND:function (v, decimals) {
-		return jFN.FIXED(v, (decimals ? decimals : 0), false);
+		var shift = Math.pow(10, decimals || 0);
+		return Math.round(v * shift) / shift;
 	},
 	ROUNDDOWN:function (v, decimals) {
 		var neg = (v < 0);
@@ -7989,7 +7995,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		decimals = decimals || 2;
 		symbol = symbol || '$';
 
-		var r = jFN.FIXED(v, decimals, false),
+		var r = jFN.FIXED(v, decimals, false).value,
 			html;
 		if (v >= 0) {
 			html = symbol + r;
@@ -8002,8 +8008,16 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		};
 	},
 	FIXED:function (v, decimals, noCommas) {
-		decimals = decimals || 2;
-		return Globalize.format(v, 'n' + decimals)
+		decimals = (decimals === undefined ? 2 : decimals);
+		var multiplier = Math.pow( 10, decimals );
+		v = Math.round( v * multiplier ) / multiplier;
+		var html = Globalize.format(v, 'n' + decimals);
+
+		return {
+			value:v.toFixed(decimals),
+			html: (noCommas ? html.replace(Globalize.culture().numberFormat[','], '') : html)
+		};
+
 	},
 	LEFT:function (v, numberOfChars) {
 		numberOfChars = numberOfChars || 1;

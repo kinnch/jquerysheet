@@ -67,7 +67,6 @@
 
                     for(var type in urls) {
                         var tempUrl = urls[type] + (type == 'tables' ? ' #sheetParent table' : '');
-	                    return;
                         $('<div />')
                                 .data('type', type)
                                 .load(tempUrl, function() {
