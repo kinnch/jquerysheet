@@ -120,11 +120,18 @@ row :
 	string {
 		$$ = [$1];
 	}
+	| QUOTE_ON string QUOTE_OFF {
+        $$ = [$2];
+    }
 	| COLUMN_EMPTY {
 		$$ = [''];
 	}
 	| COLUMN_STRING {
         //$$ = [];
+    }
+    | row QUOTE_ON string QUOTE_OFF {
+        $1.push($3);
+        $$ = $1;
     }
     | row COLUMN_EMPTY {
         $1.push('');
@@ -155,8 +162,5 @@ string :
 	}
 	| string CHAR {
 		$$ = $1 + '' + $2;
-	}
-	| QUOTE_ON string QUOTE_OFF {
-		$$ = $2;
 	}
 ;
