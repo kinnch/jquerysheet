@@ -4221,36 +4221,52 @@ jQuery.sheet = {
 			reparseFormula:function (formula, offset, loc, isBefore) {
 				return formula.replace(jSE.regEx.cell, function (ignored, col, row, pos) {
 					if (col == "SHEET") return ignored;
+					offset = offset || {loc: 0, row: 0};
 
-					var newLoc = jSE.parseLocation(ignored),
+					var oldLoc = {
+							row:row * 1,
+							col:jSE.columnLabelIndex(col)
+						},
 						moveCol,
-						moveRow;
+						moveRow,
+						override = {col: col, row: row};
 
 					if (loc) {
+						if (oldLoc.col == loc.col || col == '#REF!') {
+							override.col = '#REF!';
+							override.use = true;
+						}
+						if (oldLoc.row == loc.row || row == '#REF!') {
+							override.row = '#REF!';
+							override.use = true;
+						}
+						if (override.use) {
+							return override.col + override.row;
+						}
 						if (isBefore) {
-							if (newLoc.col >= loc.col) {
+							if (oldLoc.col > loc.col) {
 								moveCol = true;
 							}
-							if (newLoc.row >= loc.row) {
+							if (oldLoc.row > loc.row) {
 								moveRow = true;
 							}
 						} else {
-							if (newLoc.col > loc.col) {
+							if (oldLoc.col > loc.col) {
 								moveCol = true;
 							}
-							if (newLoc.row > loc.row) {
+							if (oldLoc.row > loc.row) {
 								moveRow = true;
 							}
 						}
 
 						if (moveCol || moveRow) {
-							if (moveCol) newLoc.col += offset.col;
-							if (moveRow) newLoc.row += offset.row;
+							if (moveCol) oldLoc.col += offset.col;
+							if (moveRow) oldLoc.row += offset.row;
 
-							return jS.makeFormula(newLoc);
+							return jS.makeFormula(oldLoc);
 						}
 					} else {
-						return jS.makeFormula(newLoc, offset);
+						return jS.makeFormula(oldLoc, offset);
 					}
 
 					return ignored;
@@ -7550,7 +7566,7 @@ var jSE = jQuery.sheet.engine = {
 	 */
 	regEx: {
 		n: 			    /[\$,\s]/g,
-		cell: 			/\$?([a-zA-Z]+)\$?([0-9]+)/gi, //a1
+		cell: 			/\$?([a-zA-Z]+|[#]REF[!])\$?([0-9]+|[#]REF[!])/gi, //a1
 		range: 			/\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //a1:a4
 		remoteCell:		/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1
 		remoteCellRange:/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1:b4

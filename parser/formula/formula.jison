@@ -62,6 +62,7 @@
 "!"									{return "!";}
 "="									{return '=';}
 "%"									{return '%';}
+[#]									{return '#';}
 <<EOF>>								{return 'EOF';}
 
 
@@ -165,6 +166,8 @@ expression :
 			//php $$ = $this->callFunction($1, $3);
 		}
 	| cell
+	| error
+	| error error
 ;
 
 cell :
@@ -254,5 +257,14 @@ number :
 	| number '%'
 		{
 			$$ = $1 * 0.01;
+		}
+;
+
+error :
+	'#' VARIABLE '!' {
+			$$ = $1 + $2 + $3;
+      	}
+    | VARIABLE '#' VARIABLE '!' {
+			$$ = $2 + $3 + $4;
 		}
 ;
