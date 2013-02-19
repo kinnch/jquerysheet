@@ -50,23 +50,19 @@ case 9:
     
 break;
 case 10:
-		this.$ = [$$[$0]];
+		this.$ = [$$[$0].join('')];
 	
 break;
 case 11:
-        this.$ = [$$[$0-1]];
+        this.$ = [$$[$0-1].join('')];
     
 break;
 case 12:
 		this.$ = [''];
 	
 break;
-case 13:
-        //this.$ = [];
-    
-break;
 case 14:
-        $$[$0-3].push($$[$0-1]);
+        $$[$0-3].push($$[$0-1].join(''));
         this.$ = $$[$0-3];
     
 break;
@@ -76,32 +72,31 @@ case 15:
     
 break;
 case 16:
-        //$$[$0-1].push('');
         this.$ = $$[$0-1];
     
 break;
 case 17:
         $$[$0-2].push('');
-        $$[$0-2].push($$[$0]);
+        $$[$0-2].push($$[$0].join(''));
         this.$ = $$[$0-2];
     
 break;
 case 18:
-        //$$[$0-2].push('');
-        $$[$0-2].push($$[$0]);
+        $$[$0-2].push($$[$0].join(''));
         this.$ = $$[$0-2];
     
 break;
 case 19:
-		this.$ = '';
+		this.$ = [];
 	
 break;
 case 20:
-		this.$ = $$[$0];
+		this.$ = [$$[$0]];
 	
 break;
 case 21:
-		this.$ = $$[$0-1] + '' + $$[$0];
+		$$[$0-1].push($$[$0]);
+		this.$ = $$[$0-1];
 	
 break;
 }

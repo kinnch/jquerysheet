@@ -1,4 +1,4 @@
-/* description: Parses a tab separated value to an array */
+/* description: Parses a tab separated value to an array, value being parsed is expected to have ':::::' at beginning */
 
 /* lexical grammar */
 %options flex
@@ -118,19 +118,17 @@ rows :
 
 row :
 	string {
-		$$ = [$1];
+		$$ = [$1.join('')];
 	}
 	| QUOTE_ON string QUOTE_OFF {
-        $$ = [$2];
+        $$ = [$2.join('')];
     }
 	| COLUMN_EMPTY {
 		$$ = [''];
 	}
-	| COLUMN_STRING {
-        //$$ = [];
-    }
+	| COLUMN_STRING {}
     | row QUOTE_ON string QUOTE_OFF {
-        $1.push($3);
+        $1.push($3.join(''));
         $$ = $1;
     }
     | row COLUMN_EMPTY {
@@ -138,29 +136,28 @@ row :
         $$ = $1;
     }
     | row COLUMN_STRING {
-        //$1.push('');
         $$ = $1;
     }
     | row COLUMN_EMPTY string {
         $1.push('');
-        $1.push($3);
+        $1.push($3.join(''));
         $$ = $1;
     }
     | row COLUMN_STRING string {
-        //$1.push('');
-        $1.push($3);
+        $1.push($3.join(''));
         $$ = $1;
     }
 ;
 
 string :
 	BOF {
-		$$ = '';
+		$$ = [];
 	}
 	| CHAR {
-		$$ = $1;
+		$$ = [$1];
 	}
 	| string CHAR {
-		$$ = $1 + '' + $2;
+		$1.push($2);
+		$$ = $1;
 	}
 ;
