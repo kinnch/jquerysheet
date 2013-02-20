@@ -1294,8 +1294,9 @@ jQuery.sheet = {
 				if (!jS.controls.sheets[sheet].children[1].children[row].children[col]) return {};
 
 				var td = jS.controls.sheets[sheet].children[1].children[row].children[col],
+					$td = $(td),
 					cell = jS.spreadsheets[sheet][row][col] = {
-						td:$(td),
+						td:$td,
 						formula:td.getAttribute('data-formula') || '',
 						value:td.textContent || td.innerText || '',
 						calcCount:calcCount || 0,
@@ -1304,7 +1305,7 @@ jQuery.sheet = {
 						html:[],
 						sheet:sheet
 					};
-				td.setAttribute('data-cell', cell);
+				$td.data('cell', cell);
 
 				if (cell.formula && cell.formula.charAt(0) == '=') {
 					cell.formula = cell.formula.substring(1);
@@ -2691,7 +2692,7 @@ jQuery.sheet = {
 				//Single cell value
 				if (!$.isArray(row)) {
 					formula.val(row);
-					jS.fillUpOrDown(false, false, row);
+					jS.fillUpOrDown(false, row);
 					return true;
 				}
 
@@ -2735,7 +2736,7 @@ jQuery.sheet = {
 					formula.val(firstValue);
 				}
 
-				jS.fillUpOrDown(false, false, firstValue);
+				jS.fillUpOrDown(false, firstValue);
 
 				jS.evt.cellEditDone(true);
 			},
@@ -4051,31 +4052,29 @@ jQuery.sheet = {
 			/**
 			 * Fills values down or up to highlighted cells from active cell;
 			 * @param {Boolean} goUp default is down, when set to true value are filled from bottom, up;
-			 * @param {Boolean} skipOffsetForumals default is formulas will offest, when set to true formulas will stay static;
 			 * @param {String} v the value to set cells to, if not set, formula will be used;
 			 * @methodOf jS
 			 * @name fillUpOrDown
 			 */
-			fillUpOrDown:function (goUp, skipOffsetForumals, v) {
+			fillUpOrDown:function (goUp, v) {
+				jS.evt.cellEditDone();
 				var cells = jS.obj.cellHighlighted(),
-					cellActive = jS.obj.cellActive(),
-					last = new Date();
-
-				var startFromActiveCell = cellActive.hasClass(jS.cl.uiCellHighlighted),
+					activeCell = jS.obj.cellActive().data('cell'),
+					last = new Date(),
 					startLoc = jS.getTdLocation(cells.first()),
-					endLoc = jS.getTdLocation(cells.last());
-
-				v = (v ? v : jS.obj.formula().val()); //allow value to be overridden
-
-				var offset = {
+					endLoc = jS.getTdLocation(cells.last()),
+					offset = {
 						row:0,
 						col:0
 					},
-					newV = v,
+					newV = v || activeCell.value,
 					fn,
-					cell;
+					cell,
+					isNumber = false;
 
-				if (v.charAt(0) == '=') {
+				v = v || activeCell.value;
+
+				if (v.charAt && v.charAt(0) == '=') {
 					fn = function (sheet, row, col) {
 						if (goUp) {
 							offset.row = -endLoc.row + row;
@@ -4097,11 +4096,15 @@ jQuery.sheet = {
 						jS.calcDependencies(sheet, row, col, last);
 					};
 				} else {
-					if (goUp && !isNaN(newV)) {
+					if (!isNaN(newV)) {
 						newV *= 1;
-						newV -= endLoc.row;
-						newV -= endLoc.col;
+						isNumber = true;
+
+						if (goUp) {
+							newV-= (endLoc.row + endLoc.col) - (startLoc.row + startLoc.col);
+						}
 					}
+
 					fn = function (sheet, row, col) {
 						cell = this;
 
@@ -4113,7 +4116,9 @@ jQuery.sheet = {
 
 						jS.calcDependencies(sheet, row, col, last);
 
-						if (!isNaN(newV) && newV != '') newV++;
+						if (isNumber) {
+							newV++;
+						}
 					};
 				}
 
@@ -4132,9 +4137,6 @@ jQuery.sheet = {
 					}
 				};
 				var cells = [],
-					cellsTsv,
-					formula = jS.obj.formula(),
-					oldValue = formula.val(),
 					firstRowI = 0,
 					last = new Date();
 
@@ -5174,12 +5176,14 @@ jQuery.sheet = {
 						jS.callStack--;
 						cell = jS.filterValue(cell, sheet, row, col);
 					} else {
-						fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
-						if (fn) {
-							fn.apply(cell, [cell.value]);
-						} else {
-							cell = jS.filterValue(cell, sheet, row, col);
+						if (cell.value != u && cell.value.charAt) {
+							fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
+							if (fn) {
+								fn.apply(cell, [cell.value]);
+								return;
+							}
 						}
+						cell = jS.filterValue(cell, sheet, row, col);
 					}
 				}
 
