@@ -4096,7 +4096,7 @@ jQuery.sheet = {
 						jS.calcDependencies(sheet, row, col, last);
 					};
 				} else {
-					if (!isNaN(newV)) {
+					if (!isNaN(newV) && newV.length > 0) {
 						newV *= 1;
 						isNumber = true;
 
