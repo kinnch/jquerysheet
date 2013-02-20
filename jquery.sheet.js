@@ -1419,6 +1419,7 @@ jQuery.sheet = {
 					var sheet = jS.obj.sheet(),
 						sheetSize = jS.sheetSize(sheet),
 						isLast = false,
+						activeCell = jS.obj.cellActive(),
 						o;
 
 					qty = qty || 1;
@@ -1611,6 +1612,11 @@ jQuery.sheet = {
 					}
 
 					jS.obj.pane().trigger('resizeScroll');
+
+					if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
+						jS.colLast = activeCell[0].cellIndex;
+						jS.rowLast = activeCell[0].parentNode.rowIndex;
+					}
 				},
 
 				/**
