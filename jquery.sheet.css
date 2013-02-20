@@ -55,7 +55,7 @@
 
 .jSMenu {
 	padding: 3px;
-	background-image: none;
+	background-image: none ! important;
 	border: none ! important;
 	position: absolute;
 	z-index: 1001;

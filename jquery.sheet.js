@@ -1802,7 +1802,7 @@ jQuery.sheet = {
 				 * @name makeMenu
 				 */
 				makeMenu:function (bar, menuItems) {
-					var menu;
+					var menu, buttons = $([]);
 
 					switch (bar) {
 						case "top":
@@ -1823,20 +1823,29 @@ jQuery.sheet = {
 						.mouseleave(function () {
 							menu.hide();
 						})
+						.bind('contextmenu', function() {return false;})
 						.appendTo($body)
 						.hide();
 
 					for (var msg in menuItems) {
 						if (menuItems[msg]) {
 							if ($.isFunction(menuItems[msg])) {
-								$('<div />')
-									.text(msg)
-									.data('msg', msg)
-									.click(function () {
-										menuItems[$(this).data('msg')].apply(this, [jS]);
-										return false;
-									})
-									.appendTo(menu);
+								buttons = buttons.add(
+									$('<div />')
+										.text(msg)
+										.data('msg', msg)
+										.click(function () {
+											menuItems[$(this).data('msg')].apply(this, [jS]);
+											return false;
+										})
+										.appendTo(menu)
+										.hover(function() {
+											buttons.removeClass('ui-state-highlight');
+											$(this).addClass('ui-state-highlight');
+										}, function() {
+											$(this).removeClass('ui-state-highlight');
+										})
+									);
 
 							} else if (menuItems[msg] == 'line') {
 								$('<hr />').appendTo(menu);
@@ -2407,7 +2416,28 @@ jQuery.sheet = {
 					jS.readOnly[i] = sheet.hasClass('readonly');
 
 					var enclosure = jS.controlFactory.enclosure().appendTo(jS.obj.ui()),
-						pane = jS.obj.pane().html(sheet);
+						pane = jS.obj.pane().html(sheet),
+						paneContextmenuEvent = function (e) {
+							e.preventDefault();
+							if (jS.isBusy()) {
+								return false;
+							}
+
+							if (jS.isBar(e.target)) {
+								var o = $(e.target),
+									entity = o.data('entity'),
+									i = jS.getBarIndex[entity](e.target);
+
+								if (i < 0) return false;
+
+								if (jS.evt.barInteraction.first == jS.evt.barInteraction.last) {
+									jS.controlFactory.barMenu[entity](e, i);
+								}
+							} else {
+								jS.controlFactory.cellMenu(e);
+							}
+							return false;
+						};
 
 					jS.controlFactory.scroll(enclosure, pane, sheet);
 
@@ -2431,28 +2461,42 @@ jQuery.sheet = {
 						pane
 							.mousedown(function (e) {
 								jS.setNav(true);
-								if (jS.isBusy()) return false;
+								if (jS.isBusy()) {
+									return false;
+								}
 
 								if (jS.isTd(e.target)) {
+									if (e.button == 2) {
+										paneContextmenuEvent(e);
+									}
 									jS.evt.cellOnMouseDown(e);
 									return false;
 								}
 
 								if (jS.isBar(e.target)) { //possibly a bar
+									if (e.button == 2) {
+										paneContextmenuEvent(e);
+									}
 									jS.evt.barInteraction.select(e.target);
 									return false;
 								}
 							})
 							.mouseover(function (e) {
 								//This manages bar resize, bar menu, and bar selection
-								if (jS.isBusy()) return false;
+								if (jS.isBusy()) {
+									return false;
+								}
 
-								if (!jS.isBar(e.target)) return;
+								if (!jS.isBar(e.target)) {
+									return;
+								}
 								var bar = $(e.target),
 									entity = bar.data('entity'),
 									i = jS.getBarIndex[entity](e.target);
 
-								if (i < 0) return false;
+								if (i < 0) {
+									return false;
+								}
 
 								if (jS.evt.barInteraction.selecting) {
 									jS.evt.barInteraction.last = i;
@@ -2470,24 +2514,7 @@ jQuery.sheet = {
 									}
 								}
 							})
-							.bind('contextmenu', function (e) {
-								if (jS.isBusy()) return false;
-
-								if (jS.isBar(e.target)) {
-									var o = $(e.target),
-										entity = o.data('entity'),
-										i = jS.getBarIndex[entity](e.target);
-
-									if (i < 0) return false;
-
-									if (jS.evt.barInteraction.first == jS.evt.barInteraction.last) {
-										jS.controlFactory.barMenu[entity](e, i);
-									}
-								} else {
-									jS.controlFactory.cellMenu(e);
-								}
-								return false;
-							})
+							.bind('contextmenu', paneContextmenuEvent)
 							.disableSelectionSpecial()
 							.bind('cellEdit', jS.evt.cellEdit)
 							.dblclick(jS.evt.cellOnDblClick);
