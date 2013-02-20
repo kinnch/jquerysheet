@@ -2231,8 +2231,8 @@ jQuery.sheet = {
 								}
 
 								jS.scrolledTo();
-								jS.scrolledArea[jS.i].col.start = indexes.pop() || 1;
-								jS.scrolledArea[jS.i].col.end = indexes.shift() || 1;
+								jS.scrolledArea[jS.i].col.start = math.max(indexes.pop() || 1, 1);
+								jS.scrolledArea[jS.i].col.end = math.max(indexes.shift() || 1, 1);
 
 								jS.obj.barHelper().remove();
 							}),
@@ -2252,8 +2252,8 @@ jQuery.sheet = {
 								}
 
 								jS.scrolledTo();
-								jS.scrolledArea[jS.i].row.start = indexes.pop() || 1;
-								jS.scrolledArea[jS.i].row.end = indexes.shift() || 1;
+								jS.scrolledArea[jS.i].row.start = math.max(indexes.pop() || 1, 1);
+								jS.scrolledArea[jS.i].row.end = math.max(indexes.shift() || 1, 1);
 
 								jS.obj.barHelper().remove();
 							});
@@ -4058,8 +4058,8 @@ jQuery.sheet = {
 					formula = td.data('formula'),
 					last = new Date();
 
-				var rowMax = Math.max(td.attr('rowSpan') * 1, 1);
-				var colMax = Math.max(td.attr('colSpan') * 1, 1);
+				var rowMax = math.max(td.attr('rowSpan') * 1, 1);
+				var colMax = math.max(td.attr('colSpan') * 1, 1);
 
 				for (var row = loc.row; row <= loc.row + rowMax; row++) {
 					for (var col = loc.col; col <= loc.col + colMax; col++) {
@@ -4385,10 +4385,10 @@ jQuery.sheet = {
 			 */
 			cycleCellsAndMaintainPoint:function (fn, firstLoc, lastLoc) {
 				var td = $([]),
-					rowMin = Math.min(firstLoc.row, lastLoc.row),
-					colMin = Math.min(firstLoc.col, lastLoc.col),
-					rowMax = Math.max(firstLoc.row, lastLoc.row),
-					colMax = Math.max(firstLoc.col, lastLoc.col);
+					rowMin = math.min(firstLoc.row, lastLoc.row),
+					colMin = math.min(firstLoc.col, lastLoc.col),
+					rowMax = math.max(firstLoc.row, lastLoc.row),
+					colMax = math.max(firstLoc.col, lastLoc.col);
 
 				for (var row = rowMin; row <= rowMax; row++) {
 					for (var col = colMin; col <= colMax; col++) {
@@ -4649,17 +4649,19 @@ jQuery.sheet = {
 
 			scrolledTo:function () {
 				if (!jS.scrolledArea[jS.i]) {
+					var frozenAt = jS.frozenAt();
 					jS.scrolledArea[jS.i] = {
 						col:{
-							start:jS.frozenAt().col - 1,
-							end:jS.frozenAt().col - 1
+							start:math.max(frozenAt.col, 1),
+							end:math.max(frozenAt.col, 1)
 						},
 						row:{
-							start:jS.frozenAt().row - 1,
-							end:jS.frozenAt().row - 1
+							start:math.max(frozenAt.row, 1),
+							end:math.max(frozenAt.row, 1)
 						}
 					};
 				}
+				console.log(jS.scrolledArea[jS.i]);
 				return jS.scrolledArea[jS.i];
 			},
 
@@ -6479,8 +6481,8 @@ jQuery.sheet = {
 			 */
 			cellSetActiveBar:function (type, start, end) {
 				var size = jS.sheetSize(),
-					first = Math.min(start, end),
-					last = Math.max(start, end),
+					first = math.min(start, end),
+					last = math.max(start, end),
 					rows = {},
 					cols = {},
 					visibleCol = {},
@@ -6797,7 +6799,7 @@ jQuery.sheet = {
 				now:new Date(),
 				last:new Date(),
 				diff:function () {
-					return Math.abs(Math.ceil(this.last.getTime() - this.now.getTime()) / 1000).toFixed(5);
+					return math.abs(math.ceil(this.last.getTime() - this.now.getTime()) / 1000).toFixed(5);
 				},
 				set:function () {
 					this.last = this.now;
@@ -6965,11 +6967,11 @@ jQuery.sheet = {
 						},
 						moveForward: function() {
 							this.i += 1;
-							this.i = Math.min(this.i, this.lasts.length - 1);
+							this.i = math.min(this.i, this.lasts.length - 1);
 						},
 						moveBackward: function() {
 							this.i -= 1;
-							this.i = Math.max(this.i, 0);
+							this.i = math.max(this.i, 0);
 						}
 					};
 
@@ -7181,7 +7183,8 @@ jQuery.sheet = {
 			$body = $('body'),
 			emptyFN = function () {
 			},
-			u = undefined;
+			u = undefined,
+			math = Math;
 
 		//ready the sheet's parser
 		jS.formulaLexer = function () {
@@ -8766,6 +8769,7 @@ var key = { /* key objects, makes it easier to develop */
 };
 
 var arrHelpers = {
+	math: Math,
 	toNumbers:function (arr) {
 		arr = this.flatten(arr);
 
@@ -8821,10 +8825,10 @@ var arrHelpers = {
 		min = min || 0;
 
 		var closest = array[min],
-			diff = Math.abs(num - closest);
+			diff = this.math.abs(num - closest);
 
 		for (var i = min; i < array.length; i++) {
-			var newDiff = Math.abs(num - array[i])
+			var newDiff = this.math.abs(num - array[i])
 			if (newDiff < diff) {
 				diff = newDiff;
 				closest = array[i];
@@ -8836,9 +8840,10 @@ var arrHelpers = {
 };
 
 var dates = {
+	math: Math,
 	dayDiv:86400000,
 	toCentury:function (date) {
-		return Math.round(Math.abs((new Date(1900, 0, -1)) - date) / this.dayDiv);
+		return this.math.round(this.math.abs((new Date(1900, 0, -1)) - date) / this.dayDiv);
 	},
 	get:function (date) {
 		if (date.getMonth) {
@@ -8856,7 +8861,7 @@ var dates = {
 	},
 	week:function (date) {
 		var onejan = new Date(date.getFullYear(), 0, 1);
-		return Math.ceil((((date - onejan) / this.dayDiv) + onejan.getDay() + 1) / 7);
+		return this.math.ceil((((date - onejan) / this.dayDiv) + onejan.getDay() + 1) / 7);
 	},
 	toString:function (date, pattern) {
 		if (!pattern) {
@@ -8871,7 +8876,7 @@ var dates = {
 			case 1:
 			case 2:
 			case 3:
-				var result = Math.abs(end - start) / this.dayDiv;
+				var result = this.math.abs(end - start) / this.dayDiv;
 				return result;
 			case 4:
 				return this.days360Euro(start, end);
@@ -8998,13 +9003,14 @@ var dates = {
 };
 
 var times = {
+	math: Math,
 	fromMath:function (time) {
 		var result = {};
 
 		result.hour = ((time * 24) + '').split('.')[0];
 
 		result.minute = function (time) {
-			time = Math.round(time * 24 * 100) / 100;
+			time = this.math.round(time * 24 * 100) / 100;
 			time = (time + '').split('.');
 			var minute = 0;
 			if (time[1]) {
@@ -9013,11 +9019,11 @@ var times = {
 				}
 				minute = time[1] * 0.6;
 			}
-			return Math.round(minute);
+			return this.math.round(minute);
 		}(time);
 
 		result.second = function (time) {
-			time = Math.round(time * 24 * 10000) / 10000;
+			time = this.math.round(time * 24 * 10000) / 10000;
 			time = (time + '').split('.');
 			var second = 0;
 			if (time[1]) {
@@ -9032,7 +9038,7 @@ var times = {
 						secondDecimal[1] = secondDecimal[1].substr(0, 2);
 					}
 
-					return Math.round(secondDecimal[1] * 0.6);
+					return this.math.round(secondDecimal[1] * 0.6);
 				}
 			}
 			return second;
