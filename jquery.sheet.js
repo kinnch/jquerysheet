@@ -4661,7 +4661,6 @@ jQuery.sheet = {
 						}
 					};
 				}
-				console.log(jS.scrolledArea[jS.i]);
 				return jS.scrolledArea[jS.i];
 			},
 
