@@ -1173,6 +1173,7 @@ jQuery.sheet = {
 				uiMenu:'ui-widget-header',
 				uiMenuUl:'ui-widget-header',
 				uiMenuLi:'ui-widget-header',
+				uiPane: 'ui-widget-content',
 				uiParent:'ui-widget-content ui-corner-all',
 				uiSheet:'ui-widget-content',
 				uiTab:'ui-widget-header',
@@ -1825,7 +1826,8 @@ jQuery.sheet = {
 						})
 						.bind('contextmenu', function() {return false;})
 						.appendTo($body)
-						.hide();
+						.hide()
+						.disableSelectionSpecial();
 
 					for (var msg in menuItems) {
 						if (menuItems[msg]) {
@@ -2404,7 +2406,7 @@ jQuery.sheet = {
 				 */
 				sheetUI:function (sheet, i) {
 					if (!i) {
-						jS.sheetCount = 0;
+						jS.sheetCount = 1;
 						jS.i = 0;
 					} else {
 						jS.sheetCount++;
@@ -2560,7 +2562,7 @@ jQuery.sheet = {
 				 * @name enclosure
 				 */
 				enclosure:function () {
-					var pane = jS.controls.pane[jS.i] = $('<div class="' + jS.cl.pane + '"></div>'),
+					var pane = jS.controls.pane[jS.i] = $('<div class="' + jS.cl.pane + ' ' + jS.cl.uiPane + '"></div>'),
 						enclosure = jS.controls.enclosure[jS.i] = $('<div class="' + jS.cl.enclosure + '"></div>')
 							.append(pane);
 
@@ -5717,9 +5719,9 @@ jQuery.sheet = {
 				if (size) {
 					jS.evt.cellEditAbandon();
 					jS.setDirty(true);
-					var newSheetControl = jS.controlFactory.sheetUI($.sheet.makeTable.fromSize(size), jS.sheetCount + 1);
+					var newSheetControl = jS.controlFactory.sheetUI($.sheet.makeTable.fromSize(size), jS.sheetCount);
 
-					jS.setActiveSheet(jS.sheetCount);
+					jS.setActiveSheet(jS.sheetCount - 1);
 
 					jS.sheetSyncSize();
 
@@ -5740,7 +5742,7 @@ jQuery.sheet = {
 
 				jS.obj.barHelper().remove();
 
-				jS.obj.pane().remove();
+				jS.obj.enclosure().remove();
 				jS.obj.tabContainer().children().eq(jS.i).remove();
 				jS.spreadsheets.splice(oldI, 1);
 				jS.controls.autoFiller.splice(oldI, 1);
@@ -5788,6 +5790,11 @@ jQuery.sheet = {
 				jS.readOnly.splice(oldI, 1);
 				jS.i = 0;
 				jS.sheetCount--;
+				jS.sheetCount = math.max(jS.sheetCount, 0);
+
+				if (jS.sheetCount == 0) {
+					jS.addSheet({rows: 25, cols: 10});
+				}
 
 				jS.setActiveSheet(jS.i);
 				jS.setDirty(true);
@@ -7478,17 +7485,27 @@ jQuery.sheet = {
 var jSE = jQuery.sheet.engine = {
 	/**
 	 * Calculate a spreadsheet
-	 * @param {Integer} tableI
-	 * @param {Array} spreadsheets [spreadsheet][row][cell], [0][1][1] = SHEET1!A1
+	 * @param {Integer} sheet
+	 * @param {Array} spreadsheet [row][cell], [1][1] = SHEET1!A1
 	 * @param {Function} ignite, function to run on every cell
 	 * @methodOf jQuery.sheet.engine
 	 * @name calc
 	 */
-	calc:function (tableI, spreadsheets, ignite) {
-		for (var j = 1; j < spreadsheets.length; j++) {
-			for (var k = 1; k < spreadsheets[j].length; k++) {
-				ignite(tableI, j, k);
-			}
+	calc:function (sheet, spreadsheet, ignite) {
+		spreadsheet = spreadsheet || [];
+
+		var row = spreadsheet.length - 1, col;
+		if (row > 0) {
+			do {
+				if (row > 0) {
+					col = spreadsheet[row].length - 1;
+					if (col > 0) {
+						do {
+							ignite(sheet, row, col);
+						} while (col--);
+					}
+				}
+			} while(row--);
 		}
 	},
 
@@ -8825,13 +8842,15 @@ var arrHelpers = {
 
 		var closest = array[min],
 			diff = this.math.abs(num - closest);
-
-		for (var i = min; i < array.length; i++) {
-			var newDiff = this.math.abs(num - array[i])
-			if (newDiff < diff) {
-				diff = newDiff;
-				closest = array[i];
-			}
+		var i = array.length - 1;
+		if (i) {
+			do {
+				var newDiff = this.math.abs(num - array[i])
+				if (newDiff < diff) {
+					diff = newDiff;
+					closest = array[i];
+				}
+			} while (i--);
 		}
 
 		return closest;
