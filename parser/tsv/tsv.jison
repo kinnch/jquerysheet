@@ -1,79 +1,88 @@
 /* description: Parses a tab separated value to an array, value being parsed is expected to have ':::::' at beginning */
 
 /* lexical grammar */
-%options flex
 %lex
-%s SINGLE_QUOTE_ON DOUBLE_QUOTE_ON STRING
-%%
-/* single quote handling*/
-<SINGLE_QUOTE_ON>(\n|"\n")               {return 'CHAR';}
-<SINGLE_QUOTE_ON>('"')              {return 'CHAR';}
-<SINGLE_QUOTE_ON>("'") {
-	this.popState();
-	this.begin('STRING');
-	return 'QUOTE_OFF';
-}
-<SINGLE_QUOTE_ON>(?=(\t)) {
-	this.popState();
-	return 'CHAR';
-}
-(":::::'") {
-	this.begin('SINGLE_QUOTE_ON');
-	return 'SINGLE_QUOTE_ON';
-}
-((\t|\n|"\n")"'") {
-	this.begin('SINGLE_QUOTE_ON');
-	return 'QUOTE_ON';
-}
 
-/* double quote handling*/
-<DOUBLE_QUOTE_ON>(\n|"\n")             {return 'CHAR';}
-<DOUBLE_QUOTE_ON>("'")              {return 'CHAR';}
-<DOUBLE_QUOTE_ON>('"') {
+/* lexical states */
+%s PRE_QUOTE QUOTE STRING
+
+/*begin lexing */
+%%
+
+/* quote handling */
+<QUOTE>(\n|"\n")                    {return 'CHAR';}
+<QUOTE>([\'\"])(?=<<EOF>>) {
+    this.popState();
+    return 'QUOTE_OFF';
+}
+<QUOTE>([\'\"]) {
+    if (yytext == this.quoteChar) {
+        this.popState();
+        this.begin('STRING');
+        return 'QUOTE_OFF';
+	} else {
+	    return 'CHAR';
+	}
+}
+<QUOTE>(?=(\t)) {
 	this.popState();
 	this.begin('STRING');
-	return 'QUOTE_OFF';
-}
-<DOUBLE_QUOTE_ON>(?=(\t)) {
-	this.popState();
 	return 'CHAR';
 }
-(':::::"') {
- 	this.begin('DOUBLE_QUOTE_ON');
- 	return 'QUOTE_ON';
-}
-((\t|\n|"\n")'"') {
-	this.begin('DOUBLE_QUOTE_ON');
+(":::::")([\'\"]) {
+    this.quoteChar = yytext.substring(5);
+	this.begin('QUOTE');
 	return 'QUOTE_ON';
 }
+<PRE_QUOTE>([\'\"]) {
+    this.quoteChar = yytext;
+    this.popState();
+	this.begin('QUOTE');
+	return 'QUOTE_ON';
+}
+(\t|"\t")(?=[\'\"]) {
+	this.begin('PRE_QUOTE');
+	return 'COLUMN_STRING';
+}
+(\n|"\n")(?=[\'\"]) {
+	this.begin('PRE_QUOTE');
+	return 'END_OF_LINE';
+}
+<QUOTE>(.)	                        {return 'CHAR';}
+/* end quote handling */
+
 
 /*spreadsheet control characters*/
-(':::::') {
-	return 'BOF';
+<STRING>(\n\n|"\n\n") {
+	this.popState();
+	return 'END_OF_LINE_WITH_NO_COLUMNS';
 }
 <STRING>(\n|"\n") {
 	this.popState();
 	return 'END_OF_LINE';
 }
-<STRING>(\t) {
+<STRING>(\t|"\t") {
 	this.popState();
 	return 'COLUMN_STRING';
 }
-(\t)                                {return 'COLUMN_EMPTY';}
-<STRING>(\s)                        {return 'CHAR';}
 <STRING>(.)                         {return 'CHAR';}
-<SINGLE_QUOTE_ON>(.)                {return 'CHAR';}
-<DOUBLE_QUOTE_ON>(.)                {return 'CHAR';}
-(\n|"\n")                                {return 'END_OF_LINE_EMPTY';}
-
+(':::::')                           {return 'BOF';}
+(\n\n|"\n\n")                       {return 'END_OF_LINE_WITH_NO_COLUMNS';}
+(\t\n|"\t\n")                       {return 'END_OF_LINE_WITH_EMPTY_COLUMN';}
+(\t|"\t")                           {return 'COLUMN_EMPTY';}
+(\n|"\n")                           {return 'END_OF_LINE';}
 (.) {
 	this.begin('STRING');
 	return 'CHAR';
 }
-<<EOF>>	                            {return 'EOF';}
+<<EOF>> {
+    //lexer.yy.conditionStack = [];
+    return 'EOF';
+}
 
-
+/* end lexing */
 /lex
+
 
 %start grid
 
@@ -94,14 +103,21 @@ rows :
 	}
 	| END_OF_LINE {
         $$ = [];
-    }
-    | END_OF_LINE_EMPTY {
+	}
+	| END_OF_LINE_WITH_NO_COLUMNS {
+	    $$ = [''];
+	}
+    | END_OF_LINE_WITH_EMPTY_COLUMN {
         $$ = [''];
     }
     | rows END_OF_LINE {
         $$ = $1;
     }
-    | rows END_OF_LINE_EMPTY {
+    | rows END_OF_LINE_WITH_NO_COLUMNS {
+        $1.push(['']);
+        $$ = $1;
+    }
+    | rows END_OF_LINE_WITH_EMPTY_COLUMN {
         $1[$1.length - 1].push('');
         $$ = $1;
     }
@@ -109,7 +125,12 @@ rows :
         $1.push($3);
         $$ = $1;
     }
-    | rows END_OF_LINE_EMPTY row {
+    | rows END_OF_LINE_WITH_NO_COLUMNS row {
+        $1.push(['']);
+        $1.push($3);
+        $$ = $1;
+    }
+    | rows END_OF_LINE_WITH_EMPTY_COLUMN row {
         $1[$1.length - 1].push('');
         $1.push($3);
         $$ = $1;
@@ -120,17 +141,11 @@ row :
 	string {
 		$$ = [$1.join('')];
 	}
-	| QUOTE_ON string QUOTE_OFF {
-        $$ = [$2.join('')];
-    }
 	| COLUMN_EMPTY {
 		$$ = [''];
 	}
-	| COLUMN_STRING {}
-    | row QUOTE_ON string QUOTE_OFF {
-        $1.push($3.join(''));
-        $$ = $1;
-    }
+	| COLUMN_STRING {
+	}
     | row COLUMN_EMPTY {
         $1.push('');
         $$ = $1;
@@ -160,4 +175,7 @@ string :
 		$1.push($2);
 		$$ = $1;
 	}
+	| QUOTE_ON string QUOTE_OFF {
+         $$ = $2;
+     }
 ;
