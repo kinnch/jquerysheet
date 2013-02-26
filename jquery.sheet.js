@@ -3208,7 +3208,7 @@ jQuery.sheet = {
 				cellEditAbandon:function (skipCalc) {
 					jS.obj.inPlaceEdit().trigger('destroy');
 					jS.themeRoller.bar.clearActive();
-					jS.themeRoller.cell.clearHighlighted();
+					jS.themeRoller.cell.clearHighlighted(null, true);
 
 					if (!skipCalc) {
 						jS.calc();
@@ -3255,24 +3255,23 @@ jQuery.sheet = {
 				 * @name cellSetHighlightFromKeyCode
 				 */
 				cellSetHighlightFromKeyCode:function (e) {
-					var c = jS.highlightedLast.colLast,
-						r = jS.highlightedLast.rowLast,
+					var td = jS.obj.cellActive(),
+						loc = jS.getTdLocation(td),
 						size = jS.sheetSize(),
 						td;
-					jS.obj.cellActive().mousedown();
 
 					switch (e.keyCode) {
 						case key.UP:
-							r--;
+							loc.row--;
 							break;
 						case key.DOWN:
-							r++;
+							loc.row++;
 							break;
 						case key.LEFT:
-							c--;
+							loc.col--;
 							break;
 						case key.RIGHT:
-							c++;
+							loc.col++;
 							break;
 					}
 
@@ -3282,22 +3281,15 @@ jQuery.sheet = {
 						return i;
 					}
 
-					r = keepInSize(r, size.rows);
-					c = keepInSize(c, size.cols);
+					loc.row = keepInSize(loc.row, size.rows);
+					loc.col = keepInSize(loc.col, size.cols);
 
-					jS.themeRoller.cell.clearHighlighted();
-					//set current bars
-					jS.highlightedLast.colEnd = r;
-					jS.highlightedLast.rowEnd = c;
-
-					//highlight the cells
-					jS.highlightedLast.obj = jS.highlightedLast.td = jS.cycleCellsAndMaintainPoint(jS.themeRoller.cell.setHighlighted, jS.getTdLocation(jS.obj.cellActive()), {row:r, col:c});
-					td = jS.getTd(jS.i, r, c)
+					td = jS.getTd(jS.i, loc.row, loc.col)
 						.mousemove()
 						.mouseup();
 
-					jS.highlightedLast.rowLast = r;
-					jS.highlightedLast.colLast = c;
+					jS.themeRoller.cell.setHighlighted(td);
+
 					return false;
 				},
 
@@ -4350,13 +4342,14 @@ jQuery.sheet = {
 					lastLoc = {row:size.rows, col:size.cols};
 				}
 
-				for (var row = firstLoc.row; row <= lastLoc.row; row++) {
-					for (var col = firstLoc.col; col <= lastLoc.col; col++) {
-						if (!jS.spreadsheets[i] || !jS.spreadsheets[i][row] || !jS.spreadsheets[i][row][col]) continue;
-
+				var row = lastLoc.row, col;
+				if (row < firstLoc.row) return;
+				do {
+					col = lastLoc.loc;
+					do {
 						fn.apply(jS.spreadsheets[i][row][col], [i, row, col]);
-					}
-				}
+					} while (col-- >= firstLoc.col);
+				} while (row-- >= firstLoc.row);
 			},
 
 			/**
@@ -4381,25 +4374,33 @@ jQuery.sheet = {
 			 * @param {Function} fn the function to apply to a cell
 			 * @param {Object} firstLoc {row: 0, col: 0} the cell to start at
 			 * @param {Object} lastLoc {row: 0, col: 0} the cell to end at
-			 * @returns {Array} of td objects
 			 * @methodOf jS
-			 * @name cycleCellsAndMaintainPoint
+			 * @name cycleCellArea
 			 */
-			cycleCellsAndMaintainPoint:function (fn, firstLoc, lastLoc) {
-				var td = $([]),
-					rowMin = math.min(firstLoc.row, lastLoc.row),
-					colMin = math.min(firstLoc.col, lastLoc.col),
-					rowMax = math.max(firstLoc.row, lastLoc.row),
-					colMax = math.max(firstLoc.col, lastLoc.col);
+			cycleCellArea:function (fn, firstLoc, lastLoc) {
+				var rowMin = math.max(math.min(firstLoc.row, lastLoc.row), 1),
+					colMin = math.max(math.min(firstLoc.col, lastLoc.col), 1),
+					rowMax = math.max(firstLoc.row, lastLoc.row, 1),
+					colMax = math.max(firstLoc.col, lastLoc.col, 1),
+					row = rowMax,
+					col,
+					cell,
+					i = jS.i,
+					o = {cell: $([]), td: $([])};
 
-				for (var row = rowMin; row <= rowMax; row++) {
-					for (var col = colMin; col <= colMax; col++) {
-						td = td.add(jS.getTd(jS.i, row, col));
-						fn(td[td.length - 1]);
-					}
-				}
+				fn = fn || function() {};
 
-				return td;
+
+				do {
+					col = colMax;
+					do {
+						cell = jS.spreadsheets[i][row][col];
+						o.cell = o.cell.add(cell);
+						o.td = o.td.add(cell.td);
+					} while (col-- > colMin);
+				} while (row-- > rowMin);
+
+				fn(o);
 			},
 
 			/**
@@ -4507,45 +4508,73 @@ jQuery.sheet = {
 				cell:{
 
 					/**
-					 * Highlights td object
-					 * @param {jQuery|HTMLElement} td td object
+					 * Highlights object
+					 * @param {jQuery|HTMLElement} obj td object
 					 * @methodOf jS.themeRoller.cell
 					 * @name setHighlighted
 					 */
-					setHighlighted:function (td) {
-						$(td)
-							.addClass(jS.cl.uiCellHighlighted);
+					setHighlighted:function (obj, addToHighlighted) {
+						var i,
+							_obj = jS.highlightedLast.obj;
+
+						if (_obj && _obj.length && !addToHighlighted) {
+							i = _obj.length - 1;
+							do {
+								_obj[i].isHighlighted = false;
+							} while (i-- > 0);
+						}
+
+						if (obj && obj.length > 0) {
+							i = obj.length - 1;
+							do {
+								if (!obj[i].isHighlighted) {
+									obj[i].className += ' ' + jS.cl.uiCellHighlighted;
+									obj[i].isHighlighted = true;
+								}
+							} while (i-- > 0);
+						}
+
+						if (addToHighlighted) {
+							jS.highlightedLast.obj = jS.highlightedLast.obj.add(obj);
+						} else {
+							jS.themeRoller.cell.clearHighlighted(_obj);
+
+							if (obj) jS.highlightedLast.obj = obj;
+						}
 					},
 
 					/**
-					 * Detects if there is a cell hlighlighted
+					 * Detects if there is a cell highlighted
 					 * @returns {Boolean}
 					 * @methodOf jS.themeRoller.cell
 					 * @name isHighlighted
 					 */
 					isHighlighted:function () {
-						return (jS.highlightedLast.obj.length || jS.highlightedLast.td.length ? true : false);
+						return (jS.highlightedLast.obj.length ? true : false);
 					},
 
 					/**
 					 * Clears highlighted cells
+					 * @param {Object} locLast
 					 * @methodOf jS.themeRoller.cell
 					 * @name clearHighlighted
 					 */
-					clearHighlighted:function () {
+					clearHighlighted:function (obj, force) {
 						if (jS.themeRoller.cell.isHighlighted()) {
-							jS.obj.cellHighlighted()
-								.removeClass(jS.cl.uiCellHighlighted);
-							jS.obj.highlighted()
-								.removeClass(jS.cl.uiCellHighlighted);
+							obj = obj || jS.highlightedLast.obj;
+
+							if (obj && obj.length) {
+								i = obj.length - 1;
+								do {
+									if (!obj[i].isHighlighted || force) {
+										obj.eq(i).removeClass(jS.cl.uiCellHighlighted);
+									}
+								} while (i-- > 0);
+							}
 						}
 
-						jS.highlightedLast.rowStart = 0;
-						jS.highlightedLast.colStart = 0;
+						jS.highlightedLast.obj = $([]);
 
-						jS.highlightedLast.rowEnd = 0;
-						jS.highlightedLast.colEnd = 0;
-						jS.highlightedLast.obj = jS.highlightedLast.td = $([]);
 					}
 				},
 
@@ -4575,13 +4604,16 @@ jQuery.sheet = {
 					 * @name setActive
 					 */
 					setActive:function (direction, i) {
-						//We don't clear here because we can have multi active bars
 						switch (direction) {
 							case 'top':
-								jS.obj.barTop(i).addClass(jS.cl.uiBarHighlight);
+								jS.highlightedLast.barTop
+									.removeClass(jS.cl.uiBarHighlight);
+								jS.highlightedLast.barTop = jS.obj.barTop(i).addClass(jS.cl.uiBarHighlight);
 								break;
 							case 'left':
-								jS.obj.barLeft(i).addClass(jS.cl.uiBarHighlight);
+								jS.highlightedLast.barLeft
+									.removeClass(jS.cl.uiBarHighlight);
+								jS.highlightedLast.barLeft = jS.obj.barLeft(i).addClass(jS.cl.uiBarHighlight);
 								break;
 						}
 					},
@@ -4592,11 +4624,13 @@ jQuery.sheet = {
 					 * @name clearActive
 					 */
 					clearActive:function () {
-						jS.obj.barTops()
+						jS.highlightedLast.barLeft
 							.removeClass(jS.cl.uiBarHighlight);
+						jS.highlightedLast.barLeft = $([]);
 
-						jS.obj.barLefts()
+						jS.highlightedLast.barTop
 							.removeClass(jS.cl.uiBarHighlight);
+						jS.highlightedLast.barTop = $([]);
 					}
 				},
 
@@ -4928,77 +4962,60 @@ jQuery.sheet = {
 					jS.cellLast.row = jS.rowLast = loc.row;
 					jS.cellLast.col = jS.colLast = loc.col;
 
-					jS.themeRoller.bar.clearActive();
-					jS.themeRoller.cell.clearHighlighted();
-
-					jS.highlightedLast.obj = jS.highlightedLast.td = td;
-
 					jS.themeRoller.cell.setHighlighted(td); //themeroll the cell and bars
-					jS.themeRoller.bar.setActive('left', jS.cellLast.row);
-					jS.themeRoller.bar.setActive('top', jS.cellLast.col);
+					jS.themeRoller.bar.setActive('left', loc.row);
+					jS.themeRoller.bar.setActive('top', loc.col);
 
 					var selectModel,
 						clearHighlightedModel;
 
-					jS.highlightedLast.rowStart = loc.row;
-					jS.highlightedLast.colStart = loc.col;
-					jS.highlightedLast.rowLast = loc.row;
-					jS.highlightedLast.colLast = loc.col;
-
 					switch (s.cellSelectModel) {
 						case 'excel':
 						case 'gdrive':
-							selectModel = function () {
-							};
-							clearHighlightedModel = jS.themeRoller.cell.clearHighlighted;
+							selectModel = function () {};
+							clearHighlightedModel = function() {};//jS.themeRoller.cell.clearHighlighted;
 							break;
 						case 'oo':
-							selectModel = function (target) {
-								var td = $(target);
-								if (jS.isTd(td)) {
-									jS.cellEdit(td);
+							selectModel = function (target) {;
+								if (jS.isTd(target)) {
+									jS.cellEdit($(target));
 								}
 							};
-							clearHighlightedModel = function () {
-							};
+							clearHighlightedModel = function () {};
 							break;
 					}
 
 					if (isDrag) {
-						var lastLoc = loc; //we keep track of the most recent location because we don't want tons of recursion here
+						var locTrack = {};
+
+						locTrack.last = loc;//we keep track of the most recent location because we don't want tons of recursion here
+
 						jS.obj.pane()
 							.mousemove(function (e) {
 								if (jS.isBusy()) return false;
 
-								var endLoc = jS.getTdLocation(e.target);
+								var locEnd = jS.getTdLocation(e.target), ok = true;
 
-								if (endLoc.col < 1 || endLoc.row < 1) return false; //bar
-
-								var ok = true;
+								if (locEnd.col < 1 || locEnd.row < 1) return false; //bar
 
 								if (directional) {
 									ok = false;
-									if (loc.col == endLoc.col || loc.row == endLoc.row) {
+									if (loc.col == locEnd.col || loc.row == locEnd.row) {
 										ok = true;
 									}
 								}
 
-								if ((lastLoc.col != endLoc.col || lastLoc.row != endLoc.row) && ok) { //this prevents this method from firing too much
-									//clear highlighted cells if needed
-									clearHighlightedModel();
-
-									//set current bars
-									jS.highlightedLast.colEnd = endLoc.col;
-									jS.highlightedLast.rowEnd = endLoc.row;
-
+								if ((locTrack.last.col != locEnd.col || locTrack.last.row != locEnd.row) && ok) { //this prevents this method from firing too much
 									//select active cell if needed
 									selectModel(e.target);
 
 									//highlight the cells
-									jS.highlightedLast.td = jS.highlightedLast.obj = jS.cycleCellsAndMaintainPoint(jS.themeRoller.cell.setHighlighted, loc, endLoc);
+									jS.cycleCellArea(function (o) {
+										jS.themeRoller.cell.setHighlighted(o.td);
+									}, loc, locEnd);
 								}
 
-								lastLoc = endLoc;
+								locTrack.last = locEnd;
 							});
 
 						$doc
@@ -5007,7 +5024,7 @@ jQuery.sheet = {
 									.unbind('mousemove')
 									.unbind('mouseup');
 
-								if ($.isFunction(fnDone)) {
+								if (fnDone) {
 									fnDone();
 								}
 							});
@@ -5050,11 +5067,12 @@ jQuery.sheet = {
 			 */
 			highlightedLast:{
 				obj:$([]),
-				td: $([]),
 				rowStart:0,
 				colStart:0,
 				rowEnd:0,
-				colEnd:0
+				colEnd:0,
+				barLeft: $([]),
+				barTop: $([])
 			},
 
 			/**
@@ -5108,7 +5126,7 @@ jQuery.sheet = {
 				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
 				uiCell.each(function (i) {
-					cell = $(this);
+					var cell = $(this);
 					var curr_size = (cell.css("font-size") + '').replace("px", ""),
 						new_size = parseInt(curr_size ? curr_size : 10) + resize;
 					cell.css("font-size", new_size + "px");
@@ -6547,17 +6565,8 @@ jQuery.sheet = {
 				}
 
 				setActive();
-				jS.themeRoller.cell.clearHighlighted();
-				jS.themeRoller.cell.setHighlighted(obj);
 
-				jS.highlightedLast.obj = obj;
-				jS.highlightedLast.td = $([]);
-
-				jS.highlightedLast.rowStart = rows.start;
-				jS.highlightedLast.rowEnd = rows.end;
-
-				jS.highlightedLast.colStart = cols.start;
-				jS.highlightedLast.colEnd = cols.end;
+				jS.themeRoller.cell.setHighlighted(obj.add(jS.obj.cellActive()));
 			},
 
 			/**
