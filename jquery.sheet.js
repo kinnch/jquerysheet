@@ -368,7 +368,7 @@ jQuery.fn.extend({
 	 *              "What I want my command to say": function() {}
 	 *          }
 	 *
-	 * hiddenRows {Array} default [], Hides certain rows from being displayed initially. [sheet Index][row index]. example: [[1]] hides first row in first spreadsheet; [[],[1]] hides first row in second spreadsheet
+	 * hiddenRows {Array} default [], Hides certain rows from being displayed initially. [sheet Index][row index]. example: [[1]] hides first row in first spreadsheet; [[]],[1]] hides first row in second spreadsheet
 	 *
 	 * hiddenColumns {Array} default [], Hides certain columns from being displayed initially. [sheet Index][column index]. example: [[1]] hides first column in first spreadsheet; [[],[1]] hides first column in second spreadsheet
 	 *
@@ -379,7 +379,8 @@ jQuery.fn.extend({
 	sheet:function (settings) {
 		settings = settings || {};
 		jQuery(this).each(function () {
-			var me = jQuery(this),
+			var globalize = Globalize,
+				me = jQuery(this),
 				defaults = {
 					editable:true,
 					editableNames:true,
@@ -411,14 +412,14 @@ jQuery.fn.extend({
 					endOfNumber: false,
 					encode:function (val) {
 						if (!this.endOfNumber) {
-							var radix = Globalize.culture().numberFormat['.'];
+							var radix = globalize.culture().numberFormat['.'];
 							this.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
 						}
 						switch (typeof val) {
 							case 'object':
 								return val;
 							case 'number':
-								return Globalize.format(val, "n10").replace(this.endOfNumber, function (orig, radix, num) {
+								return globalize.format(val, "n10").replace(this.endOfNumber, function (orig, radix, num) {
 									return (num ? radix : '') + (num || '');
 								});
 						}
@@ -431,7 +432,7 @@ jQuery.fn.extend({
 						}
 						var num = $.trim(val) * 1;
 						if (!isNaN(num)) {
-							return Globalize.format(num, "n10").replace(this.endOfNumber, function (orig, radix, num) {
+							return globalize.format(num, "n10").replace(this.endOfNumber, function (orig, radix, num) {
 								return (num ? radix : '') + (num || '');
 							});
 						}
@@ -550,7 +551,7 @@ jQuery.fn.extend({
 						'$':function(val, ch) {
 							this.formula = '';
 							this.value = val;
-							this.valueOverride = jFN.DOLLAR.apply(this, [val.substring(1).replace(Globalize.culture().numberFormat[','], ''), 2, ch || '$']).value;
+							this.valueOverride = jFN.DOLLAR.apply(this, [val.substring(1).replace(globalize.culture().numberFormat[','], ''), 2, ch || '$']).value;
 							this.td
 								.removeData('formula')
 								.html(val);
@@ -724,6 +725,10 @@ jQuery.sheet = {
 	 */
 	instance:[],
 
+	/**
+	 * Contains the dependencies if you use $.sheet.preLoad();
+	 * @memberOf jQuery.sheet
+	 */
 	dependencies:{
 		coreCss:{css:'jquery.sheet.css'},
 		jQueryUI:{script:'jquery-ui/ui/jquery-ui.min.js'},
@@ -734,6 +739,11 @@ jQuery.sheet = {
 		mousewheel:{script:'plugins/jquery.mousewheel.min.js'},
 		nearest:{script:'plugins/jquery.nearest.min.js'}
 	},
+
+	/**
+	 * Contains the optional plugins if you use $.sheet.preLoad();
+	 * @memberOf jQuery.sheet
+	 */
 	optional:{
 		globalizeCultures:{script:'plugins/globalize.cultures.js'},
 		raphael:{script:'plugins/raphael-min.js'},
@@ -753,6 +763,14 @@ jQuery.sheet = {
 	 */
 	events:['sheetAddRow', 'sheetAddColumn', 'sheetSwitch', 'sheetRename', 'sheetTabSortStart', 'sheetTabSortUpdate', 'sheetCellEdit', 'sheetCellEdited', 'sheetCalculation', 'sheetAdd', 'sheetDelete', 'sheetDeleteRow', 'sheetDeleteColumn', 'sheetOpen', 'sheetAllOpened', 'sheetSave', 'sheetFullScreen', 'sheetFormulaKeydown'],
 
+	/**
+	 * Used to load in all the required plugins and dependencies needed by sheet in it's default directories.
+	 * @param {String} path optional path
+	 * @param {Object} settings
+	 * @name preLoad
+	 * @methodOf jQuery.sheet
+	 *
+	 */
 	preLoad:function (path, settings) {
 		path = path || '';
 		settings = $.extend({
@@ -787,6 +805,14 @@ jQuery.sheet = {
 	},
 
 
+	/**
+	 * Repeats a string a number of times
+	 * @param {String} str
+	 * @param {Number} num
+	 * @return {String}
+	 * @name repeat
+	 * @methodOf $.sheet
+	 */
 	repeat:function (str, num) {
 		var result = '';
 		while (num > 0) {
@@ -797,6 +823,18 @@ jQuery.sheet = {
 	},
 
 
+	/**
+	 * Creates css for an iterated element
+	 * @param {String} elementName
+	 * @param {String} parentSelectorString
+	 * @param me
+	 * @param indexes
+	 * @param min
+	 * @param css
+	 * @return {String}
+	 * @name nthCss
+	 * @methodOf jQuery.sheet
+	 */
 	nthCss:function (elementName, parentSelectorString, me, indexes, min, css) {
 		var style = [],
 			index = indexes.length;
@@ -804,7 +842,7 @@ jQuery.sheet = {
 		if (me.styleSheet) { //IE compatibility
 			do {
 				if (indexes[index] > min) {
-					style.push(parentSelectorString + ' ' + elementName + ':first-child' + jQuery.sheet.repeat('+' + elementName, indexes[index] - 1));
+					style.push(parentSelectorString + ' ' + elementName + ':first-child' + this.repeat('+' + elementName, indexes[index] - 1));
 				}
 			} while (index--);
 
@@ -836,13 +874,15 @@ jQuery.sheet = {
 	 */
 	createInstance:function ($, s, I) {
 
-		/**
-		 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index]
-		 * @name jS
-		 * @namespace
-		 * @type {Object}
-		 */
-		var jS = {
+		var self = this,
+
+			/**
+			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index]
+			 * @name jS
+			 * @namespace
+			 * @type {Object}
+			 */
+			jS = {
 			/**
 			 * Current version of jQuery.sheet
 			 * @memberOf jS
@@ -1272,8 +1312,8 @@ jQuery.sheet = {
 
 			/**
 			 * Creates a single cell within
-			 * @param {Integer} sheet
-			 * @param {Integer} row
+			 * @param {Integer} sheetIndex
+			 * @param {Integer} rowIndex
 			 * @param {Integer} col
 			 * @param {Integer} calcCount
 			 * @param {Date} calcLast
@@ -1282,47 +1322,87 @@ jQuery.sheet = {
 			 * @methodOf jS
 			 * @name createCell
 			 */
-			createCell:function (sheet, row, col, calcCount, calcLast, calcDependenciesLast) {
+			createCell:function (sheetIndex, rowIndex, colIndex, calcCount, calcLast, calcDependenciesLast) {
 				//first create cell
-				if (!jS.spreadsheets[sheet]) jS.spreadsheets[sheet] = [];
-				if (!jS.spreadsheets[sheet][row]) jS.spreadsheets[sheet][row] = [];
-				if (!jS.controls.sheets[sheet]) return {};
-				if (!jS.controls.sheets[sheet].children[1]) return {};
-				if (!jS.controls.sheets[sheet].children[1].children[row]) return {};
-				if (!jS.controls.sheets[sheet].children[1].children[row].children[col]) return {};
-
-				var td = jS.controls.sheets[sheet].children[1].children[row].children[col],
-					$td = $(td),
-					cell = jS.spreadsheets[sheet][row][col] = {
-						td:$td,
-						formula:td.getAttribute('data-formula') || '',
-						value:td.textContent || td.innerText || '',
-						calcCount:calcCount || 0,
-						calcLast:calcLast || -1,
-						calcDependenciesLast:calcDependenciesLast || -1,
-						html:[],
-						sheet:sheet
-					};
-				$td.data('cell', cell);
-
-				if (cell.formula && cell.formula.charAt(0) == '=') {
-					cell.formula = cell.formula.substring(1);
+				var sheet, row, jSCell, table, colGroup, col, tBody, tr, td, $td, tdsX, tdsY;
+				if (!(sheet = jS.spreadsheets[sheetIndex])) { //check if spreadsheet exists, if not, create it as an array
+					sheet = jS.spreadsheets[sheetIndex] = [];
 				}
+
+				if (!(row = sheet[rowIndex])) { //check if row exists, if not, create it
+					row = sheet[rowIndex] = [];
+				}
+
+				if (!(table = jS.controls.sheets[sheetIndex])) {
+					return {};
+				}
+				if (!(tBody = table.children[1])) {
+					return {};
+				}
+				if (!(tr = tBody.children[rowIndex])) {
+					return {};
+				}
+				if (!(td = tr.children[colIndex])) {
+					return {};
+				}
+
+				$td = $(td);
+
+				jSCell = row[colIndex] = td.jSCell = { //create cell
+					td:$td,
+					formula:td.getAttribute('data-formula') || '',
+					value:td.textContent || td.innerText || '',
+					calcCount:calcCount || 0,
+					calcLast:calcLast || -1,
+					calcDependenciesLast:calcDependenciesLast || -1,
+					html:[],
+					sheet:sheetIndex
+				};
+
+				if (jSCell.formula && jSCell.formula.charAt(0) == '=') {
+					jSCell.formula = jSCell.formula.substring(1);
+				}
+
+
+				//attache cells to col
+				colGroup = table.children[0];
+				if (!(col = colGroup.children[colIndex]).jSCells) col.jSCells = [];
+				col.jSCells.push(jSCell);
+
+				if (!col.tds) col.tds = [];
+				col.tds.push(td);
+				
+
+				//attach cells to tr
+				if (!tr.jSCells) tr.jSCells = [];
+				tr.jSCells.push(jSCell);
+
+
+				//attach cells to table
+				if (!table.jSCells) table.jSCells = [];
+				table.jSCells.push(jSCell);
+
+				//attach td's to table
+				if (!table.tds) table.tds = [];
+				table.tds.push(td);
 
 				//now create row
-				if (!jS.controls.bar.y.td[sheet]) jS.controls.bar.y.td[sheet] = [];
-				if (!jS.controls.bar.y.td[sheet][row]) {
-					jS.controls.bar.y.td[sheet][row] = $(td.parentNode.children[0]);
+				if (!(tdsY = jS.controls.bar.y.td[sheetIndex])) {
+					tdsY = jS.controls.bar.y.td[sheetIndex] = [];
+				}
+				if (!tdsY[rowIndex]) {
+					tdsY[rowIndex] = $(tr.children[0]);
 				}
 
-				//now create column
-				if (!jS.controls.bar.x.td[sheet]) jS.controls.bar.x.td[sheet] = [];
-				if (!jS.controls.bar.x.td[sheet][col]) {
-					jS.controls.bar.x.td[sheet][col] = $(td.parentNode.parentNode.children[0].children[col]);
+				if (!(tdsX = jS.controls.bar.x.td[sheetIndex])) {
+					tdsX = jS.controls.bar.x.td[sheetIndex] = [];
+				}
+				if (!tdsX[colIndex]) {
+					tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
 				}
 
 				//return cell
-				return cell;
+				return jSCell;
 			},
 
 			/**
@@ -2227,8 +2307,8 @@ jQuery.sheet = {
 								if (indexes.length == x) return;
 								x = indexes.length;
 
-								var style = styleOverride || $.sheet.nthCss('col', '#' + jS.id.sheet + jS.i, this, indexes, jS.frozenAt().col + 1) +
-									$.sheet.nthCss('td', '#' + jS.id.sheet + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
+								var style = styleOverride || self.nthCss('col', '#' + jS.id.sheet + jS.i, this, indexes, jS.frozenAt().col + 1) +
+									self.nthCss('td', '#' + jS.id.sheet + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
 
 								if (this.styleSheet) {
 									this.styleSheet.cssText = style;
@@ -2259,7 +2339,7 @@ jQuery.sheet = {
 								if (indexes.length == y) return;
 								y = indexes.length;
 
-								var style = styleOverride || $.sheet.nthCss('tr', '#' + jS.id.sheet + jS.i, this, indexes, jS.frozenAt().row + 1);
+								var style = styleOverride || self.nthCss('tr', '#' + jS.id.sheet + jS.i, this, indexes, jS.frozenAt().row + 1);
 
 								if (this.styleSheet) { //IE compatibility
 									this.styleSheet.cssText = style;
@@ -2364,8 +2444,8 @@ jQuery.sheet = {
 					var toggleHideStyleX = jS.controls.toggleHide.x[jS.i] = $('<style></style>')
 							.appendTo(pane)
 							.bind('updateStyle', function (e) {
-								var style = $.sheet.nthCss('col', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], 0) +
-									$.sheet.nthCss('td', '#' + jS.id.sheet + jS.i + ' tr', this, jS.toggleHide.hiddenColumns[jS.i], 0);
+								var style = self.nthCss('col', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], 0) +
+									self.nthCss('td', '#' + jS.id.sheet + jS.i + ' tr', this, jS.toggleHide.hiddenColumns[jS.i], 0);
 
 								if (this.styleSheet) {
 									this.styleSheet.cssText = style;
@@ -2378,7 +2458,7 @@ jQuery.sheet = {
 						toggleHideStyleY = jS.controls.toggleHide.y[jS.i] = $('<style></style>')
 							.appendTo(pane)
 							.bind('updateStyle', function (e) {
-								var style = $.sheet.nthCss('tr', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenRows[jS.i], 0);
+								var style = self.nthCss('tr', '#' + jS.id.sheet + jS.i, this, jS.toggleHide.hiddenRows[jS.i], 0);
 
 								if (this.styleSheet) {
 									this.styleSheet.cssText = style;
@@ -2689,7 +2769,7 @@ jQuery.sheet = {
 								if (td) {
 									var loc = jS.getTdLocation(td);
 									jS.cellSetActive(td, loc, true, jS.autoFillerNotGroup, function () {
-										var highlighted = jS.highlightedTds(),
+										var highlighted = jS.highlighted(),
 											hLoc = jS.getTdLocation(highlighted.first());
 										jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
 										jS.autoFillerGoToTd(highlighted.last());
@@ -2887,9 +2967,14 @@ jQuery.sheet = {
 						return true;
 					},
 
-
+					/**
+					 * Copy what is in the highlighted tds
+					 * @param e
+					 * @param clearValue
+					 * @return {Boolean}
+					 */
 					copy:function (e, clearValue) {
-						var tds = jS.highlightedTds(),
+						var tds = jS.highlighted(true),
 							formula = jS.obj.formula(),
 							oldValue = formula.val(),
 							cellsTsv = jS.tdsToTsv(tds, clearValue);
@@ -3983,7 +4068,7 @@ jQuery.sheet = {
 			 */
 			merge:function () {
 				var cellsValue = [],
-					tds = jS.highlightedTds(),
+					tds = jS.highlighted(),
 					tdFirstLoc = jS.getTdLocation(tds.first()),
 					tdLastLoc = jS.getTdLocation(tds.last()),
 					colI = 0,
@@ -4060,7 +4145,7 @@ jQuery.sheet = {
 			 * @name unmerge
 			 */
 			unmerge:function () {
-				var td = jS.highlightedTds().first(),
+				var td = jS.highlighted().first(),
 					loc = jS.getTdLocation(td),
 					cellFirst = jS.spreadsheets[jS.i][loc.row][loc.col],
 					formula = td.data('formula'),
@@ -4093,7 +4178,7 @@ jQuery.sheet = {
 			 */
 			fillUpOrDown:function (goUp, v) {
 				jS.evt.cellEditDone();
-				var cells = jS.highlightedTds(),
+				var cells = jS.highlighted(),
 					activeCell = jS.obj.cellActive().data('cell'),
 					last = new Date(),
 					startLoc = jS.getTdLocation(cells.first()),
@@ -4161,7 +4246,7 @@ jQuery.sheet = {
 			},
 
 			tdsToTsv:function (tds, clearValue, fnEach) {
-				tds = tds || jS.highlightedTds();
+				tds = tds || jS.highlighted(true);
 				fnEach = fnEach || function (loc, cell) {
 					if (clearValue) {
 						s.parent.one('sheetPreCalculation', function () {
@@ -5107,7 +5192,7 @@ jQuery.sheet = {
 			cellStyleToggle:function (setClass, removeClass) {
 				jS.setDirty(true);
 				//Lets check to remove any style classes
-				var tds = jS.highlightedTds();
+				var tds = jS.highlighted();
 
 				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
@@ -5142,7 +5227,7 @@ jQuery.sheet = {
 				}
 
 				//Lets check to remove any style classes
-				var uiCell = jS.highlightedTds();
+				var uiCell = jS.highlighted();
 
 				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
@@ -7144,49 +7229,38 @@ jQuery.sheet = {
 			 * Get all the td objects that are currently highlighted
 			 * @returns {jQuery|HTMLElement}
 			 */
-
-			highlightedTds:function() {
+			highlighted:function(cells) {
 				var highlighted = jS.highlightedLast.obj || $([]),
-					tds = $([]),
+					obj = [],
 					tag,
 					i;
 
 				if (!(tag = highlighted) || !highlighted.length || !(tag = tag[0]) || !tag.tagName) {
-					return tds;
+					return obj;
 				}
 
-				switch (tag.tagName.toLowerCase()) {
-					case 'td':
-						return highlighted;
-					case 'tr':
+				switch (tag.tagName) {
+					case 'TD':
+						obj.push(cells ? tag.jSCell : tag);
+					case 'TR':
 						i = highlighted.length - 1;
 						do {
-							tds = tds.add(highlighted[i].children);
+							obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].children);
 						} while(i-- > 0);
 						break;
-					case 'col':
+					case 'COL':
 						highlighted = highlighted.filter('col');
 						i = highlighted.length - 1;
-						var rows = jS.rows();
 						do {
-							var j = rows.length - 1,
-								td = highlighted[i].bar,
-								colIndex = td.cellIndex;
-							do {
-								tds = tds.add(rows[j].children[colIndex]);
-							} while (j-- > 1);
+							obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds)
 						} while(i-- > 0);
 						break;
-					case 'table':
-						var rows = jS.rows();
-						i = rows.length - 1;
-						do {
-							tds = tds.add($(rows[i].children).not(':first'));
-						} while (i-- > 1);
+					case 'TABLE':
+						obj = (cells ? tag.jSCells : tag.tds);
 						break;
 				}
 
-				return tds;
+				return cells ? obj : $(obj);
 			},
 
 			/**
