@@ -1377,6 +1377,9 @@ jQuery.sheet = {
 				if (!tr.jSCells) tr.jSCells = [];
 				tr.jSCells.push(jSCell);
 
+				//attach td's to tr
+				if (!tr.tds) tr.tds = [];
+				tr.tds.push(td);
 
 				//attach cells to table
 				if (!table.jSCells) table.jSCells = [];
@@ -7245,14 +7248,18 @@ jQuery.sheet = {
 					case 'TR':
 						i = highlighted.length - 1;
 						do {
-							obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].children);
+							if (highlighted[i].tds) {
+								obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds);
+							}
 						} while(i-- > 0);
 						break;
 					case 'COL':
 						highlighted = highlighted.filter('col');
 						i = highlighted.length - 1;
 						do {
-							obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds)
+							if (highlighted[i].tds) {
+								obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds)
+							}
 						} while(i-- > 0);
 						break;
 					case 'TABLE':
