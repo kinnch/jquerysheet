@@ -1023,9 +1023,6 @@ jQuery.sheet = {
 				cellMenu:function () {
 					return jS.controls.cellMenu[jS.i] || $([]);
 				},
-				cellHighlighted:function () {
-					return jS.highlightedLast.td || $([]);
-				},
 				chart:function () {
 					return jS.controls.chart[jS.i] || $([]);
 				},
@@ -1554,6 +1551,7 @@ jQuery.sheet = {
 													.text(jSE.columnLabelString(col));
 
 												o.cols[j].setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
+												o.cols[j].bar = td[0];
 												j++;
 											} else {
 												jS.spreadsheets[jS.i][row].splice(col, 0, {});
@@ -1670,7 +1668,9 @@ jQuery.sheet = {
 				 */
 				barTop:function (sheet) {
 					var colgroup = sheet.children('colgroup'),
-						col = $('<col />')
+						cols = colgroup.children(),
+						i,
+						col = $('<col />') //left column
 							.attr('width', s.colMargin)
 							.css('width', s.colMargin + 'px')
 							.prependTo(colgroup);
@@ -1679,14 +1679,18 @@ jQuery.sheet = {
 					var barTopParent = $('<tr class="' + jS.cl.barTopParent + '" />');
 					jS.controls.barTopParent[jS.i] = barTopParent;
 
-					var parent = sheet.children('tbody').children('tr:first');
+					var parent = sheet[0].children[1].children[0];
 
 					//corner
-					barTopParent.append('<td />');
+					var corner = $('<td />');
+					barTopParent.append(corner);
 
-					parent.children('td').each(function (i) {
-						barTopParent.append('<td />');
-					});
+					i = parent.children.length - 1;
+					do {
+						var td = doc.createElement('td');
+						cols[i].bar = td;
+						corner.after(td);
+					} while (i-- > 0);
 
 					barTopParent.insertBefore(parent);
 
@@ -2237,6 +2241,16 @@ jQuery.sheet = {
 								jS.scrolledArea[jS.i].col.end = math.max(indexes.shift() || 1, 1);
 
 								jS.obj.barHelper().remove();
+							})
+							.bind('touch', function() {
+								var style;
+								if (this.styleSheet) {
+									style = this.styleSheet.cssText + '';
+									this.styleSheet.cssText = style;
+								} else {
+									style = scrollStyleX.text();
+									scrollStyleX.text(style);
+								}
 							}),
 						scrollStyleY = jS.controls.bar.y.scroll[jS.i] = $('<style type="text/css"></style>')
 							.bind('updateStyle', function (e, indexes, styleOverride) {
@@ -2675,7 +2689,7 @@ jQuery.sheet = {
 								if (td) {
 									var loc = jS.getTdLocation(td);
 									jS.cellSetActive(td, loc, true, jS.autoFillerNotGroup, function () {
-										var highlighted = jS.obj.cellHighlighted(),
+										var highlighted = jS.highlightedTds(),
 											hLoc = jS.getTdLocation(highlighted.first());
 										jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
 										jS.autoFillerGoToTd(highlighted.last());
@@ -2875,7 +2889,7 @@ jQuery.sheet = {
 
 
 					copy:function (e, clearValue) {
-						var tds = jS.obj.cellHighlighted(),
+						var tds = jS.highlightedTds(),
 							formula = jS.obj.formula(),
 							oldValue = formula.val(),
 							cellsTsv = jS.tdsToTsv(tds, clearValue);
@@ -3322,7 +3336,7 @@ jQuery.sheet = {
 						case key.ENTER:
 							r++;
 							overrideIsEdit = true;
-							if (jS.highlightedLast.td.length > 1) {
+							if (jS.highlightedLast.obj.length > 1) {
 								var inPlaceEdit = jS.obj.inPlaceEdit(),
 									v = inPlaceEdit.val();
 
@@ -3969,7 +3983,7 @@ jQuery.sheet = {
 			 */
 			merge:function () {
 				var cellsValue = [],
-					tds = jS.obj.cellHighlighted(),
+					tds = jS.highlightedTds(),
 					tdFirstLoc = jS.getTdLocation(tds.first()),
 					tdLastLoc = jS.getTdLocation(tds.last()),
 					colI = 0,
@@ -4046,7 +4060,7 @@ jQuery.sheet = {
 			 * @name unmerge
 			 */
 			unmerge:function () {
-				var td = jS.obj.cellHighlighted().first(),
+				var td = jS.highlightedTds().first(),
 					loc = jS.getTdLocation(td),
 					cellFirst = jS.spreadsheets[jS.i][loc.row][loc.col],
 					formula = td.data('formula'),
@@ -4079,7 +4093,7 @@ jQuery.sheet = {
 			 */
 			fillUpOrDown:function (goUp, v) {
 				jS.evt.cellEditDone();
-				var cells = jS.obj.cellHighlighted(),
+				var cells = jS.highlightedTds(),
 					activeCell = jS.obj.cellActive().data('cell'),
 					last = new Date(),
 					startLoc = jS.getTdLocation(cells.first()),
@@ -4147,7 +4161,7 @@ jQuery.sheet = {
 			},
 
 			tdsToTsv:function (tds, clearValue, fnEach) {
-				tds = tds || jS.obj.cellHighlighted();
+				tds = tds || jS.highlightedTds();
 				fnEach = fnEach || function (loc, cell) {
 					if (clearValue) {
 						s.parent.one('sheetPreCalculation', function () {
@@ -4216,11 +4230,10 @@ jQuery.sheet = {
 							col:size.cols
 						}
 					},
-					last = new Date();
+					last = new Date(),
+					cellStack = [];
 
-				/*jS.log("offsetFormulas from - Col:" + loc.col + ',Row:' + loc.row);
-				jS.log("Is before loc:" + (isBefore ? 'true' : 'false'));
-				jS.log("Offset: - Col:" + offset.col + ',Row:' + offset.row);*/
+
 
 				jS.cycleCells(function (sheet, row, col) {
 					if (this.formula && typeof this.formula == 'string' && jS.isFormulaEditable(this.td)) {
@@ -4229,10 +4242,15 @@ jQuery.sheet = {
 						this.td.data('formula', '=' + this.formula);
 					}
 
-					jS.calcDependencies(sheet, row, col, last, true);
+					cellStack.push(function() {
+						jS.calcDependencies(sheet, row, col, last, true);
+					});
 
 				}, affectedRange.first, affectedRange.last);
 
+				while (cellStack.length) {
+					cellStack.pop()();
+				}
 
 				jS.evt.cellEditDone();
 			},
@@ -4345,11 +4363,11 @@ jQuery.sheet = {
 				var row = lastLoc.row, col;
 				if (row < firstLoc.row) return;
 				do {
-					col = lastLoc.loc;
+					col = lastLoc.col;
 					do {
 						fn.apply(jS.spreadsheets[i][row][col], [i, row, col]);
-					} while (col-- >= firstLoc.col);
-				} while (row-- >= firstLoc.row);
+					} while (col-- > firstLoc.col);
+				} while (row-- > firstLoc.row);
 			},
 
 			/**
@@ -4515,7 +4533,8 @@ jQuery.sheet = {
 					 */
 					setHighlighted:function (obj, addToHighlighted) {
 						var i,
-							_obj = jS.highlightedLast.obj;
+							_obj = jS.highlightedLast.obj,
+							x = jS.obj.scrollStyleX();
 
 						if (_obj && _obj.length && !addToHighlighted) {
 							i = _obj.length - 1;
@@ -4541,6 +4560,8 @@ jQuery.sheet = {
 
 							if (obj) jS.highlightedLast.obj = obj;
 						}
+
+						x.trigger('touch'); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
 					},
 
 					/**
@@ -5086,7 +5107,7 @@ jQuery.sheet = {
 			cellStyleToggle:function (setClass, removeClass) {
 				jS.setDirty(true);
 				//Lets check to remove any style classes
-				var tds = jS.obj.cellHighlighted();
+				var tds = jS.highlightedTds();
 
 				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
@@ -5121,7 +5142,7 @@ jQuery.sheet = {
 				}
 
 				//Lets check to remove any style classes
-				var uiCell = jS.obj.cellHighlighted();
+				var uiCell = jS.highlightedTds();
 
 				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
@@ -7120,6 +7141,55 @@ jQuery.sheet = {
 			},
 
 			/**
+			 * Get all the td objects that are currently highlighted
+			 * @returns {jQuery|HTMLElement}
+			 */
+
+			highlightedTds:function() {
+				var highlighted = jS.highlightedLast.obj || $([]),
+					tds = $([]),
+					tag,
+					i;
+
+				if (!(tag = highlighted) || !highlighted.length || !(tag = tag[0]) || !tag.tagName) {
+					return tds;
+				}
+
+				switch (tag.tagName.toLowerCase()) {
+					case 'td':
+						return highlighted;
+					case 'tr':
+						i = highlighted.length - 1;
+						do {
+							tds = tds.add(highlighted[i].children);
+						} while(i-- > 0);
+						break;
+					case 'col':
+						highlighted = highlighted.filter('col');
+						i = highlighted.length - 1;
+						var rows = jS.rows();
+						do {
+							var j = rows.length - 1,
+								td = highlighted[i].bar,
+								colIndex = td.cellIndex;
+							do {
+								tds = tds.add(rows[j].children[colIndex]);
+							} while (j-- > 1);
+						} while(i-- > 0);
+						break;
+					case 'table':
+						var rows = jS.rows();
+						i = rows.length - 1;
+						do {
+							tds = tds.add($(rows[i].children).not(':first'));
+						} while (i-- > 1);
+						break;
+				}
+
+				return tds;
+			},
+
+			/**
 			 *
 			 * @param {jQuery|HTMLElement} o table
 			 * @returns {Object} {cols, rows}
@@ -7458,9 +7528,11 @@ jQuery.sheet = {
 
 		outer.detach();
 
+		var w = w1 - w2, h = h1 - h2;
+
 		return {
-			width:w1 - w2,
-			height:h1 - h2
+			width: w || 15,
+			height: h || 15
 		};
 	},
 
