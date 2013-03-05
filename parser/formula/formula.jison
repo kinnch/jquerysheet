@@ -157,12 +157,12 @@ expression :
 		{/*$$ = Math.E;*/;}
 	| FUNCTION '(' ')'
 		{
-			$$ = yy.lexer.handler.callFunction($1, '', yy.lexer.obj);//js
+			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, [$1, '']);//js
 			//php $$ = $this->callFunction($1);
 		}
 	| FUNCTION '(' expseq ')'
 		{
-			$$ = yy.lexer.handler.callFunction($1, $3, yy.lexer.obj);//js
+			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, [$1, $3]);//js
 			//php $$ = $this->callFunction($1, $3);
 		}
 	| cell
@@ -209,21 +209,21 @@ expseq :
 			$$ = [$1];//js
 			//php $$ = array($1);
 		}
-	| expression ';' expseq
+	| expseq ';' expression
 	    {
-	        $$ = ($.isArray($3) ? $3 : [$3]);//js
-		    $$.push($1);//js
+	        $1.push($3); //js
+	        $$ = $1; //js
 
-			//php $$ = (is_array($3) ? $3 : array());
-			//php $$[] = $1;
+			//php $1[] = $3;
+			//php $$ = $1;
 	    }
- 	| expression ',' expseq
+ 	| expseq ',' expression
 		{
-	        $$ = ($.isArray($3) ? $3 : [$3]);//js
-		    $$.push($1);//js
+	        $1.push($3); //js
+	        $$ = $1; //js
 
-			//php $$ = (is_array($3) ? $3 : array());
-			//php $$[] = $1;
+			//php $1[] = $3;
+			//php $$ = $1;
 	    }
  ;
 

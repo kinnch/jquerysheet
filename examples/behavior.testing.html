@@ -80,6 +80,8 @@
                 jS.deleteRow(1);
                 jS.deleteColumn(1);
             }, function () {
+	            console.log(tdAtPos(td, 1, 1));
+	            console.log(jS.obj.sheet()[0]);
                 if (
                     tdAtPos(td, 1, 1) &&
                     jS.obj.sheet().find('td').length == (4 * 4)
