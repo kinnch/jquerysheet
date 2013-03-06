@@ -17,7 +17,13 @@
                     .html($(this).html())
                     .sheet({
                         sheetAllOpened: function() {
-                            console.log($(this).serializeCellInputs(true));
+	                        $.each($(this).serializeCellInputs(true), function() {
+		                        $('#output')
+			                        .append($('<tr></tr>')
+					                    .append($('<td></td>').text(this.name))
+					                    .append($('<td></td>').text(this.value))
+		                        );
+	                        });
                         }
                     });
             });
@@ -26,5 +32,14 @@
 </head>
 <body>
 <div id="sheetParent" title="Inputs"></div>
+<table>
+	<thead>
+		<th>Input Name</th>
+		<th>Value</th>
+	</thead>
+	<tbody id="output">
+
+	</tbody>
+</table>
 </body>
 </html>

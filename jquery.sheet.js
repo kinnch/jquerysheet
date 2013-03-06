@@ -1783,6 +1783,9 @@ jQuery.sheet = {
 					i = parent.children.length - 1;
 					do {
 						var td = doc.createElement('td');
+						if (!cols[i]) {
+							cols[i] = $(doc.createElement('col')).prependTo(colgroup);
+						}
 						cols[i].bar = td;
 						corner.after(td);
 					} while (i-- > 0);
@@ -2252,11 +2255,13 @@ jQuery.sheet = {
 
 					if (jS.isSheetEditable()) {
 						var addSheet = $('<span class="' + jS.cl.uiTab + ' ui-corner-bottom" title="Add a spreadsheet" data-i="-1">+</span>')
-							.click(function () {
+							.mousedown(function () {
 								jS.addSheet({
 									rows:25,
 									cols:10
 								});
+
+								return false;
 							})
 							.appendTo(tabContainer);
 
@@ -7452,11 +7457,9 @@ jQuery.sheet = {
 		s.parent.addClass(jS.cl.parent);
 
 		s.parent
-			.unbind('sheetSwitch')
 			.bind('sheetSwitch', function (e, js, i) {
 				jS.switchSheet(i);
 			})
-			.unbind('sheetRename')
 			.bind('sheetRename', function (e, js, i) {
 				jS.renameSheet(i);
 			});
