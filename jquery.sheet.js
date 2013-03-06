@@ -5695,6 +5695,8 @@ jQuery.sheet = {
 						if (result != null) {
 							if (result.html != u) {
 								this.html = result.html;
+							} else {
+								this.html = []; //reset html if we didn't just get an html value
 							}
 							if (result.value != u) {
 								return result.value;
@@ -8568,7 +8570,10 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		};
 	},
 	HOUR:function (time) {
-		return times.fromMath(time).hour;
+		console.log(time);
+		time = times.fromMath(time);
+		console.log(time);
+		return time.hour;
 	},
 	MINUTE:function (time) {
 		return times.fromMath(time).minute;
@@ -9256,12 +9261,12 @@ var dates = {
 var times = {
 	math: Math,
 	fromMath:function (time) {
-		var result = {};
+		var result = {}, me = this;
 
-		result.hour = ((time * 24) + '').split('.')[0];
+		result.hour = ((time * 24) + '').split('.')[0] * 1;
 
 		result.minute = function (time) {
-			time = this.math.round(time * 24 * 100) / 100;
+			time = me.math.round(time * 24 * 100) / 100;
 			time = (time + '').split('.');
 			var minute = 0;
 			if (time[1]) {
@@ -9270,11 +9275,11 @@ var times = {
 				}
 				minute = time[1] * 0.6;
 			}
-			return this.math.round(minute);
+			return me.math.round(minute);
 		}(time);
 
 		result.second = function (time) {
-			time = this.math.round(time * 24 * 10000) / 10000;
+			time = me.math.round(time * 24 * 10000) / 10000;
 			time = (time + '').split('.');
 			var second = 0;
 			if (time[1]) {
@@ -9289,7 +9294,7 @@ var times = {
 						secondDecimal[1] = secondDecimal[1].substr(0, 2);
 					}
 
-					return this.math.round(secondDecimal[1] * 0.6);
+					return me.math.round(secondDecimal[1] * 0.6);
 				}
 			}
 			return second;

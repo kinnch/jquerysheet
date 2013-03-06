@@ -217,7 +217,16 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 							this.html = html;
 
 							result = jP.fn[fn].apply(this, values);
-
+							if (result != null) {
+								if (result.html != u) {
+									this.html = result.html;
+								} else {
+									this.html = []; //reset html if we didn't just get an html value
+								}
+								if (result.value != u) {
+									return result.value;
+								}
+							}
 							return result;
 						} else {
 							return s.error.apply(this, [{error: "Function Not Found"}]);
