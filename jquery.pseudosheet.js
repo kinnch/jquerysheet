@@ -131,7 +131,7 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 									resultFn = function () {
 										var obj = {result: formulaParser.parse(objFormula)};
 										jP.filterValue.apply(obj);
-										return obj.result;
+										return obj.val;
 									};
 
 								s.dataHandler[i].apply({
@@ -161,7 +161,7 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 							if (isInput) {
 								$obj.val(this.val);
 							} else {
-								$obj.html(this.result.html);
+								$obj.html(this.result.html !== u ? this.result.html : this.val);
 							}
 						}
 					}
@@ -174,17 +174,30 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 					if (this.result !== u) {
 						if (this.result.value !== u) {
 							this.val = this.result.value;
+							this.html = this.result.html || this.result.value;
 						} else {
 							this.val = this.result;
 						}
-						if (this.result.html === u || this.result.value === u) {
+						/*if (this.result.html === u || this.result.value === u) {
 							this.result = {val: this.result.value || this.result, html: this.result.html || this.result};
+						} else if (this.val.html !== u) {
+							this.result.html = this.val.html;
+							this.val = this.val.value;
 						} else {
 							this.result.html = this.val;
-						}
+						}*/
 					} else {
 						this.result = {html: this.val};
 					}
+
+					/*if (this.result !== u) {
+						this.val = this.result;
+						$(this).html((this.html || []).length > 0 ? this.html : (this.val));
+					} else if (this.html.length > 0) {
+						$(this).html(this.html);
+					} else {
+						$(this).html(this.val);
+					}*/
 				},
 				objHandler: {
 					callFunction: function(fn, args) {
@@ -193,21 +206,19 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 						if (jP.fn[fn]) {
 							this.obj.fnCount++;
 							var values = [],
-								html = [];
+								html = [],
+								result;
 
 							for(i in args) {
-								if (args[i].value && args[i].html) {
-									values.push(args[i].value);
-									html.push(args[i].html);
-								} else {
-									values.push(args[i]);
-									html.push(args[i]);
-								}
+								values.push(args[i].value !== u ? args[i].value : args[i]);
+								html.push(args[i].html !== u ? args[i].html : args[i]);
 							}
 
 							this.html = html;
 
-							return jP.fn[fn].apply(this, values);
+							result = jP.fn[fn].apply(this, values);
+
+							return result;
 						} else {
 							return s.error.apply(this, [{error: "Function Not Found"}]);
 						}
