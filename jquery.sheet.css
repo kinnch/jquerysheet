@@ -360,6 +360,16 @@
 	position: relative ! important;
 }
 
+.jSDropdown {
+	cursor: pointer;
+	width: 100%;
+}
+.jSCheckbox, .jSCheckbox * {
+	cursor: pointer;
+}
+.jSRadio, .jSRadio * {
+	cursor: pointer;
+}
 .bodyNoScroll
 {
 	overflow: hidden ! important;

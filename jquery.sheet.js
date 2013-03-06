@@ -8758,7 +8758,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		if (jS.s.editable) {
 
 			var id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
-			html = jQuery('<select style="width: 100%;" name="' + id + '" id="' + id + '" />')
+			html = jQuery('<select name="' + id + '" id="' + id + '" class="jSDropdown" />')
 				.mousedown(function () {
 					jS.cellEdit(jQuery(this).parent(), null, true);
 				})
@@ -8789,7 +8789,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		if (jS.s.editable) {
 			var id = "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
 
-			html = jQuery('<span />')
+			html = jQuery('<span class="jSRadio"/>')
 				.mousedown(function () {
 					jS.cellEdit(jQuery(this).parent());
 				});
@@ -8809,7 +8809,9 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 
 					html
 						.append(input)
-						.append('<span>' + v[i] + '</span>')
+						.append(jQuery('<span>' + v[i] + '</span>').click(function() {
+							$(this).prev().click();
+						}))
 						.append('<br />');
 				}
 			}
@@ -8835,7 +8837,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 						jS.calcDependencies.apply(cell);
 					});
 
-			html = jQuery('<span />')
+			html = jQuery('<span class="jSCheckbox"/>')
 				.append(checkbox)
 				.append('<span>' + v + '</span><br />')
 				.mousedown(function () {
