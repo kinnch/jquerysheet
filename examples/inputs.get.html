@@ -13,19 +13,29 @@
         $.sheet.preLoad('../');
         $(function() {
             $('<div />').load('../examples/inputs.html #sheetParent table', function() {
-                $('#sheetParent')
-                    .html($(this).html())
-                    .sheet({
-                        sheetAllOpened: function() {
-	                        $.each($(this).serializeCellInputs(true), function() {
-		                        $('#output')
-			                        .append($('<tr></tr>')
-					                    .append($('<td></td>').text(this.name))
-					                    .append($('<td></td>').text(this.value))
-		                        );
-	                        });
-                        }
-                    });
+
+	            var output = function(i) {
+		            if (!i) $('#output').children().remove();
+
+		            $('#output')
+				            .append($('<tr></tr>')
+				            .append($('<td></td>').text(this.name))
+				            .append($('<td></td>').text(this.value))
+		            );
+	            };
+                var sheet = $('#sheetParent')
+	                    .html($(this).html())
+	                    .sheet({
+	                        sheetAllOpened: function() {
+		                        $.each($(this).serializeCellInputs(true), output);
+	                        }
+	                    });
+
+	            sheet
+			            .find(':input')
+		                .change(function() {
+			                $.each(sheet.serializeCellInputs(true), output);
+		                });
             });
         });
     </script>

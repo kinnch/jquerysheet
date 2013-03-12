@@ -73,7 +73,7 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 					if (!this) return s.error.apply(this, [{error: 'Object not found'}]);
 
 					var	obj = this,
-						$obj = jQuery(this),
+						$obj = obj.$obj = jQuery(this),
 						isInput = $obj.is(':input');
 
 					if (isInput) {
@@ -116,11 +116,7 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 						}
 
 						jP.callStack++
-						formulaParser.lexer.obj = {
-							obj: this,
-							type: 'object',
-							jP: jP
-						};
+						formulaParser.lexer.obj = this;
 						formulaParser.lexer.handler = jP.objHandler;
 
 						var data = $obj.data();
@@ -134,11 +130,7 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 										return obj.val;
 									};
 
-								s.dataHandler[i].apply({
-									obj: obj,
-									$obj: $obj,
-									formula: objFormula
-								}, [resultFn()]);
+								s.dataHandler[i].apply(obj, [resultFn()]);
 							}
 						});
 
@@ -178,50 +170,41 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 						} else {
 							this.val = this.result;
 						}
-						/*if (this.result.html === u || this.result.value === u) {
-							this.result = {val: this.result.value || this.result, html: this.result.html || this.result};
-						} else if (this.val.html !== u) {
-							this.result.html = this.val.html;
-							this.val = this.val.value;
-						} else {
-							this.result.html = this.val;
-						}*/
 					} else {
 						this.result = {html: this.val};
 					}
-
-					/*if (this.result !== u) {
-						this.val = this.result;
-						$(this).html((this.html || []).length > 0 ? this.html : (this.val));
-					} else if (this.html.length > 0) {
-						$(this).html(this.html);
-					} else {
-						$(this).html(this.val);
-					}*/
 				},
 				objHandler: {
 					callFunction: function(fn, args) {
 						args = args || [];
 
 						if (jP.fn[fn]) {
-							this.obj.fnCount++;
+							this.fnCount++;
 							var values = [],
 								html = [],
-								result;
+								result,
+								i = args.length;
 
-							for(i in args) {
-								values.push(args[i].value !== u ? args[i].value : args[i]);
-								html.push(args[i].html !== u ? args[i].html : args[i]);
+							if (i) {
+								do {
+									if (args[i] != u) {
+										if (args[i].value || args[i].html) {
+											values.unshift(args[i].value);
+											html.unshift(args[i].html);
+										} else {
+											values.unshift(args[i]);
+											html.unshift(args[i]);
+										}
+									}
+								} while (i--);
 							}
-
-							this.html = html;
 
 							result = jP.fn[fn].apply(this, values);
 							if (result != null) {
 								if (result.html != u) {
-									this.html = result.html;
+									this.html.push(result.html);
 								} else {
-									this.html = []; //reset html if we didn't just get an html value
+									this.html.push(null); //reset html if we didn't just get an html value
 								}
 								if (result.value != u) {
 									return result.value;
