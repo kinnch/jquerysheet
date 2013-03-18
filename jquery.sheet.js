@@ -1707,8 +1707,8 @@ jQuery.sheet = {
 										var td = doc.createElement('td');
 										if (i == 0) {
 											td.setAttribute('class', jS.cl.barLeft + ' ' + jS.cl.uiBar);
-											td.setAttribute('data-entity', 'left');
-											td.setAttribute('data-type', 'bar');
+											td.entity = 'left';
+											td.type = 'bar';
 										}
 										tr.appendChild(td);
 									}
@@ -1722,23 +1722,19 @@ jQuery.sheet = {
 									return {row:(isBefore ? i : i + qty)};
 								},
 								createCells:function () {
-									var row = o.trs.length - 1,
-										col,
-										offset = (isBefore ? 0 : 1) + i,
-										rowWithOffset;
-
-									do {
-										rowWithOffset = row + offset;
-										jS.spreadsheets[jS.i].splice(rowWithOffset, 0, []);
-										col = o.trs[row].children.length - 1;
-										do {
+									for (var row = 0; row < o.trs.length; row++) {
+										row = row * 1;
+										var offset = (isBefore ? 0 : 1) + i;
+										jS.spreadsheets[jS.i].splice(row + offset, 0, []);
+										for (var col = 0; col < o.trs[row].children.length; col++) {
+											col = col * 1;
 											if (col == 0) {//skip bar
-												jS.controls.bar.y.td[jS.i].splice(rowWithOffset, 0, $(o.trs[row].children[col]));
+												jS.controls.bar.y.td[jS.i].splice(row + offset, 0, $(o.trs[row].children[col]));
 											} else {
-												jS.createCell(jS.i, rowWithOffset, col);
+												jS.createCell(jS.i, row + offset, col);
 											}
-										} while (col--);
-									} while (row--);
+										}
+									}
 
 									jS.refreshRowLabels(i);
 								}
@@ -1787,16 +1783,13 @@ jQuery.sheet = {
 									return {col:(isBefore ? i : i + qty)};
 								},
 								createCells:function () {
-									var rows = jS.rows(sheet),
-										offset = (isBefore ? 0 : 1) + i,
-										row = rows.length - 1,
-										col,
-										td,
-										$td;
-									do {
-										col = offset +  qty;
-										do {
-											td = sheet[0].children[1].children[row].children[col];
+									var rows = jS.rows(sheet);
+									for (var row = 0; row < rows.length; row++) {
+										var col = (isBefore ? 0 : 1) + i,
+											colMax = col + qty,
+											j = 0;
+										for (col; col < colMax; col++) {
+											var td = sheet[0].children[1].children[row].children[col];
 											$td = $(td);
 											if (row == 0) {
 												jS.controls.bar.x.td[jS.i].splice(col, 0, $td);
@@ -1814,8 +1807,8 @@ jQuery.sheet = {
 												jS.spreadsheets[jS.i][row].splice(col, 0, {});
 												jS.createCell(jS.i, row, col);
 											}
-										} while(col-- > offset);
-									} while(row--);
+										}
+									}
 
 									jS.refreshColumnLabels(i);
 								}
