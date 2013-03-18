@@ -29,28 +29,28 @@
             <td class="styleBold styleCenter">Correct?</td>
             <td class="styleBold styleCenter">Notes</td>
         </tr>
-        <tr><!--bracket handling-->
+        <tr>
             <td>Bracket Handling</td>
             <td data-formula="='<b>b</b>'"></td>
             <td>&lt;b&gt;b&lt;/b&gt;</td>
             <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
             <td></td>
         </tr>
-        <tr><!--concat with format-->
+        <tr>
             <td>Concat with format</td>
             <td data-formula="=CONCATENATE('Dollar Amount: ',DOLLAR(SUM(200)))"></td>
             <td>Dollar Amount: 200</td>
             <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
             <td>For now concatenation makes formatting cells somewhat difficult, so for the time being the formatting is lost on concatenation. Same as example below.</td>
         </tr>
-        <tr><!--concat operator with format-->
+        <tr>
             <td>Concat operator with format</td>
             <td data-formula="='Dollar Amount: ' + DOLLAR(SUM(200))"></td>
             <td>Dollar Amount: 200</td>
             <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
             <td></td>
         </tr>
-        <tr><!--line breaks-->
+        <tr>
             <td>Line Breaks</td>
             <td data-formula="='Test
 
