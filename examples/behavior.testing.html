@@ -40,13 +40,14 @@
 
                     jS.calcDependencies(sheet, row, col);
                 },
-                td = jS.obj.sheet().find('td').last().css('background-color', 'yellow');
+                td = jS.obj.table().find('td').last().css('background-color', 'yellow');
 
             test('Adding cells to end', function () {
                 jS.controlFactory.addRow();
                 jS.controlFactory.addColumn();
             }, function () {
-                if (tdAtPos(td, 1, 1) && jS.obj.sheet().find('td').length == (3 * 3)) {
+	            console.log(jS.obj.table().find('td').length);
+                if (tdAtPos(td, 1, 1) && jS.obj.table().find('td').length == (3 * 3)) {
                     return 'SUCCESS';
                 }
                 return 'FAILURE';
@@ -56,7 +57,7 @@
                 jS.controlFactory.addRow(1, true);
                 jS.controlFactory.addColumn(1, true);
             }, function () {
-                if (tdAtPos(td, 2, 2) && jS.obj.sheet().find('td').length == (4 * 4)) {
+                if (tdAtPos(td, 2, 2) && jS.obj.table().find('td').length == (4 * 4)) {
                     return 'SUCCESS';
                 }
                 return 'FAILURE';
@@ -68,8 +69,8 @@
             }, function () {
                 if (
                     tdAtPos(td, 2, 2) &&
-                    tdAtPos(jS.obj.sheet().find('td').last(), 4, 4) &&
-                    jS.obj.sheet().find('td').length == (5 * 5)
+                    tdAtPos(jS.obj.table().find('td').last(), 4, 4) &&
+                    jS.obj.table().find('td').length == (5 * 5)
                 ) {
                     return 'SUCCESS';
                 }
@@ -81,10 +82,10 @@
                 jS.deleteColumn(1);
             }, function () {
 	            console.log(tdAtPos(td, 1, 1));
-	            console.log(jS.obj.sheet()[0]);
+	            console.log(jS.obj.table()[0]);
                 if (
                     tdAtPos(td, 1, 1) &&
-                    jS.obj.sheet().find('td').length == (4 * 4)
+                    jS.obj.table().find('td').length == (4 * 4)
                 ) {
                     return 'SUCCESS';
                 }
@@ -98,7 +99,7 @@
             }, function () {
                 if (
                     tdAtPos(td, 1, 1) &&
-                    jS.obj.sheet().find('td').length == (3 * 3)
+                    jS.obj.table().find('td').length == (3 * 3)
                 ) {
                     return 'SUCCESS';
                 }

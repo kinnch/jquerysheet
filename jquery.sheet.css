@@ -150,6 +150,9 @@
 	padding: 2px 5px 0 5px ! important;
 	cursor: pointer;
 }
+.jSTab {
+	cursor: pointer;
+}
 .jSTabContainer *, .Div *
 {
 	font-size: 1em ! important;
@@ -166,6 +169,7 @@
 /* Sheet styling */
 .jS
 {
+	position: absolute;
     table-layout: fixed;
     empty-cells: show;
 	background-image: none ! important;
@@ -370,6 +374,11 @@
 .jSRadio, .jSRadio * {
 	cursor: pointer;
 }
+
+.jSHide {
+	display: none;
+}
+
 .bodyNoScroll
 {
 	overflow: hidden ! important;
