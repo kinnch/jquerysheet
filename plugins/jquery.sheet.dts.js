@@ -314,7 +314,7 @@
 					jS.evt.cellEditDone();
 					var metadata = [];
 					var spreadsheet = {
-						"title": (jS.obj.sheet().attr('title') || ''),
+						"title": (jS.obj.table().attr('title') || ''),
 						"rows": [],
 						"metadata": {
 							"widths": [],
@@ -421,7 +421,7 @@
 					var frozenAt = $.extend({}, jS.frozenAt()),
 						widths = [];
 
-					output += '<spreadsheet title="' + (jS.obj.sheet().attr('title') || '') + '">';
+					output += '<spreadsheet title="' + (jS.obj.table().attr('title') || '') + '">';
 
 					output += '<rows>';
 					for(var row in jS.spreadsheets[sheet]) {
