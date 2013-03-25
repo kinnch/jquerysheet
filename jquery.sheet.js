@@ -5614,26 +5614,27 @@ jQuery.sheet = {
 				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
 				if (i >= 0) {
-					hasClass = $(tds[0]).hasClass(setClass);
+					hasClass = tds[0].className.match(setClass); //go by first element in set
 					do {
 						td = tds[i];
 						$td = $(td);
 
-						if (removeClass) {
+						if (removeClass) {//If there is a class that conflicts with this one, we remove it first
 							$td.removeClass(removeClass);
-						} else {
-							//Now lets add some style
-							if (hasClass) {
-								$td.removeClass(setClass);
-							} else {
-								$td.addClass(setClass);
-							}
-
-							if (!td.jSCell.edited) {
-								td.jSCell.edited = true;
-								cellsEdited = cells.add(td.jSCell);
-							}
 						}
+
+						//Now lets add some style
+						if (hasClass) {
+							$td.removeClass(setClass);
+						} else {
+							$td.addClass(setClass);
+						}
+
+						if (!td.jSCell.edited) {
+							td.jSCell.edited = true;
+							cellsEdited = cells.add(td.jSCell);
+						}
+
 					} while (i--);
 
 					return true;
