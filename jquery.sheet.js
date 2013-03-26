@@ -2767,7 +2767,27 @@ jQuery.sheet = {
 
 					var enclosure = jS.controlFactory.enclosure(table),
 						pane = enclosure.pane,
-						$pane = $(pane);
+						$pane = $(pane),
+						paneContextmenuEvent = function (e) {
+							e.preventDefault();
+							if (jS.isBusy()) {
+								return false;
+							}
+
+							if (jS.isBar(e.target)) {
+								var entity = e.target.entity,
+									i = jS.getBarIndex[entity](e.target);
+
+								if (i < 0) return false;
+
+								if (jS.evt.barInteraction.first == jS.evt.barInteraction.last) {
+									jS.controlFactory.barMenu[entity](e, i);
+								}
+							} else {
+								jS.controlFactory.tdMenu(e);
+							}
+							return false;
+						};
 
 					ui.appendChild(enclosure);
 
@@ -2800,7 +2820,7 @@ jQuery.sheet = {
 
 							if (jS.isCell(e.target)) {
 								if (e.button == 2) {
-									paneContextmenuEvent(e);
+									paneContextmenuEvent.apply(this, [e]);
 								}
 								jS.evt.cellOnMouseDown(e);
 								return false;
@@ -2808,7 +2828,7 @@ jQuery.sheet = {
 
 							if (jS.isBar(e.target)) { //possibly a bar
 								if (e.button == 2) {
-									paneContextmenuEvent(e);
+									paneContextmenuEvent.apply(this, [e]);
 								}
 								mouseDownEntity = e.target.entity;
 								jS.evt.barInteraction.select(e.target);
@@ -2859,26 +2879,7 @@ jQuery.sheet = {
 						pane.ondblclick = jS.evt.cellOnDblClick;
 
 						$pane
-							.bind('contextmenu', function (e) {
-								e.preventDefault();
-								if (jS.isBusy()) {
-									return false;
-								}
-
-								if (jS.isBar(e.target)) {
-									var entity = e.target.entity,
-										i = jS.getBarIndex[entity](e.target);
-
-									if (i < 0) return false;
-
-									if (jS.evt.barInteraction.first == jS.evt.barInteraction.last) {
-										jS.controlFactory.barMenu[entity](e, i);
-									}
-								} else {
-									jS.controlFactory.tdMenu(e);
-								}
-								return false;
-							})
+							.bind('contextmenu', paneContextmenuEvent)
 							.disableSelectionSpecial()
 							.bind('cellEdit', jS.evt.cellEdit);
 					}
@@ -5060,7 +5061,7 @@ jQuery.sheet = {
 								i = obj.length - 1;
 								do {
 									if (!obj[i].isHighlighted || force) {
-										obj[i].className = obj[i].className.replace(' ' + jS.cl.uiTdHighlighted, '');
+										obj[i].className = obj[i].className.replace(jS.cl.uiTdHighlighted, '');
 										obj[i].isHighlighted = false;
 									}
 								} while (i-- > 0);
