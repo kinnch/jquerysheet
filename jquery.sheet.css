@@ -376,7 +376,7 @@
 }
 
 .jSHide {
-	display: none;
+	display: none ! important;
 }
 
 .bodyNoScroll

@@ -23,21 +23,25 @@
                     dtsType = $('#dtsType').val(),
                     json,
                     xml,
-                    tables;
+                    tables,
+		            trim = false;
 
                 switch (dtsType) {
-                case "json":
-                    json = $.sheet.dts.fromTables.json(jS);
-                    tables = $.sheet.dts.toTables.json(json);
+                    case "json": trim = true;
+	                case "json_trim":
+	                    json = $.sheet.dts.fromTables.json(jS, trim);
+	                    tables = $.sheet.dts.toTables.json(json);
 
-                    $('#dtsValue').val(JSON.stringify(json));
-                    break;
-                case "xml":
-                    xml = $.sheet.dts.fromTables.xml(jS);
-                    tables = $.sheet.dts.toTables.xml(xml);
+	                    $('#dtsValue').val(JSON.stringify(json));
+	                    break;
+                    case "xml":
+		                trim = true;
+	                case "xml_trim":
+	                    xml = $.sheet.dts.fromTables.xml(jS, trim);
+	                    tables = $.sheet.dts.toTables.xml(xml);
 
-                    $('#dtsValue').val(xml);
-                    break;
+                        $('#dtsValue').val(xml);
+		                break;
                 }
 
                 $('#dtsUI')
@@ -67,7 +71,9 @@
 <body>
 Data Transformation Type: <select id="dtsType">
     <option value="json">JSON</option>
+	<option value="json_trim">JSON Trim Empty Cells</option>
     <option value="xml">XML</option>
+	<option value="xml_trim">XML Trim Empty Cells</option>
 </select>
 <input id="exportAndCreate" type="button" value="CLICK ME!" />
 <div id="dtsUI" style="display: none;"><textarea id="dtsValue" style="width: 100%; height: 100%;"></textarea></div>

@@ -1918,16 +1918,12 @@ jQuery.sheet = {
 				 */
 				barLeft:function (sheet) {
 					var tr = sheet.tbody.children,
-						i = tr.length - 1,
-						td;
+						i = tr.length - 1;
 
-						sheet.barLeft = [];
 					//table / tbody / tr
 					if (i > -1) {
 						do {
-							td = doc.createElement('td');
-							sheet.barLeft.unshift(td);
-							tr[i].insertBefore(td, tr[i].children[0])
+							tr[i].insertBefore(doc.createElement('td'), tr[i].children[0]);
 						} while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
 					}
 				},
@@ -1948,6 +1944,11 @@ jQuery.sheet = {
 						tdCorner = doc.createElement('td'),
 
 						barTopParent = doc.createElement('tr');
+
+					//If the col elements outnumber the td's, get rid of the extra as it messes with the ui
+					while (cols.length > trFirst.children.length) {
+						colgroup.removeChild(cols[cols.length -1]);
+					}
 
 					colCorner.width = s.colMargin + 'px';
 					colCorner.style.width = colCorner.width;
@@ -1997,11 +1998,13 @@ jQuery.sheet = {
 					 */
 					top:function (pane) {
 						if (jS.isBusy()) return false;
-						if (!(jS.scrolledTo().end.col <= jS.frozenAt().col + 1)) return false;
+						var frozenAt = jS.frozenAt(),
+							scrolledTo = jS.scrolledTo();
+						if (!(scrolledTo.end.col <= frozenAt.col + 1)) return false;
 
 						jS.obj.barHelper().remove();
 
-						var bar = jS.obj.barTop(jS.frozenAt().col + 1),
+						var bar = jS.obj.barTop(frozenAt.col + 1),
 							pos = bar.position(),
 							handle = $(doc.createElement('div'))
 								.addClass(jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
@@ -2025,7 +2028,7 @@ jQuery.sheet = {
 								jS.setDirty(true);
 								var target = jS.nearest(handle, tds);
 								jS.obj.barHelper().remove();
-								jS.frozenAt().col = jS.getTdLocation(target).col - 1;
+								jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
 								jS.evt.scroll.start('x', pane);
 							},
 							containment:'parent'
@@ -2041,11 +2044,13 @@ jQuery.sheet = {
 					 */
 					left:function (pane) {
 						if (jS.isBusy()) return false;
-						if (!(jS.scrolledTo().end.row <= (jS.frozenAt().row + 1))) return false;
+						var frozenAt = jS.frozenAt(),
+							scrolledTo = jS.scrolledTo();
+						if (!(scrolledTo.end.row <= (frozenAt.row + 1))) return false;
 
 						jS.obj.barHelper().remove();
 
-						var bar = jS.obj.barLeft(jS.frozenAt().row + 1),
+						var bar = $(pane.table.tbody.children[frozenAt.row + 1].children[0]);
 							pos = bar.position(),
 							handle = $(doc.createElement('div'))
 								.addClass(jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
@@ -2053,8 +2058,7 @@ jQuery.sheet = {
 								.css('top', pos.top + 'px')
 								.css('left', pos.left + 'px')
 								.attr('title', jS.msg.dragToFreezeRow)
-								.appendTo(pane),
-							tds = pane.table.barLeft;
+								.appendTo(pane);
 
 						jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
 						jS.controls.bar.y.handleFreeze[jS.i] = handle;
@@ -2067,9 +2071,9 @@ jQuery.sheet = {
 							stop:function (e, ui) {
 								jS.setBusy(false);
 								jS.setDirty(true);
-								var target = jS.nearest(handle, tds);
+								var target = jS.nearest(handle, pane.table.tbody.children);
 								jS.obj.barHelper().remove();
-								jS.frozenAt().row = jS.getTdLocation(target).row - 1;
+								jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
 								jS.evt.scroll.start('y', pane);
 							},
 							containment:'parent'
@@ -2423,6 +2427,8 @@ jQuery.sheet = {
 							handles:'s',
 							resize:function (e, ui) {
 								jS.controls.formula.height(ui.size.height);
+							},
+							stop: function() {
 								jS.sheetSyncSize();
 							}
 						});
@@ -2766,6 +2772,7 @@ jQuery.sheet = {
 					jS.readOnly[i] = table.className.match('readonly');
 
 					var enclosure = jS.controlFactory.enclosure(table),
+						$enclosure = $(enclosure),
 						pane = enclosure.pane,
 						$pane = $(pane),
 						paneContextmenuEvent = function (e) {
@@ -2890,14 +2897,18 @@ jQuery.sheet = {
 					jS.resizableSheet(s.parent, {
 						minWidth:s.width * 0.1,
 						minHeight:s.height * 0.1,
-
 						start:function () {
-							enclosure.hide();
+							jS.setBusy(true);
+							$enclosure.hide();
+							ui.tabContainer.hide();
 						},
 						stop:function () {
-							enclosure.show();
+							$enclosure.show();
+							ui.tabContainer.show();
+							jS.setBusy(false);
 							s.width = s.parent.width();
 							s.height = s.parent.height();
+							jS.sheetSyncSize();
 							pane.resizeScroll();
 						}
 					});
@@ -4956,15 +4967,19 @@ jQuery.sheet = {
 			 */
 			checkMinSize:function (o) {
 				var size = jS.sheetSize(o),
-					addRows = 0,
-					addCols = 0;
+					addRows = s.minSize.rows || 0,
+					addCols = s.minSize.cols || 0,
+					frozenAt = jS.frozenAt();
 
-				if (size.cols < s.minSize.cols) {
-					jS.controlFactory.addColumnMulti(null, s.minSize.cols - size.cols);
+				addRows = (frozenAt.row > addRows ? frozenAt.row + 1 : addRows);
+				addCols = (frozenAt.col > addCols ? frozenAt.col + 1 : addCols);
+
+				if (size.cols < addCols) {
+					jS.controlFactory.addColumnMulti(null, addCols - size.cols);
 				}
 
-				if (size.rows < s.minSize.rows) {
-					jS.controlFactory.addRowMulti(null, s.minSize.rows - size.rows);
+				if (size.rows < addRows) {
+					jS.controlFactory.addRowMulti(null, addRows - size.rows);
 				}
 			},
 
@@ -6502,7 +6517,7 @@ jQuery.sheet = {
 						sheetTab = newTitle;
 					}
 				}
-				return $('<div />').text(sheetTab).html();
+				return $(doc.createElement('div')).text(sheetTab).html();
 			},
 
 			/**
@@ -6712,6 +6727,15 @@ jQuery.sheet = {
 						i = tables.length - 1;
 
 					jS.sheetCount = tables.length - 1;
+
+					header.ui = ui;
+					header.tabContainer = tabContainer;
+
+					ui.header = header;
+					ui.tabContainer = tabContainer;
+
+					tabContainer.header = header;
+					tabContainer.ui = ui;
 
 					s.parent
 						.append(header)
