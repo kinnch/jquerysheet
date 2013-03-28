@@ -89,7 +89,7 @@
 
 							if (this['class']) td.attr('class', this['class'] || '');
 							if (this['style']) td.attr('style', this['style'] || '');
-							if (this['formula']) td.data('formula', (this['formula'] ? '=' + this['formula'] : ''))
+							if (this['formula']) td.attr('data-formula', (this['formula'] ? '=' + this['formula'] : ''))
 							if (this['value']) td.html(this['value'] || '')
 						});
 					});
