@@ -25,6 +25,7 @@ var jSF = jQuery.sheet.financefn = {
 		};
 	},
 	PV: function(rate, nper, pmt, fv, type) {
+		this.html = [];
 		fv = fv || 0;
 		type = type || 0;
 
@@ -41,6 +42,7 @@ var jSF = jQuery.sheet.financefn = {
 		};
 	},
 	RATE: function(nper, pmt, pv, fv, type, estimate) {
+		this.html = [];
 		fv = fv || 0;
 		type = type || 0;
 		estimate = estimate || 0.1;
@@ -83,6 +85,7 @@ var jSF = jQuery.sheet.financefn = {
 		};
 	},
 	IPMT: function(rate, per, nper, pv, fv, type) {
+		this.html = [];
 		var pmt = jFN.PMT(rate, nper, pv, fv, type).value,
 			fv = jFN.FV(rate, per - 1, pmt, pv, type).value,
 			result = fv * rate;
@@ -99,6 +102,7 @@ var jSF = jQuery.sheet.financefn = {
 		};
 	},
 	PMT: function(rate, nper, pv, fv, type){
+		this.html = [];
 		fv = fv || 0;
 		type = type || 0;
 
@@ -118,6 +122,7 @@ var jSF = jQuery.sheet.financefn = {
 		};
 	},
 	NPER: function(rate, pmt, pv, fv, type) { //Taken from LibreOffice - http://opengrok.libreoffice.org/xref/core/sc/source/core/tool/interpr2.cxx#1382 ScInterpreter::ScZZR()
+		this.html = [];
 		var log = Math.log;
 		rate = parseFloat(rate || 0);
 		pmt = parseFloat(pmt || 0);
@@ -135,6 +140,7 @@ var jSF = jQuery.sheet.financefn = {
 		}
 	},
 	FV: function(rate, nper, pmt, pv, type) { //not working yet
+		this.html = [];
 		pv = (pv ? pv : 0);
 		type = (type ? type : 0);
 		var result = -(

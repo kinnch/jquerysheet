@@ -5814,7 +5814,7 @@ jQuery.sheet = {
 			updateCellDependencies:function () {
 				if ((this.state || (this.state = [])).length) return;
 				this.state.push('updatingDependencies');
-				var dependencies = this.dependencies;
+				var dependencies = this.dependencies || []; //just in case it was never set
 				this.dependencies = [];
 				var i = dependencies.length - 1;
 
@@ -7516,7 +7516,7 @@ jQuery.sheet = {
 				o.find('.' + jS.cl.barTopParent).remove();
 				o.find('.' + jS.cl.barLeft).remove();
 				o.children('colgroup').children('col:first').remove();
-				o = jS.sheetDecorateRemove(false, o)
+				o = jS.sheetDecorateRemove(false, o);
 				return o;
 			},
 
