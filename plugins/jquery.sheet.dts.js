@@ -77,7 +77,8 @@
 					metadata,
 					widths,
 					width,
-					frozenAt;
+					frozenAt,
+					height;
 
 				for (var i = 0; i < json.length; i++) {
 					spreadsheet = json[i];
@@ -89,10 +90,10 @@
 					rows = spreadsheet['rows'];
 					for (var j = 0; j < rows.length; j++) {
 						row = rows[j];
-						if (row['height']) {
+						if (height = (row['height'] + '').replace('px','')) {
 							var tr = $(doc.createElement('tr'))
-								.attr('height', this['height'])
-								.css('height', this['height'])
+								.attr('height', height)
+								.css('height', height + 'px')
 								.appendTo(table);
 						}
 						columns = row['columns'];
@@ -113,10 +114,10 @@
 							var colgroup = $(doc.createElement('colgroup'))
 								.prependTo(table);
 							for(var k = 0; k < widths.length; k++) {
-								width = widths[k];
+								width = (widths[k] + '').replace('px', '');
 								var col = $(doc.createElement('col'))
 									.attr('width', width)
-									.css('width', width)
+									.css('width', width + 'px')
 									.appendTo(colgroup);
 							}
 						}
@@ -191,7 +192,8 @@
 					frozenatrow,
 					frozenatcol,
 					widths,
-					width;
+					width,
+					height;
 
 				for (var i = 0; i < spreadsheets.length; i++) {
 					spreadsheet = spreadsheets[i];
@@ -208,10 +210,11 @@
 						row = rows[l];
 						var tr = $(doc.createElement('tr')).appendTo(tbody);
 
-						if (row.attributes['height']) {
+						if (height = row.attributes['height']) {
+							height = (height.nodeValue || '').replace('px','');
 							tr
-								.css('height', (row.attributes['height'] ? row.attributes['height'].nodeValue : ''))
-								.attr('height', (row.attributes['height'] ? row.attributes['height'].nodeValue : ''));
+								.css('height', height)
+								.attr('height', height + 'px');
 						}
 
 						columns = row.getElementsByTagName('columns')[0].getElementsByTagName('column');
@@ -232,10 +235,10 @@
 
 					widths = metadata.getElementsByTagName('width');
 					for (var l = 0; l < widths.length; l++) {
-						width = widths[l];
+						width = (widths[l].textContent || widths[l].text).replace('px', '');
 						$(doc.createElement('col'))
-							.attr('width', width.textContent || width.text)
-							.css('width', width.textContent || width.text)
+							.attr('width', width)
+							.css('width', width + 'px')
 							.appendTo(colgroup);
 					}
 
@@ -347,7 +350,7 @@
 						jsonRow = {
 							"height": null,
 							"columns": [],
-							"height": (parentAttr['height'] ? parentAttr['height'].value : jS.s.colMargin + 'px')
+							"height": (parentAttr['height'] ? parentAttr['height'].value.replace('px', '') : jS.s.colMargin)
 						};
 
 						column = spreadsheet[row].length - 1;
@@ -370,7 +373,7 @@
 								jsonRow.columns.unshift(jsonColumn);
 
 								if (!jsonRow["height"]) {
-									jsonRow["height"] = (parent.attributes['height'] ? parent.attributes['height'].value : jS.s.colMargin + 'px');
+									jsonRow["height"] = (parent.attributes['height'] ? parent.attributes['height'].value.replace('px' , '') : jS.s.colMargin);
 								}
 
 								if (cell['formula']) jsonColumn['formula'] = cell['formula'];
@@ -383,7 +386,7 @@
 							}
 
 							if (row * 1 == 1) {
-								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width'));
+								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
 							}
 						} while (column-- > 1);
 
@@ -501,14 +504,14 @@
 							}
 
 							if (row * 1 == 1) {
-								widths[column] = '<width>' + $(jS.col(null, column)).css('width') + '</width>';
+								widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
 							}
 
 						} while (column -- > 1);
 
 						if (xmlColumns) {
 							parentAttr = spreadsheet[row][1].td[0].parentNode.attributes;
-							xmlRow = '<row height="' + (parentAttr['height'] ? parentAttr['height'].value : jS.s.colMargin + 'px') + '">' +
+							xmlRow = '<row height="' + (parentAttr['height'] ? parentAttr['height'].value.replace('px', '') : jS.s.colMargin) + '">' +
 								'<columns>' +
 									xmlColumns +
 								'</columns>' +
