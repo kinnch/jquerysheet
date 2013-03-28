@@ -239,6 +239,7 @@ case 40:
 		
 break;
 case 41:
+			yy.lexer.obj.html.push($$[$0-1] + $$[$0]);//js
 			this.$ = $$[$0-1] * 0.01;
 		
 break;

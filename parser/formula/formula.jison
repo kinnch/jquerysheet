@@ -333,6 +333,7 @@ number :
 		}
 	| number '%'
 		{
+			yy.lexer.obj.html.push($1 + $2);//js
 			$$ = $1 * 0.01;
 		}
 ;

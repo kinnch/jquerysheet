@@ -562,6 +562,7 @@ jQuery.fn.extend({
 					},
 					cellEndHandlers: {
 						'%': function(val) {
+							this.html.push(val);
 							this.value = val;
 							this.valueOverride = val.substring(0, this.value.length - 1) / 100;
 						}
