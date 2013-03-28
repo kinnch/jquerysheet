@@ -4305,8 +4305,8 @@ jQuery.sheet = {
 				jS.controls.tables = jS.obj.tables().add(table);
 
 				//override frozenAt settings with table's data-frozenatrow and data-frozenatcol
-				var frozenAtRow = $table.data('frozenatrow'),
-					frozenAtCol = $table.data('frozenatcol');
+				var frozenAtRow = $table.attr('data-frozenatrow') * 1,
+					frozenAtCol = $table.attr('data-frozenatcol') * 1;
 
 				if (!jS.s.frozenAt[jS.i]) jS.s.frozenAt[jS.i] = {row:0, col:0};
 				if (frozenAtRow) jS.s.frozenAt[jS.i].row = frozenAtRow;

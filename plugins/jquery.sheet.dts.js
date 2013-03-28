@@ -71,20 +71,20 @@
 				var tables = $([]);
 
 				$.each(json, function() {
-					var table = $('<table />');
+					var table = $(document.createElement('table'));
 					if (this['title']) table.attr('title', this['title'] || '');
 
 					tables = tables.add(table);
 
 					$.each(this['rows'], function() {
 						if (this['height']) {
-							var tr = $('<tr />')
+							var tr = $(document.createElement('tr'))
 								.attr('height', this['height'])
 								.css('height', this['height'])
 								.appendTo(table);
 						}
 						$.each(this['columns'], function() {
-							var td = $('<td />')
+							var td = $(document.createElement('td'))
 								.appendTo(tr);
 
 							if (this['class']) td.attr('class', this['class'] || '');
@@ -96,7 +96,7 @@
 
 					if (!this['metadata']) return;
 					if (this['metadata']['widths']) {
-						var colgroup = $('<colgroup />')
+						var colgroup = $(document.createElement('colgroup'))
 							.prependTo(table);
 						for(var width in this['metadata']['widths']) {
 							var col = $('<col />')
@@ -107,10 +107,10 @@
 					}
 					if (this['metadata']['frozenAt']) {
 						if (this['metadata']['frozenAt']['row']) {
-							table.data('frozenatrow', this['metadata']['frozenAt']['row']);
+							table.attr('data-frozenatrow', this['metadata']['frozenAt']['row']);
 						}
 						if (this['metadata']['frozenAt']['col']) {
-							table.data('frozenatcol', this['metadata']['frozenAt']['col']);
+							table.attr('data-frozenatcol', this['metadata']['frozenAt']['col']);
 						}
 					}
 				});
@@ -162,98 +162,78 @@
 			xml: function(xml) {
 				xml = $.parseXML(xml);
 
-				var tables = $([]);
+				var tables = $([]),
+					spreadsheets = xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet'),
+					spreadsheet,
+					rows,
+					row,
+					columns,
+					column,
+					attr,
+					metadata,
+					frozenat,
+					frozenatrow,
+					frozenatcol,
+					widths,
+					width;
 
-				$.each(xml.childNodes, function(i, spreadsheets) {
-					$.each(this.childNodes, function(j,  spreadsheet) {
-						var table = $('<table />').attr('title', (this.attributes['title'] ? this.attributes['title'].nodeValue : '')),
-							colgroup = $('<colgroup/>').appendTo(table),
-							tbody = $('<tbody />').appendTo(table);
+				for (var i = 0; i < spreadsheets.length; i++) {
+					spreadsheet = spreadsheets[i];
+					var table = $(document.createElement('table')).attr('title', (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '')),
+						colgroup = $(document.createElement('colgroup')).appendTo(table),
+						tbody = $(document.createElement('tbody')).appendTo(table);
 
-						tables = tables.add(table);
+					tables = tables.add(table);
 
-						$.each(this.childNodes, function(k, rows){ //rows
-							switch (this.nodeName.toLowerCase()) {
-								case 'rows':
-									$.each(this.childNodes, function(l, row) { //row
-										switch (this.nodeName.toLowerCase()) {
-											case 'row':
-												var tr = $('<tr/>').appendTo(tbody);
+					rows = spreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row');
+					metadata = spreadsheet.getElementsByTagName('metadata')[0];
 
-												if (this.attributes['height']) {
-													tr
-														.css('height', (this.attributes['height'] ? this.attributes['height'].nodeValue : ''))
-														.attr('height', (this.attributes['height'] ? this.attributes['height'].nodeValue : ''));
-												}
+					for (var l = 0; l < rows.length; l++) {//row
+						row = rows[l];
+						var tr = $(document.createElement('tr')).appendTo(tbody);
 
-												$.each(this.childNodes, function(m, columns) {
-													switch (this.nodeName.toLowerCase()) {
-														case 'columns':
-															$.each(this.childNodes, function(n, column) {
-																switch (this.nodeName.toLowerCase()) {
-																	case 'column':
-																		var td = $('<td />').appendTo(tr);
-																		$.each(this.childNodes, function(p, attr) { //formula or value or style
-																			switch (this.nodeName.toLowerCase()) {
-																				case 'formula':
-																					td.attr('data-formula', '=' + (this.textContent || this.text));
-																					break
-																				case 'value':
-																					td.html(this.textContent || this.text);
-																					break;
-																				case 'style':
-																					td.attr('style', this.textContent || this.text);
-																					break;
-																				case 'class':
-																					td.attr('class', this.textContent || this.text);
-																			}
-																		});
-																		break;
-																}
-															});
-													}
-												});
+						if (row.attributes['height']) {
+							tr
+								.css('height', (row.attributes['height'] ? row.attributes['height'].nodeValue : ''))
+								.attr('height', (row.attributes['height'] ? row.attributes['height'].nodeValue : ''));
+						}
 
-												break;
+						columns = row.getElementsByTagName('columns')[0].getElementsByTagName('column');
+						for (var m = 0; m < columns.length; m++) {
+							column = columns[m];
+							var td = $(document.createElement('td')).appendTo(tr),
+								formula = column.getElementsByTagName('formula')[0],
+								value = column.getElementsByTagName('value')[0],
+								style = column.getElementsByTagName('style')[0],
+								cl = column.getElementsByTagName('class')[0];
 
-										}
-									});
-									break;
-								case 'metadata':
-									$.each(this.childNodes, function() {
-										switch (this.nodeName.toLowerCase()) {
-											case 'frozenat':
-												$.each(this.childNodes, function() {
-													switch (this.nodeName.toLowerCase()) {
-														case 'row':
-															table.data('frozenatrow', (this.textContent || this.text) * 1);
-															break;
-														case 'col':
-															table.data('frozenatcol', (this.textContent || this.text) * 1);
-															break;
-													}
-												});
-												break;
-											case 'widths':
-												$.each(this.childNodes, function() {
-													switch (this.nodeName.toLowerCase()) {
-														case 'width':
-															$('<col/>')
-																.attr('width', this.textContent || this.text)
-																.css('width', this.textContent || this.text)
-																.appendTo(colgroup);
-															break;
-													}
-												});
-												break;
-										}
-									});
-									break;
-							}
-						});
-					});
-				});
+							if (formula) td.attr('data-formula', '=' + (formula.textContent || formula.text));
+							if (value) td.html(value.textContent || value.text);
+							if (style) td.attr('style', style.textContent || style.text);
+							if (cl) td.attr('class', cl.textContent || cl.text);
+						}
+					}
 
+					widths = metadata.getElementsByTagName('width');
+					for (var l = 0; l < widths.length; l++) {
+						width = widths[l];
+						$(document.createElement('col'))
+							.attr('width', width.textContent || width.text)
+							.css('width', width.textContent || width.text)
+							.appendTo(colgroup);
+					}
+
+					frozenat = metadata.getElementsByTagName('frozenAt')[0];
+					if (frozenat) {
+						frozenatcol = frozenat.getElementsByTagName('col')[0];
+						frozenatrow = frozenat.getElementsByTagName('row')[0];
+
+						if (frozenatcol) table.attr('data-frozenatcol', (frozenatcol.textContent || frozenatcol.text) * 1);
+						if (frozenatrow) table.attr('data-frozenatrow', (frozenatrow.textContent || frozenatrow.text) * 1);
+					}
+
+
+				}
 				return tables;
 			}
 		},
