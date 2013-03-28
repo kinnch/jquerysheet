@@ -9,7 +9,7 @@
  *
  */
 
-(function($) {
+(function($, doc) {
 	/**
 	 * @namespace
 	 * @name dts
@@ -68,52 +68,68 @@
 			 */
 			json: function(json) {
 
-				var tables = $([]);
+				var tables = $([]),
+					spreadsheet,
+					rows,
+					row,
+					columns,
+					column,
+					metadata,
+					widths,
+					width,
+					frozenAt;
 
-				$.each(json, function() {
-					var table = $(document.createElement('table'));
-					if (this['title']) table.attr('title', this['title'] || '');
+				for (var i = 0; i < json.length; i++) {
+					spreadsheet = json[i];
+					var table = $(doc.createElement('table'));
+					if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
 
 					tables = tables.add(table);
 
-					$.each(this['rows'], function() {
-						if (this['height']) {
-							var tr = $(document.createElement('tr'))
+					rows = spreadsheet['rows'];
+					for (var j = 0; j < rows.length; j++) {
+						row = rows[j];
+						if (row['height']) {
+							var tr = $(doc.createElement('tr'))
 								.attr('height', this['height'])
 								.css('height', this['height'])
 								.appendTo(table);
 						}
-						$.each(this['columns'], function() {
-							var td = $(document.createElement('td'))
+						columns = row['columns'];
+						for (var k = 0; k < columns.length; k++) {
+							column = columns[k];
+							var td = $(doc.createElement('td'))
 								.appendTo(tr);
 
-							if (this['class']) td.attr('class', this['class'] || '');
-							if (this['style']) td.attr('style', this['style'] || '');
-							if (this['formula']) td.attr('data-formula', (this['formula'] ? '=' + this['formula'] : ''))
-							if (this['value']) td.html(this['value'] || '')
-						});
-					});
+							if (column['class']) td.attr('class', column['class'] || '');
+							if (column['style']) td.attr('style', column['style'] || '');
+							if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''))
+							if (column['value']) td.html(column['value'] || '')
+						}
+					}
 
-					if (!this['metadata']) return;
-					if (this['metadata']['widths']) {
-						var colgroup = $(document.createElement('colgroup'))
-							.prependTo(table);
-						for(var width in this['metadata']['widths']) {
-							var col = $('<col />')
-								.attr('width', this['metadata']['widths'][width])
-								.css('width', this['metadata']['widths'][width])
-								.appendTo(colgroup);
+					if (metadata = spreadsheet['metadata']) {
+						if (widths = metadata['widths']) {
+							var colgroup = $(doc.createElement('colgroup'))
+								.prependTo(table);
+							for(var k = 0; k < widths.length; k++) {
+								width = widths[k];
+								var col = $(doc.createElement('col'))
+									.attr('width', width)
+									.css('width', width)
+									.appendTo(colgroup);
+							}
+						}
+						if (frozenAt = metadata['frozenAt']) {
+							if (frozenAt['row']) {
+								table.attr('data-frozenatrow', frozenAt['row']);
+							}
+							if (frozenAt['col']) {
+								table.attr('data-frozenatcol', frozenAt['col']);
+							}
 						}
 					}
-					if (this['metadata']['frozenAt']) {
-						if (this['metadata']['frozenAt']['row']) {
-							table.attr('data-frozenatrow', this['metadata']['frozenAt']['row']);
-						}
-						if (this['metadata']['frozenAt']['col']) {
-							table.attr('data-frozenatcol', this['metadata']['frozenAt']['col']);
-						}
-					}
-				});
+				}
 
 				return tables;
 			},
@@ -179,9 +195,9 @@
 
 				for (var i = 0; i < spreadsheets.length; i++) {
 					spreadsheet = spreadsheets[i];
-					var table = $(document.createElement('table')).attr('title', (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '')),
-						colgroup = $(document.createElement('colgroup')).appendTo(table),
-						tbody = $(document.createElement('tbody')).appendTo(table);
+					var table = $(doc.createElement('table')).attr('title', (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '')),
+						colgroup = $(doc.createElement('colgroup')).appendTo(table),
+						tbody = $(doc.createElement('tbody')).appendTo(table);
 
 					tables = tables.add(table);
 
@@ -190,7 +206,7 @@
 
 					for (var l = 0; l < rows.length; l++) {//row
 						row = rows[l];
-						var tr = $(document.createElement('tr')).appendTo(tbody);
+						var tr = $(doc.createElement('tr')).appendTo(tbody);
 
 						if (row.attributes['height']) {
 							tr
@@ -201,7 +217,7 @@
 						columns = row.getElementsByTagName('columns')[0].getElementsByTagName('column');
 						for (var m = 0; m < columns.length; m++) {
 							column = columns[m];
-							var td = $(document.createElement('td')).appendTo(tr),
+							var td = $(doc.createElement('td')).appendTo(tr),
 								formula = column.getElementsByTagName('formula')[0],
 								value = column.getElementsByTagName('value')[0],
 								style = column.getElementsByTagName('style')[0],
@@ -217,7 +233,7 @@
 					widths = metadata.getElementsByTagName('width');
 					for (var l = 0; l < widths.length; l++) {
 						width = widths[l];
-						$(document.createElement('col'))
+						$(doc.createElement('col'))
 							.attr('width', width.textContent || width.text)
 							.css('width', width.textContent || width.text)
 							.appendTo(colgroup);
@@ -339,30 +355,31 @@
 							cell = spreadsheet[row][column];
 							jsonColumn = {};
 							attr = cell.td[0].attributes;
-							cl = (attr['class'] ? $.trim(
-								(attr['class'].value || '')
-									.replace(jS.cl.uiCellActive , '')
-									.replace(jS.cl.uiCellHighlighted, '')
-							) : '');
 
-							parent = cell.td[0].parentNode;
-
-							jsonRow.columns.unshift(jsonColumn);
-
-							if (!jsonRow["height"]) {
-								jsonRow["height"] = (parent.attributes['height'] ? parent.attributes['height'].value : jS.s.colMargin + 'px');
-							}
-
-							if (cell['formula']) jsonColumn['formula'] = cell['formula'];
-							if (cell['value']) jsonColumn['value'] = cell['value'];
-							if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
-
-							if (cl.length) {
-								jsonColumn['class'] = cl;
-							}
-
-							if (doNotTrim || rowHasValues || cl || jsonColumn['formula'] || jsonColumn['value'] || jsonColumn['style']) {
+							if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
 								rowHasValues = true;
+
+								cl = (attr['class'] ? $.trim(
+									(attr['class'].value || '')
+										.replace(jS.cl.uiCellActive , '')
+										.replace(jS.cl.uiCellHighlighted, '')
+								) : '');
+
+								parent = cell.td[0].parentNode;
+
+								jsonRow.columns.unshift(jsonColumn);
+
+								if (!jsonRow["height"]) {
+									jsonRow["height"] = (parent.attributes['height'] ? parent.attributes['height'].value : jS.s.colMargin + 'px');
+								}
+
+								if (cell['formula']) jsonColumn['formula'] = cell['formula'];
+								if (cell['value']) jsonColumn['value'] = cell['value'];
+								if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
+
+								if (cl.length) {
+									jsonColumn['class'] = cl;
+								}
 							}
 
 							if (row * 1 == 1) {
@@ -524,4 +541,4 @@
 			}
 		}
 	};
-})(jQuery);
+})(jQuery, document);
