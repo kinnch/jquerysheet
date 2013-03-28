@@ -1519,7 +1519,7 @@ jQuery.sheet = {
 
 				jSCell = row[colIndex] = td.jSCell = { //create cell
 					td:$td,
-					dependencies: {},
+					dependencies: [],
 					formula:td.getAttribute('data-formula') || '',
 					value:td.textContent || td.innerText || '',
 					calcCount:calcCount || 0,
@@ -5815,18 +5815,23 @@ jQuery.sheet = {
 				if ((this.state || (this.state = [])).length) return;
 				this.state.push('updatingDependencies');
 				var dependencies = this.dependencies;
-				this.dependencies = {};
-				for (var i in dependencies) {
-					var dependantCell = dependencies[i],
-						dependantCellLoc = jS.getTdLocation(dependantCell.td);
+				this.dependencies = [];
+				var i = dependencies.length - 1;
 
-					dependantCell.calcDependenciesLast = 0;
+				if (i > -1) {
+					do {
+						var dependantCell = dependencies[i],
+							dependantCellLoc = jS.getTdLocation(dependantCell.td);
 
-					jS.updateCellValue.apply(dependantCell);
-					if (dependantCellLoc.row > 0 && dependantCellLoc.col > 0) {
-						jS.updateCellDependencies.apply(dependantCell);
-					}
+						dependantCell.calcDependenciesLast = 0;
+
+						jS.updateCellValue.apply(dependantCell);
+						if (dependantCellLoc.row > 0 && dependantCellLoc.col > 0) {
+							jS.updateCellDependencies.apply(dependantCell);
+						}
+					} while (i--);
 				}
+
 				this.state.pop();
 			},
 
@@ -5941,8 +5946,8 @@ jQuery.sheet = {
 					if (!(row = sheet[loc.row])) return;
 					if (!(cell = row[loc.col])) return;
 
-					if (!cell.dependencies) cell.dependencies = {};
-					cell.dependencies[sheetIndex + '_' + loc.row + '_' + loc.col] = this;
+					if (!cell.dependencies) cell.dependencies = [];
+					cell.dependencies.push(this);
 					return cell;
 				},
 
