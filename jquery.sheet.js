@@ -686,10 +686,12 @@ jQuery.fn.extend({
 	 * @param sheet
 	 */
 	setCellHtml:function (html, row, col, sheet) {
-		var jS = jQuery(this).getSheet();
+		var jS = jQuery(this).getSheet(), cell;
 		sheet = (sheet ? sheet : 0);
 		try {
-			jS.spreadsheets[sheet][row][col].html = [html];
+			cell = jS.spreadsheets[sheet][row][col];
+			cell.html = [html];
+			cell.calcLast = cell.calcDependenciesLast = 0;
 			return jS.updateCellValue(sheet, row, col);
 		} catch (e) {
 		}
