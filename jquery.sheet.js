@@ -2558,6 +2558,9 @@ jQuery.sheet = {
 							jS.evt.scroll.scrollTo({axis:'y', pixel:scrollOuter.scrollTop}, 0);
 
 							jS.autoFillerGoToTd();
+							if (pane.inPlaceEdit) {
+								pane.inPlaceEdit.goToTd();
+							}
 						}
 					};
 
@@ -3004,22 +3007,29 @@ jQuery.sheet = {
 
 					jS.obj.inPlaceEdit().trigger('destroy');
 					var formula = jS.obj.formula(),
-						offset = td.offset(),
-						style = td.attr('style'),
-						w = td.width(),
-						h = td.height(),
 						val = formula.val(),
 						textarea,
-						$textarea;
+						$textarea,
+						pane = jS.obj.pane();
 
-					if (!offset) return; //If the td is a dud, we do not want a textarea
+					if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
 
 					textarea = doc.createElement('textarea');
+					pane.inPlaceEdit = textarea;
 					$textarea = $(textarea);
 					textarea.i = jS.i;
 					textarea.value = formula[0].value;
 					textarea.className = jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit;
-					textarea.setAttribute('style', 'left:' + offset.left + 'px;top:' + offset.top + 'px;width:' + w + 'px;height:' + h + 'px;');
+					textarea.td = td[0];
+					textarea.goToTd = function() {
+						this.offset = td.offset();
+						if (!this.offset.left && !this.offset.right) {
+							$textarea.hide();
+						} else {
+							this.setAttribute('style', 'left:' + (this.offset.left - 1) + 'px;top:' + (this.offset.top - 1) + 'px;width:' + this.td.clientWidth + 'px;height:' + this.td.clientHeight + 'px;');
+						}
+					};
+					textarea.goToTd();
 					textarea.onkeydown = jS.evt.inPlaceEditOnKeyDown;
 					textarea.onkeyup = function() { formula[0].value = textarea.value; };
 					textarea.onchange = function() { formula[0].value = textarea.value; };
@@ -3033,6 +3043,7 @@ jQuery.sheet = {
 						.bind('paste', jS.evt.pasteOverCells)
 						.focus()
 						.bind('destroy', function () {
+							pane.inPlaceEdit = null;
 							jS.cellLast.isEdit = (textarea.value != val);
 							$textarea.remove();
 							jS.controls.inPlaceEdit[textarea.i] = false;
