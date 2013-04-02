@@ -2655,6 +2655,10 @@ jQuery.sheet = {
 
 						scrollStyleX.updateStyle(null, xStyle);
 						scrollStyleY.updateStyle(null, yStyle);
+
+						if (pane.inPlaceEdit) {
+							pane.inPlaceEdit.goToTd();
+						}
 					};
 
 					if (!$.fn.mousewheel) {
@@ -5326,6 +5330,10 @@ jQuery.sheet = {
 								.width(ui.size.width)
 								.attr('width', ui.size.width + 'px')
 								.css('width', ui.size.width + 'px');
+
+							if (pane.inPlaceEdit) {
+								pane.inPlaceEdit.goToTd();
+							}
 						},
 						stop:function (e, ui) {
 							jS.setBusy(false);
@@ -5374,6 +5382,10 @@ jQuery.sheet = {
 								.height(ui.size.height)
 								.attr('height', (ui.size.height))
 								.css('height', ui.size.height + 'px');
+
+							if (pane.inPlaceEdit) {
+								pane.inPlaceEdit.goToTd();
+							}
 						},
 						stop:function (e, ui) {
 							jS.setBusy(false);
