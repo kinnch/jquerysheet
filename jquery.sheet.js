@@ -644,10 +644,13 @@ jQuery.fn.extend({
 	 * @param sheet
 	 */
 	setCellValue:function (value, row, col, sheet) {
-		var jS = jQuery(this).getSheet();
+		var jS = jQuery(this).getSheet(), cell;
 		sheet = (sheet ? sheet : 0);
 		try {
-			jS.spreadsheets[sheet][row][col].value = value;
+			cell = jS.spreadsheets[sheet][row][col];
+			cell.value = value;
+			cell.valueOverride = cell.formula = '';
+			cell.calcLast = cell.calcDependenciesLast = 0;
 			return jS.updateCellValue(sheet, row, col);
 		} catch (e) {
 		}
@@ -662,10 +665,13 @@ jQuery.fn.extend({
 	 * @param sheet
 	 */
 	setCellFormula:function (formula, row, col, sheet) {
-		var jS = jQuery(this).getSheet();
+		var jS = jQuery(this).getSheet(), cell;
 		sheet = (sheet ? sheet : 0);
 		try {
-			jS.spreadsheets[sheet][row][col].formula = formula;
+			cell = jS.spreadsheets[sheet][row][col];
+			cell.formula = formula;
+			cell.valueOverride = cell.value = '';
+			cell.calcLast = cell.calcDependenciesLast = 0;
 			return jS.updateCellValue(sheet, row, col);
 		} catch (e) {
 		}
