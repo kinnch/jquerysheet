@@ -3026,7 +3026,13 @@ jQuery.sheet = {
 						if (!this.offset.left && !this.offset.right) {
 							$textarea.hide();
 						} else {
-							this.setAttribute('style', 'left:' + (this.offset.left - 1) + 'px;top:' + (this.offset.top - 1) + 'px;width:' + this.td.clientWidth + 'px;height:' + this.td.clientHeight + 'px;');
+							this.setAttribute('style',
+								'left:' + (this.offset.left - 1) + 'px;' +
+								'top:' + (this.offset.top - 1) + 'px;' +
+								'width:' + this.td.clientWidth + 'px;' +
+								'height:' + this.td.clientHeight + 'px;' +
+								'min-width:' + this.td.clientWidth + 'px;' +
+								'min-height:' + this.td.clientHeight + 'px;');
 						}
 					};
 					textarea.goToTd();
