@@ -2792,7 +2792,6 @@ jQuery.sheet = {
 						pane = enclosure.pane,
 						$pane = $(pane),
 						paneContextmenuEvent = function (e) {
-							e.preventDefault();
 							if (jS.isBusy()) {
 								return false;
 							}
@@ -6353,9 +6352,9 @@ jQuery.sheet = {
 					jS.setDirty(true);
 					jS.controlFactory.sheetUI(jS.obj.ui()[0], $.sheet.makeTable.fromSize(size), jS.sheetCount);
 
-					jS.sheetCount++;
+					jS.setActiveSheet(jS.sheetCount);
 
-					jS.setActiveSheet(jS.sheetCount - 1);
+					jS.sheetCount++;
 
 					jS.sheetSyncSize();
 
@@ -6787,6 +6786,7 @@ jQuery.sheet = {
 
 					for (i = 0; i < tables.length; i++) {
 						jS.controlFactory.sheetUI(ui, tables[i], i);
+						jS.sheetCount++;
 						jS.calc(i);
 						jS.trigger('sheetOpened', [i]);
 					}
@@ -9225,43 +9225,50 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 			v = arrHelpers.flatten(arguments),
 			html = this.td.children().detach(),
 			loc = jS.getTdLocation(cell.td),
-			$td = jQuery(cell.td);
+			$td = jQuery(cell.td),
+			select;
 		v = arrHelpers.unique(v);
 
 		if (!html.length || cell.needsUpdated) {
 			var id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
-			html = jQuery('<select name="' + id + '" id="' + id + '" class="jSDropdown" />')
-				.mouseup(function() {
-					jS.cellEdit($td);
-				})
-				.change(function () {
-					cell.value = html.val();
-					jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
-				});
+			select = document.createElement('select');
+			select.setAttribute('name', id);
+			select.setAttribute('id', id);
+			select.className = 'jSDropdown';
+			select.cell = cell;
+			select.type = 'dropdown';
 
-			html[0].cell = cell;
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+			select.onmouseup = function() {
+				jS.cellEdit($td);
+			};
+			select.onchange = function () {
+				cell.value = this.value;
+				jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
+			};
+
+			jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
 			for (var i = 0; i < (v.length <= 50 ? v.length : 50); i++) {
 				if (v[i]) {
-					html.append('<option value="' + v[i] + '">' + v[i] + '</option>');
+					var opt = document.createElement('option');
+					opt.setAttribute('value', v[i]);
+					opt.text = v[i];
+					select.appendChild(opt);
 				}
 			}
 
 			if (!jS.s.editable) {
-				html.attr('disabled', true);
+				select.setAttribute('disabled', true);
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
-					cell.value = html.val();
-					$td.text(cell.value);
+					$td.text(cell.value = select.value);
 				});
 			}
 
-			html
-				.val(cell.value)
-				.change();
+			select.value = cell.value;
+			select.onchange();
 		}
-		return {value:cell.value, html:html};
+		return {value:cell.value, html:select};
 	},
 	RADIO:function () {
 		var cell = this,
@@ -9270,49 +9277,57 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 			html = this.td.children().detach(),
 			loc = jS.getTdLocation(cell.td),
 			$td = jQuery(cell.td),
-			inputs = jQuery([]);
+			inputs = jQuery([]),
+			radio;
 		v = arrHelpers.unique(v);
 
 
 		if (!html.length || cell.needsUpdated) {
 			var id = "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
 
-			html = jQuery('<span class="jSRadio"/>')
-				.mousedown(function () {
-					jS.cellEdit($td);
-				});
-
-			html[0].jSCell = cell;
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+			radio = document.createElement('span');
+			radio.className = 'jSRadio';
+			radio.onmousedown = function () {
+				jS.cellEdit($td);
+			};
+			radio.jSCell = cell;
+			jS.controls.inputs[jS.i] = jS.obj.inputs().add(radio);
 
 			for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
 				if (v[i]) {
-					var input = jQuery('<input type="radio" name="' + id + '" class="' + id + '" />')
-						.val(v[i])
-						.change(function () {
-							cell.value = jQuery(this).val();
-							jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
-						});
+					var input = document.createElement('input'),
+						label = document.createElement('span');
+
+					input.setAttribute('type', 'radio');
+					input.setAttribute('name', id);
+					input.className = id;
+					input.value = v[i];
+					input.onchange = function() {
+						cell.value = jQuery(this).val();
+						jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
+					};
 
 					inputs = inputs.add(input);
 
 					if (v[i] == cell.value) {
-						input.attr('checked', 'true');
-						input.change();
+						input.setAttribute('checked', 'true');
+						input.onchange();
 					}
-
-					html
-						.append(input)
-						.append(jQuery('<span>' + v[i] + '</span>').click(function() {
-							$(this).prev().click();
-						}))
-						.append('<br />');
+					label.textContent = v[i];
+					radio.appendChild(input);
+					radio.input = input;
+					label.onclick = function () {
+						jQuery(this).prev().click();
+					};
+					radio.appendChild(label);
+					radio.appendChild(document.createElement('br'));
 				}
 			}
 
 			if (!jS.s.editable) {
-				cell.value = html.find('input:checked').val();
-				html.find('input').attr('disabled', true);
+				var html = jQuery(radio);
+				cell.value = inputs.filter(':checked').val();
+				inputs.attr('disabled', true);
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
 					cell.value = inputs.filter(':checked').val();
@@ -9320,7 +9335,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 				});
 			}
 		}
-		return {value:cell.value, html:html};
+		return {value:cell.value, html:radio};
 	},
 	CHECKBOX:function (v) {
 		if (jQuery.isArray(v)) v = v[0];
@@ -9330,47 +9345,55 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 			html = this.td.children().detach(),
 			loc = jS.getTdLocation(cell.td),
 			checkbox = $([]),
-			$td = jQuery(cell.td);
+			$td = jQuery(cell.td),
+			label;
 
 		if ((!html.length || cell.needsUpdated)) {
 
 			var id = "checkbox" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
-			checkbox = jQuery('<input type="checkbox" name="' + id + '" class="' + id + '" />')
-				.val(v)
-				.change(function () {
-					if (checkbox.is(':checked')) {
-						cell.value = v;
-					} else {
-						cell.value = '';
-					}
-					jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
-				});
+			checkbox = document.createElement('input');
+			checkbox.setAttribute('type', 'checkbox');
+			checkbox.setAttribute('name', id);
+			checkbox.className = id;
+			checkbox.value = v;
+			checkbox.onchange = function () {
+				if (jQuery(this).is(':checked')) {
+					cell.value = v;
+				} else {
+					cell.value = '';
+				}
+				jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
+			};
 
 			if (!jS.s.editable) {
-				checkbox.attr('disabled', true);
+				checkbox.setAttribute('disabled', 'true');
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
-					cell.value = (cell.value == 'true' || checkbox.is(':checked') ? v : '');
+					cell.value = (cell.value == 'true' || jQuery(checkbox).is(':checked') ? v : '');
 					$td.text(cell.value);
 				});
 			}
 
-			html = jQuery('<span class="jSCheckbox"/>')
-				.append(checkbox)
-				.append('<span>' + v + '</span><br />')
-				.mousedown(function () {
-					jS.cellEdit($td);
-				});
+			html = document.createElement('span');
+			html.className='SCheckbox';
+			html.appendChild(checkbox);
+			label = document.createElement('span');
+			label.textContent = v;
+			html.appendChild(label);
+			html.appendChild(document.createElement('br'));
+			html.onmousedown = function () {
+				jS.cellEdit($td);
+			};
+			html.cell = cell;
 
-			html[0].cell = cell;
 			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
 			if (v == cell.value) {
-				checkbox.attr('checked', true);
-				checkbox.change();
-			}
+				checkbox.setAttribute('checked', true);
+				checkbox.onchange();
+			};
 		}
-		return {value: cell.value == 'true' || checkbox.is(':checked') ? v : '', html:html};
+		return {value: cell.value == 'true' || jQuery(checkbox).is(':checked') ? v : '', html:html};
 	},
 	BARCHART:function (values, legend, title) {
 		return {
