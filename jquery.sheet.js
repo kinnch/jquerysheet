@@ -2147,6 +2147,7 @@ jQuery.sheet = {
 										.data('msg', msg)
 										.click(function () {
 											menuItems[$(this).data('msg')].apply(this, [jS]);
+											menu.hide();
 											return false;
 										})
 										.appendTo(menu)
@@ -6445,6 +6446,7 @@ jQuery.sheet = {
 			 */
 			deleteRow:function (i, skipCalc) {
 				i = i || jS.rowLast;
+				if (i < 1) return;
 				//remove tr's first
 				jS.getTd(jS.i, i, 1).parent().remove();
 
