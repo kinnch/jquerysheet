@@ -5982,7 +5982,9 @@ jQuery.sheet = {
 					if (!(cell = row[loc.col])) return;
 
 					if (!cell.dependencies) cell.dependencies = [];
-					cell.dependencies.push(this);
+					if ($.inArray(this, cell.dependencies) < 0) {
+						cell.dependencies.push(this);
+					}
 					return cell;
 				},
 
