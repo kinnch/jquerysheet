@@ -283,7 +283,7 @@ jQuery.fn.extend({
 	 *
 	 * allowToggleState {Boolean}, default true, allows the spreadsheet to be toggled from write/read
 	 *
-	 * newColumnWidth {Integer}, default 120, width of new columns
+	 * newColumnWidth {Number}, default 120, width of new columns
 	 *
 	 * title {String|Function}, title of spreadsheet, if function, expects string and is sent jS
 	 *
@@ -297,9 +297,9 @@ jQuery.fn.extend({
 	 *
 	 * lockFormulas {Boolean} default false, turns on/off the ability to edit formulas
 	 *
-	 * colMargin {Integer} default 18, size of height of new cells, and width of cell bars
+	 * colMargin {Number} default 18, size of height of new cells, and width of cell bars
 	 *
-	 * boxModelCorrection {Integer} default 2, if box model is detected, it adds these pixels to ensure the size of the spreadsheet controls are correct
+	 * boxModelCorrection {Number} default 2, if box model is detected, it adds these pixels to ensure the size of the spreadsheet controls are correct
 	 *
 	 * formulaFunctions {Object} default {}, Additional functions for formulas. Will overwrite default functions if named the same.
 	 *      Javascript Example:
@@ -1024,7 +1024,7 @@ jQuery.sheet = {
 	 * @methodOf jQuery.sheet
 	 * @param {Object} $ jQuery
 	 * @param {Object} s settings from jQuery.fn.sheet
-	 * @param {Integer} I the index of the instance
+	 * @param {Number} I the index of the instance
 	 * @returns {Object} jS jQuery sheet instance
 	 */
 	createInstance:function ($, s, I) {
@@ -1063,7 +1063,7 @@ jQuery.sheet = {
 			 * The active sheet index within the a set of sheets
 			 * @memberOf jS
 			 * @name i
-			 * @type {Integer}
+			 * @type {Number}
 			 */
 			i:0,
 
@@ -1071,7 +1071,7 @@ jQuery.sheet = {
 			 * The instance index
 			 * @memberOf jS
 			 * @name I
-			 * @type {Integer}
+			 * @type {Number}
 			 */
 			I:I,
 
@@ -1079,7 +1079,7 @@ jQuery.sheet = {
 			 * The current count of sheet's within the instance
 			 * @memberOf jS
 			 * @name sheetCount
-			 * @type {Integer}
+			 * @type {Number}
 			 */
 			sheetCount:0,
 
@@ -1475,7 +1475,7 @@ jQuery.sheet = {
 			/**
 			 * Returns singe spreadsheet from a set of spreadsheets within as instance, builds if it doesn't exist
 			 * @param {Boolean} forceRebuild Enforces the spreadsheet to be rebuilt
-			 * @param {Integer} i Spreadsheet index
+			 * @param {Number} i Spreadsheet index
 			 * @methodOf jS
 			 * @name spreadsheetToArray
 			 */
@@ -1490,10 +1490,10 @@ jQuery.sheet = {
 
 			/**
 			 * Creates a single cell within
-			 * @param {Integer} sheetIndex
-			 * @param {Integer} rowIndex
-			 * @param {Integer} colIndex
-			 * @param {Integer} calcCount
+			 * @param {Number} sheetIndex
+			 * @param {Number} rowIndex
+			 * @param {Number} colIndex
+			 * @param {Number} calcCount
 			 * @param {Date} calcLast
 			 * @param {Date} calcDependenciesLast
 			 * @returns {Object} jSCell
@@ -1610,7 +1610,7 @@ jQuery.sheet = {
 
 			/**
 			 * Turns off all intercept keystroke navigation instances, with exception of supplied instance index
-			 * @param {Integer} nav Instance index
+			 * @param {Number} nav Instance index
 			 * @methodOf jS
 			 * @name setNav
 			 */
@@ -1632,8 +1632,8 @@ jQuery.sheet = {
 			controlFactory:{
 				/**
 				 * Creates multi rows
-				 * @param {Integer} i, optional, row index
-				 * @param {Integer} qty the number of cells you'd like to add, if not specified, a dialog will ask
+				 * @param {Number} i, optional, row index
+				 * @param {Number} qty the number of cells you'd like to add, if not specified, a dialog will ask
 				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
 				 * @param {Boolean} skipFormulaReparse re-parses formulas if needed
 				 * @methodOf jS.controlFactory
@@ -1653,8 +1653,8 @@ jQuery.sheet = {
 
 				/**
 				 * Creates multi columns
-				 * @param {Integer} i, optional, column index
-				 * @param {Integer} qty the number of cells you'd like to add, if not specified, a dialog will ask
+				 * @param {Number} i, optional, column index
+				 * @param {Number} qty the number of cells you'd like to add, if not specified, a dialog will ask
 				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
 				 * @param {Boolean} skipFormulaReparse re-parses formulas if needed
 				 * @methodOf jS.controlFactory
@@ -1674,9 +1674,9 @@ jQuery.sheet = {
 
 				/**
 				 * Creates cells for sheet and the bars that go along with them
-				 * @param {Integer} i optional, index where cells should be added, if null, cells go to end
+				 * @param {Number} i optional, index where cells should be added, if null, cells go to end
 				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end;
-				 * @param {Integer} qty how many rows/columsn to add
+				 * @param {Number} qty how many rows/columsn to add
 				 * @param {String} type "row" or "col", default "col"
 				 * @param {Boolean} skipFormulaReparse re-parses formulas if needed
 				 * @methodOf jS.controlFactory
@@ -1897,7 +1897,7 @@ jQuery.sheet = {
 
 				/**
 				 * creates single row
-				 * @param {Integer} i, optional, row index
+				 * @param {Number} i, optional, row index
 				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
 				 * @methodOf jS.controlFactory
 				 * @name addRow
@@ -1909,7 +1909,7 @@ jQuery.sheet = {
 
 				/**
 				 * creates single column
-				 * @param {Integer} i, optional, column index
+				 * @param {Number} i, optional, column index
 				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
 				 * @methodOf jS.controlFactory
 				 * @name addColumn
@@ -2178,7 +2178,7 @@ jQuery.sheet = {
 
 					/**
 					 * @param {Object} e jQuery event
-					 * @param {Integer} i column
+					 * @param {Number} i column
 					 * @param {jQuery|HTMLElement} target
 					 * @returns {*}
 					 * @methodOf jS.controlFactory.barMenu
@@ -2779,7 +2779,7 @@ jQuery.sheet = {
 				 * Creates the spreadsheet user interface
 				 * @param {HTMLElement} ui raw user interface
 				 * @param {HTMLElement} sheet raw table
-				 * @param {Integer} i the new count for spreadsheets in this instance
+				 * @param {Number} i the new count for spreadsheets in this instance
 				 * @methodOf jS.controlFactory
 				 * @name sheetUI
 				 */
@@ -3648,8 +3648,8 @@ jQuery.sheet = {
 
 				/**
 				 * Sets active cell from a pixel location
-				 * @param {Integer} left pixels left
-				 * @param {Integer} top pixels top
+				 * @param {Number} left pixels left
+				 * @param {Number} top pixels top
 				 * @returns {Boolean}
 				 * @methodOf jS.evt
 				 * @name cellSetFocusFromXY
@@ -4110,7 +4110,7 @@ jQuery.sheet = {
 
 			/**
 			 *
-			 * @param {Integer} start index to start from
+			 * @param {Number} start index to start from
 			 * @methodOf jS
 			 * @name refreshColumnLabels
 			 */
@@ -4133,7 +4133,7 @@ jQuery.sheet = {
 
 			/**
 			 *
-			 * @param {Integer} start index to start from
+			 * @param {Number} start index to start from
 			 * @methodOf jS
 			 * @name refreshRowLabels
 			 */
@@ -4188,7 +4188,7 @@ jQuery.sheet = {
 
 			/**
 			 * Detects read state of a spreadsheet
-			 * @param {Integer} i index of spreadsheet within instance
+			 * @param {Number} i index of spreadsheet within instance
 			 * @returns {Boolean}
 			 * @methodOf jS
 			 * @name isSheetEditable
@@ -4290,7 +4290,7 @@ jQuery.sheet = {
 
 			/**
 			 * Switches spreadsheet
-			 * @param {Integer} i index of spreadsheet within instance
+			 * @param {Number} i index of spreadsheet within instance
 			 * @methodOf jS
 			 * @name switchSheet
 			 */
@@ -4298,7 +4298,7 @@ jQuery.sheet = {
 				if (isNaN(i)) return false;
 
 				if (i == -1) {
-					jS.addSheet('5x10');
+					jS.addSheet({rows: 25, cols: 10});
 				} else if (i != jS.i) {
 					jS.setActiveSheet(i);
 					jS.calc(i);
@@ -4339,7 +4339,7 @@ jQuery.sheet = {
 			/**
 			 * Cycles through all the td's and turns table into spreadsheet
 			 * @param {HTMLElement} table spreadsheet
-			 * @param {Integer} i spreadsheet index within instance
+			 * @param {Number} i spreadsheet index within instance
 			 * @methodOf jS
 			 * @name createSpreadsheet
 			 */
@@ -4452,11 +4452,11 @@ jQuery.sheet = {
 			merge:function () {
 				var cellsValue = [],
 					tds = jS.highlighted(),
-					tdFirstLoc = jS.getTdLocation(tds.first()),
-					tdLastLoc = jS.getTdLocation(tds.last()),
+					tdFirstLoc = jS.getTdLocation(tds[0]),
+					tdLastLoc = jS.getTdLocation(tds[tds.length - 1]),
 					colI = 0,
 					rowI = 0,
-					firstCell = jS.spreadsheets[jS.i][tdFirstLoc.row][tdFirstLoc.col],
+					firstCell = tds[0].jSCell,
 					last = new Date();
 
 				if (tds.length > 1 && tdFirstLoc.row) {
@@ -4498,7 +4498,7 @@ jQuery.sheet = {
 									cell.up = cellUp;
 
 									td
-										.removeData('formula')
+										.removeAttr('data-formula')
 										.html('')
 										.hide();
 								}
@@ -4517,8 +4517,9 @@ jQuery.sheet = {
 						.attr('rowSpan', rowI)
 						.attr('colSpan', colI);
 
-					jS.calcDependencies.apply(tds.first()[0].jSCell);
+					jS.calcDependencies.apply(firstCell);
 					jS.evt.cellEditDone();
+					jS.autoFillerGoToTd();
 				}
 			},
 
@@ -4528,28 +4529,27 @@ jQuery.sheet = {
 			 * @name unmerge
 			 */
 			unmerge:function () {
-				var td = jS.highlighted().first(),
+				var td = jS.highlighted()[0],
 					loc = jS.getTdLocation(td),
-					cellFirst = jS.spreadsheets[jS.i][loc.row][loc.col],
-					formula = td.data('formula'),
 					last = new Date();
 
-				var rowMax = math.max(td.attr('rowSpan') * 1, 1);
-				var colMax = math.max(td.attr('colSpan') * 1, 1);
+				var rowMax = math.max(td.getAttribute('rowSpan') * 1, 1);
+				var colMax = math.max(td.getAttribute('colSpan') * 1, 1);
 
 				for (var row = loc.row; row <= loc.row + rowMax; row++) {
 					for (var col = loc.col; col <= loc.col + colMax; col++) {
-						var td = jS.getTd(jS.i, row, col)
+						var td = $(jS.getTd(jS.i, row, col))
 								.show()
 								.removeAttr('colSpan')
 								.removeAttr('rowSpan'),
-							cell = td.cell;
+							cell = td[0].jSCell;
 
 						cell.up = cell.down = cell.left = cell.right = cell.defer = null;
 
 						jS.calcDependencies.apply(cell, [last]);
 					}
 				}
+				jS.autoFillerGoToTd();
 			},
 
 			/**
@@ -4837,7 +4837,7 @@ jQuery.sheet = {
 			 * @param {Function} fn the function to apply to a cell
 			 * @param {Object} firstLoc {row: 0, col: 0} the cell to start at
 			 * @param {Object} lastLoc {row: 0, col: 0} the cell to end at
-			 * @param {Integer} i spreadsheet index within instance
+			 * @param {Number} i spreadsheet index within instance
 			 * @methodOf jS
 			 * @name cycleCells
 			 */
@@ -5301,7 +5301,7 @@ jQuery.sheet = {
 				/**
 				 * Provides the top bar with ability to resize
 				 * @param {jQuery|HTMLElement} bar td bar object
-				 * @param {Integer} i index of bar
+				 * @param {Number} i index of bar
 				 * @param {jQuery|HTMLElement} pane spreadsheet pane
 				 * @param {jQuery|HTMLElement} sheet spreadsheet table
 				 * @methodOf jS.resizeBar
@@ -5345,7 +5345,7 @@ jQuery.sheet = {
 				/**
 				 * Provides the left bar with ability to resize
 				 * @param {jQuery|HTMLElement} bar td bar object
-				 * @param {Integer} i index of bar
+				 * @param {Number} i index of bar
 				 * @param {jQuery|HTMLElement} pane spreadsheet pane
 				 * @param {jQuery|HTMLElement} sheet spreadsheet table
 				 * @methodOf jS.resizeBar
@@ -5743,7 +5743,7 @@ jQuery.sheet = {
 
 			/**
 			 * Current number of cells being parsed
-			 * @type {Integer}
+			 * @type {Number}
 			 * @memberOf jS
 			 * @name callStack
 			 */
@@ -5751,9 +5751,9 @@ jQuery.sheet = {
 
 			/**
 			 * Ignites calculation with cell, is recursively called if cell uses value from another cell
-			 * @param {Integer} sheetIndex sheet index within instance
-			 * @param {Integer} rowIndex row index
-			 * @param {Integer} colIndex col index
+			 * @param {Number} sheetIndex sheet index within instance
+			 * @param {Number} rowIndex row index
+			 * @param {Number} colIndex col index
 			 * @returns {*} cell value after calculated
 			 * @name updateCellValue
 			 * @methodOf jS
@@ -5786,7 +5786,7 @@ jQuery.sheet = {
 				}
 
 				if (cell.defer) {//merging creates a defer property, which points the cell to another location to get the other value
-					return this.updateCellValue.apply(cell.defer);
+					return jS.updateCellValue.apply(cell.defer);
 				}
 
 				cell.state.push('updating');
@@ -5973,7 +5973,7 @@ jQuery.sheet = {
 
 				/**
 				 * Creates a relationship between 2 cells, where the formula originates and the cell that is required to supply a value to
-				 * @param {Integer} sheetIndex
+				 * @param {Number} sheetIndex
 				 * @param {Object} loc {row, col}
 				 */
 				createDependency:function (sheetIndex, loc) {
@@ -6285,7 +6285,7 @@ jQuery.sheet = {
 
 			/**
 			 * Where jS.spreadsheets are calculated, and returned to their td counterpart
-			 * @param {Integer} tableI table index
+			 * @param {Number} tableI table index
 			 * @methodOf jS
 			 * @name calc
 			 */
@@ -6367,7 +6367,7 @@ jQuery.sheet = {
 
 			/**
 			 * deletes a spreadsheet table
-			 * @param {Integer} i optional spraedsheet index within instance
+			 * @param {Number} i optional spreadsheet index within instance
 			 * @methodOf jS
 			 * @name deleteSheet
 			 */
@@ -6410,7 +6410,7 @@ jQuery.sheet = {
 				jS.controls.chart.splice(oldI, 1);
 				jS.controls.tdMenu.splice(oldI, 1);
 				jS.controls.enclosure.splice(oldI, 1);
-				jS.controls.fullScreen.splice(oldI, 1);
+				jS.controls.fullScreen = null;
 				jS.controls.inPlaceEdit.splice(oldI, 1);
 				jS.controls.menuLeft.splice(oldI, 1);
 				jS.controls.menuRight.splice(oldI, 1);
@@ -6692,8 +6692,8 @@ jQuery.sheet = {
 			/**
 			 * moves autoFiller to a selected cell
 			 * @param {jQuery|HTMLElement} td
-			 * @param {Integer} tdHeight optional, height of a td object
-			 * @param {Integer} tdWidth optional, width of a td object
+			 * @param {Number} tdHeight optional, height of a td object
+			 * @param {Number} tdWidth optional, width of a td object
 			 * @methodOf jS
 			 * @name autoFillerGoToTd
 			 */
@@ -6728,7 +6728,7 @@ jQuery.sheet = {
 
 			/**
 			 * sets active a spreadsheet inside of a sheet instance
-			 * @param {Integer} i a sheet integer desired to show
+			 * @param {Number} i a sheet integer desired to show
 			 * @methodOf jS
 			 * @name setActiveSheet
 			 */
@@ -7006,8 +7006,8 @@ jQuery.sheet = {
 			/**
 			 * Sets active bar
 			 * @param {String} type "col" || "row" || "all"
-			 * @param {Integer} begin start highlighting from
-			 * @param {Integer} end end highlighting to
+			 * @param {Number} begin start highlighting from
+			 * @param {Number} end end highlighting to
 			 * @methodOf jS
 			 * @name cellSetActiveBar
 			 */
@@ -7194,9 +7194,9 @@ jQuery.sheet = {
 
 			/**
 			 * Gets the td element within a spreadsheet instance
-			 * @param {Integer} tableIndex table index
-			 * @param {Integer} rowIndex row index
-			 * @param {Integer} colIndex column index
+			 * @param {Number} tableIndex table index
+			 * @param {Number} rowIndex row index
+			 * @param {Number} colIndex column index
 			 * @returns {Element}
 			 * @methodOf
 			 * @name getTd
@@ -7235,8 +7235,8 @@ jQuery.sheet = {
 
 			/**
 			 * Get a td from a pixel location
-			 * @param {Integer} left pixels from left
-			 * @param {Integer} top pixels from top
+			 * @param {Number} left pixels from left
+			 * @param {Number} top pixels from top
 			 * @param {Boolean} isBar
 			 * @returns {Element|Boolean} Boolean if not found
 			 * @methodOf jS
@@ -7294,7 +7294,7 @@ jQuery.sheet = {
 				 * get index from bar left element
 				 * TODO: Needs to use object's index to be faster
 				 * @param o
-				 * @returns {Integer}
+				 * @returns {Number}
 				 * @methodOf jS.getBarIndex
 				 * @name left
 				 */
@@ -7311,7 +7311,7 @@ jQuery.sheet = {
 				 * get index from bar top element
 				 * TODO: Needs to use object's index to be faster
 				 * @param o
-				 * @returns {Integer}
+				 * @returns {Number}
 				 * @methodOf hS.getBarIndex
 				 * @name top
 				 */
@@ -7520,9 +7520,9 @@ jQuery.sheet = {
 				/**
 				 * adds elements to the undoable stack
 				 * @param {Date} last
-				 * @param {Integer} sheet
-				 * @param {Integer} row
-				 * @param {Integer} col
+				 * @param {Number} sheet
+				 * @param {Number} row
+				 * @param {Number} col
 				 * @param {Boolean} after
 				 * @name add
 				 * @methodOf jS.cellUndoable
@@ -7583,7 +7583,7 @@ jQuery.sheet = {
 			/**
 			 * get col associated with a sheet/table within an instance
 			 * @param {jQuery|HTMLElement} o table
-			 * @param {Integer} i, Index of column
+			 * @param {Number} i, Index of column
 			 * @returns {Element}
 			 * @methodOf jS
 			 * @name col
@@ -7936,7 +7936,7 @@ jQuery.sheet = {
 
 	/**
 	 * Make 2 or more spreadsheets scroll to together, useful for history viewing or spreadsheet comparison
-	 * @param {Integer} I instance index
+	 * @param {Number} I instance index
 	 * @method Of jQuery.sheet
 	 * @name scrollLocker
 	 */
@@ -7959,7 +7959,7 @@ jQuery.sheet = {
 
 	/**
 	 * Make 2 or more spreadsheets switch together, just like clicking their tabs at the same time
-	 * @param {Integer} I instance index
+	 * @param {Number} I instance index
 	 * @method Of jQuery.sheet
 	 * @name switchSheetLocker
 	 */
@@ -8067,7 +8067,7 @@ jQuery.sheet = {
 var jSE = jQuery.sheet.engine = {
 	/**
 	 * Calculate a spreadsheet
-	 * @param {Integer} sheet
+	 * @param {Number} sheet
 	 * @param {Array} spreadsheet [row][cell], [1][1] = SHEET1!A1
 	 * @param {Function} ignite, function to run on every cell
 	 * @methodOf jQuery.sheet.engine
@@ -8113,7 +8113,7 @@ var jSE = jQuery.sheet.engine = {
 	/**
 	 * Parse a sheet name to it's index
 	 * @param {String} locStr, SHEET1 = 0
-	 * @return {Integer}
+	 * @return {Number}
 	 * @methodOf jQuery.sheet.engine
 	 * @name parseSheetLocation
 	 */
@@ -8123,8 +8123,8 @@ var jSE = jQuery.sheet.engine = {
 
 	/**
 	 *
-	 * @param {Integer} col, 1 = A
-	 * @param {Integer} row, 1 = 1
+	 * @param {Number} col, 1 = A
+	 * @param {Number} row, 1 = 1
 	 * @return {String}
 	 * @methodOf jQuery.sheet.engine
 	 * @name parseCellName
@@ -8167,7 +8167,7 @@ var jSE = jQuery.sheet.engine = {
 
 	/**
 	 * Get label of a column index
-	 * @param {Integer} index, 1 = A, 2 = B, 26 = Z, 27 = AA
+	 * @param {Number} index, 1 = A, 2 = B, 26 = Z, 27 = AA
 	 * @return {String}
 	 * @name columnLabelString
 	 * @methodOf jQuery.sheet.engine
