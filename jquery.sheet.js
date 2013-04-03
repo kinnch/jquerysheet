@@ -1410,7 +1410,7 @@ jQuery.sheet = {
 				newSheet:"What size would you like to make your spreadsheet? Example: '5x10' creates a sheet that is 5 columns by 10 rows.",
 				openSheet:"Are you sure you want to open a different sheet?  All unsaved changes will be lost.",
 				toggleHideRow:"No row selected.",
-				toggleHideColumn:"Now column selected.",
+				toggleHideColumn:"No column selected.",
 				loopDetected:"Loop Detected",
 				newSheetTitle:"What would you like the sheet's title to be?",
 				notFoundColumn:"Column not found",
@@ -2778,7 +2778,7 @@ jQuery.sheet = {
 				/**
 				 * Creates the spreadsheet user interface
 				 * @param {HTMLElement} ui raw user interface
-				 * @param {HTMLElement} sheet raw table
+				 * @param {HTMLElement} table raw table
 				 * @param {Number} i the new count for spreadsheets in this instance
 				 * @methodOf jS.controlFactory
 				 * @name sheetUI
@@ -6439,32 +6439,47 @@ jQuery.sheet = {
 
 			/**
 			 * removes the currently selected row
-			 * @param {Number} i
+			 * @param {Number} row
 			 * @param {Boolean} skipCalc
 			 * @methodOf jS
 			 * @name deleteRow
 			 */
-			deleteRow:function (i, skipCalc) {
-				i = i || jS.rowLast;
-				if (i < 1) return;
-				//remove tr's first
-				jS.getTd(jS.i, i, 1).parent().remove();
+			deleteRow:function (row, skipCalc) {
+				var i, start, end, qty, size = jS.sheetSize();
+
+				if (row) {
+					start = end = row;
+				} else {
+					start = math.min(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
+					end = math.max(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
+				}
+
+				qty = (end - start) + 1;
+
+				if (start < 1 || size.cols < 2 || qty >= size.rows) return;
+
+				i = end;
+
+				do {
+					//remove tr's first
+					jS.getTd(jS.i, i, 1).parent().remove();
+				} while (start < i--);
 
 				//now remove bar
-				jS.controls.bar.y.td[jS.i].splice(i, 1);
+				jS.controls.bar.y.td[jS.i].splice(start, qty);
 
 				//now remove cells
-				jS.spreadsheets[jS.i].splice(i, 1);
+				jS.spreadsheets[jS.i].splice(start, qty);
 
-				jS.refreshRowLabels(i);
+				jS.refreshRowLabels(start);
 
 				jS.setChanged(true);
 
 				jS.offsetFormulas({
-					row:i,
+					row:start,
 					col:0
 				}, {
-					row:-1,
+					row:-qty,
 					col:0
 				});
 
@@ -6478,53 +6493,68 @@ jQuery.sheet = {
 			},
 
 			/**
-			 * removes the currently selected column
-			 * @param {Number} i
+			 * removes the columns associated with highlighted cells
+			 * @param {Number} col
 			 * @param {Boolean} skipCalc
 			 * @methodOf jS
 			 * @name deleteColumn
 			 */
-			deleteColumn:function (i, skipCalc) {
-				i = i || jS.colLast;
-				if (i < 1) return;
+			deleteColumn:function (col, skipCalc) {
+				var i, start, end, qty, size = jS.sheetSize();
+
+				if (col) {
+					start = end = col;
+				} else {
+					start = math.min(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
+					end = math.max(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
+				}
+
+				qty = (end - start) + 1;
+
+				if (start < 1 || size.cols < 2 || qty >= size.cols) return;
+
+				i = end;
+
 				jS.obj.barHelper().remove();
-				var table = jS.obj.table(),
-					col = jS.col(table[0], i),
-					bar = jS.obj.barTop(i).remove(),
-					tds = col.tds,
-					j = tds.length -1;
-
-				//remove tds first
 				do {
-					$(tds[j]).remove();
-				} while (j--);
+					var table = jS.obj.table(),
+						col = jS.col(table[0], i),
+						bar = jS.obj.barTop(i).remove(),
+						tds = col.tds,
+						j = tds.length -1;
 
-				//now remove bar
-				jS.obj.barTop(i).remove();
+					//remove tds first
+					do {
+						$(tds[j]).remove();
+					} while (j--);
+
+					//now remove bar
+					jS.obj.barTop(i).remove();
+
+					//now remove col
+					$(col).remove();
+				} while (start < i--);
 
 				//remove column
-				jS.controls.bar.x.td[jS.i].splice(i, 1);
+				jS.controls.bar.x.td[jS.i].splice(start, qty);
 
 				//remove cells
-				j = jS.spreadsheets[jS.i].length - 1;
+				j = jS.spreadsheets[jS.i].length - qty;
 				do {
-					jS.spreadsheets[jS.i][j].splice(i, 1);
+					jS.spreadsheets[jS.i][j].splice(start, qty);
 				} while (j-- > 1);
 
-				//now remove col
-				$(col).remove();
-
 				//refresh labels
-				jS.refreshColumnLabels(i);
+				jS.refreshColumnLabels(start);
 
 				jS.setChanged(true);
 
 				jS.offsetFormulas({
 					row:0,
-					col:i
+					col:start
 				}, {
 					row:0,
-					col:-1
+					col:-qty
 				});
 
 				jS.setDirty(true);
@@ -6692,26 +6722,27 @@ jQuery.sheet = {
 			/**
 			 * moves autoFiller to a selected cell
 			 * @param {jQuery|HTMLElement} td
-			 * @param {Number} tdHeight optional, height of a td object
-			 * @param {Number} tdWidth optional, width of a td object
+			 * @param {Number} h optional, height of a td object
+			 * @param {Number} w optional, width of a td object
 			 * @methodOf jS
 			 * @name autoFillerGoToTd
 			 */
-			autoFillerGoToTd:function (td, tdHeight, tdWidth) {
+			autoFillerGoToTd:function (td, h, w) {
 				if (!s.autoFiller) return;
 
 				td = td || jS.obj.tdActive();
-				tdHeight = tdHeight || td.height();
-				tdWidth = tdWidth || td.width();
+				h = h || td.height();
+				w = w || td.width();
+				if (!h && !w) {
+					jS.autoFillerHide();
+				}
 
-				if (td[0] && td[0].type == 'cell' && td.is(':visible')) { //ensure that it is a usable cell
+				if (td[0] && td[0].type == 'cell') { //ensure that it is a usable cell
 					var tdPos = td.position();
 					jS.obj.autoFiller()
 						.show()
-						.css('top', ((tdPos.top + (tdHeight || td.height()) - 3) + 'px'))
-						.css('left', ((tdPos.left + (tdWidth || td.width()) - 3) + 'px'));
-				} else {
-					jS.autoFillerHide();
+						.css('top', ((tdPos.top + (h || td.height()) - 3) + 'px'))
+						.css('left', ((tdPos.left + (w || td.width()) - 3) + 'px'));
 				}
 			},
 
