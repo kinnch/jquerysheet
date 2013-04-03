@@ -5211,8 +5211,13 @@ jQuery.sheet = {
 			},
 
 			frozenAt:function () {
-				if (!jS.s.frozenAt[jS.i]) jS.s.frozenAt[jS.i] = {row:0, col:0};
-				return jS.s.frozenAt[jS.i];
+				var frozenAt;
+				if (!(frozenAt = jS.s.frozenAt[jS.i])) frozenAt = {row:0, col:0};
+
+				frozenAt.row = math.max(frozenAt.row, 0);
+				frozenAt.col = math.max(frozenAt.col, 0);
+
+				return frozenAt;
 			},
 
 			scrolledTo:function () {
