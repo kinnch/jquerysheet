@@ -1985,7 +1985,7 @@ jQuery.sheet = {
 						barTopParent.insertBefore(td, tdCorner.nextSibling);
 					} while (i-- > 0);
 
-					table.barTop = barTopParent.children;
+					table.barTop = jS.controls.barTopParent[jS.i].children();
 
 					return barTopParent;
 				},
