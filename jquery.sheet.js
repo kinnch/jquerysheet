@@ -1151,7 +1151,7 @@ jQuery.sheet = {
 				enclosure:[],
 				enclosures:null,
 				formula:null,
-				fullScreen:[],
+				fullScreen:null,
 				header:null,
 				inPlaceEdit:[],
 				inputs:[],
@@ -1249,7 +1249,7 @@ jQuery.sheet = {
 					return jS.controls.formula || $([]);
 				},
 				fullScreen:function () {
-					return jS.controls.fullScreen[jS.i] || $([]);
+					return jS.controls.fullScreen || $([]);
 				},
 				header:function () {
 					return jS.controls.header || $([]);
@@ -2908,26 +2908,6 @@ jQuery.sheet = {
 
 					jS.themeRoller.start(table);
 
-					// resizable container div
-					jS.resizableSheet(s.parent, {
-						minWidth:s.width * 0.1,
-						minHeight:s.height * 0.1,
-						start:function () {
-							jS.setBusy(true);
-							$enclosure.hide();
-							ui.tabContainer.hide();
-						},
-						stop:function () {
-							$enclosure.show();
-							ui.tabContainer.show();
-							jS.setBusy(false);
-							s.width = s.parent.width();
-							s.height = s.parent.height();
-							jS.sheetSyncSize();
-							pane.resizeScroll();
-						}
-					});
-
 					jS.createSpreadsheet(table, i);
 
 					jS.checkMinSize(table);
@@ -4241,10 +4221,11 @@ jQuery.sheet = {
 			toggleFullScreen:function () {
 				if (!jS) return;
 				jS.evt.cellEditDone();
-				var fullScreen = jS.obj.fullScreen();
+				var fullScreen = jS.obj.fullScreen(),
+					pane = jS.obj.pane();
 				if (fullScreen.is(':visible')) {
 					$body.removeClass('bodyNoScroll');
-					s.parent = fullScreen.data('parent');
+					s.parent = fullScreen[0].origParent;
 
 					var w = s.parent.width(),
 						h = s.parent.height();
@@ -4256,29 +4237,39 @@ jQuery.sheet = {
 
 					fullScreen.remove();
 
+					pane.resizeScroll();
 					jS.sheetSyncSize();
-
-					jS.obj.pane().resizeScroll();
 
 					jS.trigger('sheetFullScreen', [false]);
 				} else { //here we make a full screen
 					$body.addClass('bodyNoScroll');
 
+					s.parent.bind('test', function(){});
 					var w = $win.width() - 15,
 						h = $win.height() - 15,
-						parent = s.parent;
+						parent = $(s.parent),
+						fullScreen = doc.createElement('div'),
+						events = $._data(s.parent[0], 'events');
+
+					fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen;
 
 					s.width = w;
 					s.height = h;
 
-					s.parent = jS.controls.fullScreen[jS.i] = $('<div class="' + jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + '" />')
-						.append(s.parent.children())
-						.appendTo($body)
-						.data('parent', s.parent);
+					fullScreen.origParent = parent;
+					s.parent = jS.controls.fullScreen = $(fullScreen)
+						.append(parent.children())
+						.appendTo($body);
 
-					jS.obj.pane().resizeScroll();
+					pane.resizeScroll();
 					jS.sheetSyncSize();
 					parent.trigger('sheetFullScreen', [true]);
+
+					for (var event in events) {
+						for (var i = 0; i < events[event].length; i++) {
+							s.parent.bind(event, events[event][i].handler);
+						}
+					}
 				}
 			},
 
@@ -6791,6 +6782,26 @@ jQuery.sheet = {
 						jS.trigger('sheetOpened', [i]);
 					}
 
+					// resizable container div
+					jS.resizableSheet(s.parent, {
+						minWidth:s.width * 0.1,
+						minHeight:s.height * 0.1,
+						start:function () {
+							jS.setBusy(true);
+							jS.obj.enclosure().hide();
+							ui.tabContainer.hide();
+						},
+						stop:function () {
+							jS.obj.enclosure().show();
+							ui.tabContainer.show();
+							jS.setBusy(false);
+							s.width = s.parent.width();
+							s.height = s.parent.height();
+							jS.sheetSyncSize();
+							jS.obj.pane().resizeScroll();
+						}
+					});
+
 					jS.sheetSyncSize();
 
 					jS.setActiveSheet(0);
@@ -7727,6 +7738,7 @@ jQuery.sheet = {
 		};
 		jS.setBusy(true);
 		s.parent.data('sheetInstance', jS);
+		s.parent[0].jS = jS;
 
 		//got tired of ie crashing when console not available
 		if (!window.console) window.console = {log:function () {
