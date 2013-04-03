@@ -2015,6 +2015,7 @@ jQuery.sheet = {
 
 						var bar = jS.obj.barTop(frozenAt.col + 1),
 							pos = bar.position(),
+							offset = $(pane).offset(),
 							handle = $(doc.createElement('div'))
 								.addClass(jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
 								.height(s.colMargin + s.boxModelCorrection)
@@ -2040,7 +2041,7 @@ jQuery.sheet = {
 								jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
 								jS.evt.scroll.start('x', pane);
 							},
-							containment:'parent'
+							containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - win.scrollBarSize.width), offset.top]
 						});
 					},
 
@@ -2059,8 +2060,9 @@ jQuery.sheet = {
 
 						jS.obj.barHelper().remove();
 
-						var bar = $(pane.table.tbody.children[frozenAt.row + 1].children[0]);
+						var bar = $(pane.table.tbody.children[frozenAt.row + 1].children[0]),
 							pos = bar.position(),
+							offset = $(pane).offset(),
 							handle = $(doc.createElement('div'))
 								.addClass(jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
 								.width(s.colMargin)
@@ -2085,7 +2087,7 @@ jQuery.sheet = {
 								jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
 								jS.evt.scroll.start('y', pane);
 							},
-							containment:'parent'
+							containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - win.scrollBarSize.height)]
 						});
 					},
 
@@ -6918,8 +6920,8 @@ jQuery.sheet = {
 				h -= jS.obj.tabContainer().outerHeight() + jS.s.boxModelCorrection;
 
 				jS.obj.panes()
-					.height(h - window.scrollBarSize.height - s.boxModelCorrection)
-					.width(w - window.scrollBarSize.width);
+					.height(h - win.scrollBarSize.height - s.boxModelCorrection)
+					.width(w - win.scrollBarSize.width);
 
 
 				jS.obj.enclosures()
@@ -7744,10 +7746,6 @@ jQuery.sheet = {
 		if (!window.console) window.console = {log:function () {
 		}};
 
-		if (!window.scrollBarSize) {
-			window.scrollBarSize = $.sheet.getScrollBarSize();
-		}
-
 		var win = window,
 			$win = $(win),
 			doc = document,
@@ -7757,6 +7755,10 @@ jQuery.sheet = {
 			},
 			u = undefined,
 			math = Math;
+
+		if (!win.scrollBarSize) {
+			win.scrollBarSize = $.sheet.getScrollBarSize();
+		}
 
 		//ready the sheet's parser
 		jS.formulaLexer = function () {
