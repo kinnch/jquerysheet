@@ -2082,7 +2082,7 @@ jQuery.sheet = {
 							stop:function (e, ui) {
 								jS.setBusy(false);
 								jS.setDirty(true);
-								var target = jS.nearest(handle, pane.table.tbody.children);
+								var target = jS.nearest(handle, $(pane.table.tbody.children));
 								jS.obj.barHelper().remove();
 								jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
 								jS.evt.scroll.start('y', pane);
