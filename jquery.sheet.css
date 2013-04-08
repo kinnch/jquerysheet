@@ -33,19 +33,20 @@
 
 /* Menu */
 .jSBarHelper {
-	float: right;
-	position: relative;
 	height: 0px;
 	border: none ! important;
-	left: -20px;
 	width: 0px;
-	padding-left: 0px ! important;
 }
-.jSBarHelper * {
+.jSBarTopMenuButton {
+	width: inherit ! important;
+	height: 0px ! important;
+	float: right;
+	margin-right: 30px;
+}
+.jSBarTopMenuButton * {
 	position: absolute;
-	cursor: pointer;
-	height: 12px;
-	width: 14px;
+	height: 16px ! important;
+	width: 18px ! important;
 	background-color: inherit ! important;
 }
 
@@ -264,43 +265,69 @@
 	text-align: center;
 	cursor: pointer ! important;
 	height: 18px;
+	border-width: 0px ! important;
+}
+
+.jSBarController {
+	border: none ! important;
+	position: absolute ! important;
 }
 
 .jSBarTopParent .jSBarController .ui-resizable-handle {
-	height: 16px;
 	width: 10px;
+	top: -3px;
+	right: -6px;
+	border-top-width: 0px;
+	border-bottom-width: 0px;
 }
 
 .jSBarLeft {
 	border-left-width: 0px ! important;
 }
 .jSBarLeft .jSBarController {
-	width: 0px;
 	height: 0px;
 	position: absolute;
 }
-.jSBarLeft .jSBarController {
-	width: 0px ! important;
-}
 .jSBarLeft .jSBarController .ui-resizable-handle {
-	width: 16px;
 	display: inline ! important;
 	height: 10px;
+	border: none ! important;
+	padding-left:1px;
 }
+
+.jSBarController .ui-resizable-handle {
+	border-width: 0px;
+}
+
+.jSBarController .ui-resizable-handle:hover {
+	background: inherit;
+}
+
+.jSBarControllerChild {
+	background: inherit;
+	top: 3px ! important;
+	left: 0px;
+}
+
+.jSBarControllerChild .ui-resizable-handle {
+	border-left-width: 1px;
+	border-right-width: 1px;
+}
+
 .jSBarHandleFreezeTop
 {
-	top: 0em ! important;
+	top: 1px ! important;
 	cursor: move ! important;
-	width: 8px;
+	width: 10px;
 	position: absolute;
 	background-image: none ! important;
 }
 
 .jSBarHandleFreezeLeft
 {
-	right: 0em ! important;
+	left: 1px ! important;
 	cursor: move ! important;
-	height: 8px;
+	height: 10px;
 	position: absolute;
 	background-image: none ! important;
 }

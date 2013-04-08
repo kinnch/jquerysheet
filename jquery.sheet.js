@@ -536,10 +536,7 @@ jQuery.fn.extend({
 						},
 						"line2":'line',
 						"Add spreadsheet":function (jS) {
-							jS.addSheet({
-								rows:25,
-								cols:10
-							});
+							jS.addSheet();
 						},
 						"Delete spreadsheet":function (jS) {
 							jS.deleteSheet();
@@ -891,7 +888,6 @@ jQuery.sheet = {
 		globalize:{script:'plugins/globalize.js'},
 		formulaParser:{script:'parser/formula/formula.js'},
 		tsvParser:{script:'parser/tsv/tsv.js'},
-		mousewheel:{script:'plugins/jquery.mousewheel.min.js'},
 		nearest:{script:'plugins/jquery.nearest.min.js'}
 	},
 
@@ -1287,6 +1283,9 @@ jQuery.sheet = {
 				scrollStyleY:function () {
 					return jS.controls.bar.y.scroll[jS.i] || $([]);
 				},
+				scrollStyles:function() {
+					return $(this.scrollStyleX()).add(this.scrollStyleY());
+				},
 				scroll:function () {
 					return jS.controls.scroll[jS.i] || $([]);
 				},
@@ -1351,6 +1350,7 @@ jQuery.sheet = {
 				barLeft:'jSBarLeft',
 				barHandleFreezeLeft:'jSBarHandleFreezeLeft',
 				barTop:'jSBarTop',
+				barTopMenuButton: 'jSBarTopMenuButton',
 				barHandleFreezeTop:'jSBarHandleFreezeTop',
 				barTopParent:'jSBarTopParent',
 				chart:'jSChart',
@@ -1407,7 +1407,6 @@ jQuery.sheet = {
 				dragToFreezeCol:"Drag to freeze column",
 				dragToFreezeRow:"Drag to freeze row",
 				addSheet:"Add a spreadsheet",
-				newSheet:"What size would you like to make your spreadsheet? Example: '5x10' creates a sheet that is 5 columns by 10 rows.",
 				openSheet:"Are you sure you want to open a different sheet?  All unsaved changes will be lost.",
 				toggleHideRow:"No row selected.",
 				toggleHideColumn:"No column selected.",
@@ -2015,28 +2014,44 @@ jQuery.sheet = {
 
 						var bar = jS.obj.barTop(frozenAt.col + 1),
 							pos = bar.position(),
+							highlighter,
 							offset = $(pane).offset(),
-							handle = $(doc.createElement('div'))
+							handle = doc.createElement('div'),
+							$handle = pane.freezeHandleTop = $(handle)
+								.appendTo(pane)
 								.addClass(jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
-								.height(s.colMargin + s.boxModelCorrection)
-								.css('top', pos.top + 'px')
-								.css('left', pos.left + 'px')
-								.attr('title', jS.msg.dragToFreezeCol)
-								.appendTo(pane),
+								.height(bar.height())
+								.css('left', (pos.left - handle.clientWidth) + 'px')
+								.attr('title', jS.msg.dragToFreezeCol),
 							tds = pane.table.barTop;
 
-						jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
-						jS.controls.bar.x.handleFreeze[jS.i] = handle;
 
-						jS.draggable(handle, {
+						jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
+						jS.controls.bar.x.handleFreeze[jS.i] = $handle;
+
+						jS.draggable($handle, {
 							axis:'x',
 							start:function () {
 								jS.setBusy(true);
+
+								highlighter = $(doc.createElement('div'))
+									.appendTo(pane)
+									.css('position', 'absolute')
+									.addClass('ui-state-highlight ' + jS.cl.barHelper)
+									.height(pane.table.tbody.children[0].children[0].clientHeight)
+									.fadeTo(0,0.33);
+							},
+							drag:function() {
+								var target = jS.nearest($handle, tds).prev();
+								if (target.length && target.position) {
+									highlighter.width(target.position().left + target.width());
+								}
 							},
 							stop:function (e, ui) {
+								highlighter.remove();
 								jS.setBusy(false);
 								jS.setDirty(true);
-								var target = jS.nearest(handle, tds);
+								var target = jS.nearest($handle, tds);
 								jS.obj.barHelper().remove();
 								jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
 								jS.evt.scroll.start('x', pane);
@@ -2062,27 +2077,43 @@ jQuery.sheet = {
 
 						var bar = $(pane.table.tbody.children[frozenAt.row + 1].children[0]),
 							pos = bar.position(),
+							highlighter,
 							offset = $(pane).offset(),
-							handle = $(doc.createElement('div'))
+							handle = doc.createElement('div'),
+							$handle = pane.freezeHandleLeft = $(handle)
+								.appendTo(pane)
 								.addClass(jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
-								.width(s.colMargin)
-								.css('top', pos.top + 'px')
-								.css('left', pos.left + 'px')
-								.attr('title', jS.msg.dragToFreezeRow)
-								.appendTo(pane);
+								.width(bar.width())
+								.css('top', (pos.top - handle.clientHeight) + 'px')
+								.attr('title', jS.msg.dragToFreezeRow),
+								trs = $(pane.table.tbody.children);
 
 						jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
-						jS.controls.bar.y.handleFreeze[jS.i] = handle;
+						jS.controls.bar.y.handleFreeze[jS.i] = $handle;
 
-						jS.draggable(handle, {
+						jS.draggable($handle, {
 							axis:'y',
 							start:function () {
 								jS.setBusy(true);
+
+								highlighter = $(doc.createElement('div'))
+									.appendTo(pane)
+									.css('position', 'absolute')
+									.addClass('ui-state-highlight ' + jS.cl.barHelper)
+									.width(handle.clientWidth)
+									.fadeTo(0,0.33);
+							},
+							drag:function() {
+								var target = jS.nearest($handle, trs).prev();
+								if (target.length && target.position) {
+									highlighter.height(target.position().top + target.height());
+								}
 							},
 							stop:function (e, ui) {
+								highlighter.remove();
 								jS.setBusy(false);
 								jS.setDirty(true);
-								var target = jS.nearest(handle, $(pane.table.tbody.children));
+								var target = jS.nearest($handle, trs);
 								jS.obj.barHelper().remove();
 								jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
 								jS.evt.scroll.start('y', pane);
@@ -2205,8 +2236,11 @@ jQuery.sheet = {
 						if (!barMenuParentTop.length) {
 
 							barMenuParentTop = $(doc.createElement('div'))
-								.addClass(jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper)
-								.append($(doc.createElement('span')).addClass('ui-icon ui-icon-triangle-1-s'))
+								.addClass(jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barTopMenuButton)
+								.append(
+									$(doc.createElement('span'))
+										.addClass('ui-icon ui-icon-triangle-1-s')
+								)
 								.mousedown(function (e) {
 									barMenuParentTop.parent()
 										.mousedown()
@@ -2222,7 +2256,6 @@ jQuery.sheet = {
 								.blur(function () {
 									if (menu) menu.hide();
 								})
-								.css('padding-left', target.position().left + target.width() - s.colMargin)
 								.bind('destroy', function () {
 									barMenuParentTop.remove();
 									jS.controls.bar.x.menuParent[jS.i] = null;
@@ -2500,10 +2533,7 @@ jQuery.sheet = {
 						addSheet.setAttribute('title', jS.msg.addSheet);
 						addSheet.innerHTML = '&nbsp;+&nbsp;';
 						addSheet.onmousedown = function () {
-							jS.addSheet({
-								rows:25,
-								cols:10
-							});
+							jS.addSheet();
 
 							return false;
 						};
@@ -2664,51 +2694,46 @@ jQuery.sheet = {
 						}
 					};
 
-					if (!$.fn.mousewheel) {
-						return scrollOuter;
-					}
 
-					$(pane)
-						.mousewheel(function (e) {
-							var E = e.originalEvent,
-								e,
+					function mousewheel(e) {
+						e = e || win.event;
+						var detail;
+
+						if ("mousewheel" == e.type) {
+							var scrollNoXY = 1,
 								div = function (a, b) {
 									return 0 != a % b ? a : a / b;
 								};
 
-
-							if ("mousewheel" == E.type) {
-								var scrollNoXY = 1,
-									setPixels = div(-E.wheelDelta, scrollNoXY), x, y;
-
-								if (E.wheelDeltaX !== u) {
-									scrollOuter.scrollTop += div(-E.wheelDeltaY, scrollNoXY);
-									scrollOuter.scrollLeft += div(-E.wheelDeltaX, scrollNoXY);
-								} else {
-									scrollOuter.scrollTop += setPixels;
-								}
-
+							if (e.wheelDeltaX !== u) {
+								scrollOuter.scrollTop += div(-e.wheelDeltaY, scrollNoXY);
+								scrollOuter.scrollLeft += div(-e.wheelDeltaX, scrollNoXY);
 							} else {
-								e = E.detail, 100 < e ? e = 3 : -100 > e && (e = -3);
-
-								var top = 0, left = 0;
-								switch (e) {
-									case 1:
-									case -1:
-										left = e * 50;
-										break;
-									case 3:
-									case -3:
-										top = e * 15;
-										break;
-								}
-
-								scrollOuter.scrollTop += top;
-								scrollOuter.scrollLeft += left;
+								scrollOuter.scrollTop += div(-e.wheelDelta, scrollNoXY);
 							}
 
-							return false;
-						});
+						} else if ((detail = e.detail) || (detail = e.deltaX) || (detail = e.deltaY)) {
+							(100 < detail ? detail = 3 : -100 > detail && (detail = -3));
+
+							var top = 0, left = 0;
+							switch (detail) {
+								case 1:
+								case -1:
+									left = detail * 50;
+									break;
+								case 3:
+								case -3:
+									top = detail * 15;
+									break;
+							}
+
+							scrollOuter.scrollTop += top;
+							scrollOuter.scrollLeft += left;
+						}
+						return false;
+					}
+
+					pane.onwheel = pane.onmousewheel = pane.onDOMMouseScroll = pane.onMozMousePixelScroll = mousewheel;
 
 					return scrollOuter;
 				},
@@ -2990,6 +3015,8 @@ jQuery.sheet = {
 						td = $(jS.rowTds(null, 1)[1]);
 						jS.cellEdit(td);
 					}
+
+					if (!td.length) return;
 
 					jS.obj.inPlaceEdit().trigger('destroy');
 					var formula = jS.obj.formula(),
@@ -4298,7 +4325,7 @@ jQuery.sheet = {
 				if (isNaN(i)) return false;
 
 				if (i == -1) {
-					jS.addSheet({rows: 25, cols: 10});
+					jS.addSheet();
 				} else if (i != jS.i) {
 					jS.setActiveSheet(i);
 					jS.calc(i);
@@ -5309,7 +5336,8 @@ jQuery.sheet = {
 				 */
 				top:function (bar, i, pane, sheet) {
 					jS.obj.barTopControls().remove();
-					var barController = $('<div class="' + jS.cl.barController + '" />')
+					var barController = $(doc.createElement('div'))
+						.addClass(jS.cl.barController + ' ui-state-highlight')
 						.width(bar.width())
 						.height(0)
 						.prependTo(bar);
@@ -5322,6 +5350,9 @@ jQuery.sheet = {
 							jS.autoFillerHide();
 							jS.setBusy(true);
 							this.col = $(jS.col(sheet, i));
+							if (pane.freezeHandleTop) {
+								pane.freezeHandleTop.remove();
+							}
 						},
 						resize:function (e, ui) {
 							this.col
@@ -5338,8 +5369,13 @@ jQuery.sheet = {
 							pane.resizeScroll();
 							jS.followMe();
 							jS.setDirty(true);
-						}
+						},
+						minWidth: 32
 					});
+
+					barController.children()
+						.height(bar.height())
+						.css('position', 'absolute');
 				},
 
 				/**
@@ -5354,7 +5390,8 @@ jQuery.sheet = {
 				left:function (bar, i, pane, sheet) {
 					jS.obj.barLeftControls().remove();
 					var offset = bar.offset(),
-						barController = $('<div class="' + jS.cl.barController + '"></div>')
+						barController = $(doc.createElement('div'))
+							.addClass(jS.cl.barController + ' ui-state-highlight')
 							.prependTo(bar)
 							.offset({
 								top:offset.top,
@@ -5363,7 +5400,8 @@ jQuery.sheet = {
 
 					jS.controls.bar.y.controls[jS.i] = jS.obj.barLeftControls().add(barController);
 
-					var child = $('<div class="barControllerChild"></div>')
+					var child = $(doc.createElement('div'))
+							.addClass('jSBarControllerChild')
 							.height(bar.height())
 							.prependTo(barController),
 
@@ -5374,6 +5412,9 @@ jQuery.sheet = {
 						start:function () {
 							jS.autoFillerHide();
 							jS.setBusy(true);
+							if (pane.freezeHandleLeft) {
+								pane.freezeHandleLeft.remove();
+							}
 						},
 						resize:function (e, ui) {
 							me
@@ -5390,8 +5431,13 @@ jQuery.sheet = {
 							pane.resizeScroll();
 							jS.followMe();
 							jS.setDirty(true);
-						}
+						},
+						minHeight: 15
 					});
+
+					barController.children().children()
+						.width(bar.width())
+						.css('position', 'absolute');
 				},
 
 				/**
@@ -5469,6 +5515,8 @@ jQuery.sheet = {
 				//This finished up the edit of the last cell
 				jS.evt.cellEditDone();
 
+				if (!td.length) return;
+
 				var loc = jS.getTdLocation(td),
 					cell = td[0].jSCell,
 					v;
@@ -5520,6 +5568,9 @@ jQuery.sheet = {
 						jS.highlightedLast.start = loc;
 						jS.highlightedLast.end = loc;
 					}
+
+					if (!td.length) return;
+
 					jS.themeRoller.bar.setActive('left', td[0].barLeft);
 					jS.themeRoller.bar.setActive('top', td[0].barTop);
 
@@ -6337,17 +6388,12 @@ jQuery.sheet = {
 
 			/**
 			 * adds a spreadsheet table
-			 * @param {Object} size, optional, size example "10x100" which means 10 columns by 100 rows
+			 * @param {Object} size, optional
 			 * @methodOf jS
 			 * @name addSheet
 			 */
 			addSheet:function (size) {
-				if (!size) {
-					size = prompt(jS.msg.newSheet);
-					size = size.toLowerCase().split('x');
-					size = {cols:$.trim(size[0]) * 1, rows:$.trim(size[1]) * 1};
-				}
-
+				size = size || {rows: 25, cols: 10};
 				if (size) {
 					jS.evt.cellEditAbandon();
 					jS.setDirty(true);
@@ -6427,7 +6473,7 @@ jQuery.sheet = {
 				jS.sheetCount = math.max(jS.sheetCount, 0);
 
 				if (jS.sheetCount == 0) {
-					jS.addSheet({rows: 25, cols: 10});
+					jS.addSheet();
 				}
 
 				jS.setActiveSheet(jS.i);
@@ -6733,8 +6779,9 @@ jQuery.sheet = {
 				td = td || jS.obj.tdActive();
 				h = h || td.height();
 				w = w || td.width();
-				if (!h && !w) {
+				if (!h || !w) {
 					jS.autoFillerHide();
+					return;
 				}
 
 				if (td[0] && td[0].type == 'cell') { //ensure that it is a usable cell
@@ -6864,10 +6911,9 @@ jQuery.sheet = {
 			 * @name newSheet
 			 */
 			newSheet:function () {
-				var size = prompt(jS.msg.newSheet);
-				if (size) {
-					jS.openSheet($.sheet.makeTable.fromSize(size));
-				}
+				s.parent
+					.html($.sheet.makeTable.fromSize())
+					.sheet(s);
 			},
 
 			/**
