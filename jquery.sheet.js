@@ -4390,6 +4390,7 @@ jQuery.sheet = {
 								td.entity = 'left';
 								td.innerHTML = row;
 								td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.cl.uiBar;
+								td.setAttribute('style', 'height:' + td.nextSibling.style.height); //This element is generated and needs to track the height of the item just before it
 							}
 
 							if (row == 0 && col > 0) { //bartop
@@ -5403,9 +5404,7 @@ jQuery.sheet = {
 					var child = $(doc.createElement('div'))
 							.addClass('jSBarControllerChild')
 							.height(bar.height())
-							.prependTo(barController),
-
-						me = bar.parent().add(bar).add(barController);
+							.prependTo(barController);
 
 					jS.resizableCells(child, {
 						handles:'s',
@@ -5417,10 +5416,13 @@ jQuery.sheet = {
 							}
 						},
 						resize:function (e, ui) {
-							me
-								.height(ui.size.height)
-								.attr('height', (ui.size.height))
-								.css('height', ui.size.height + 'px');
+							bar
+								.css('height', ui.size.height + 'px')
+								.attr('height', ui.size.height);
+
+							bar.next()
+								.css('height', ui.size.height + 'px')
+								.attr('height', ui.size.height);
 
 							if (pane.inPlaceEdit) {
 								pane.inPlaceEdit.goToTd();
