@@ -104,8 +104,8 @@
 
 							if (column['class']) td.attr('class', column['class'] || '');
 							if (column['style']) td.attr('style', column['style'] || '');
-							if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''))
-							if (column['value']) td.html(column['value'] || '')
+							if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
+							if (column['value']) td.html(column['value'] || '');
 						}
 					}
 

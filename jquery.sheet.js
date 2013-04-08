@@ -926,7 +926,7 @@ jQuery.sheet = {
 		path = path || '';
 		settings = $.extend({
 			skip: ['globalizeCultures']
-		},settings)
+		},settings);
 
 
 		var g = function () {
@@ -967,7 +967,7 @@ jQuery.sheet = {
 	repeat:function (str, num) {
 		var result = '';
 		while (num > 0) {
-			if (num & 1) result += str;
+			if (num && 1) result += str;
 			num >>= 1, str += str;
 		}
 		return result;
@@ -2430,7 +2430,7 @@ jQuery.sheet = {
 						//Edit box menu
 						formula = doc.createElement('textarea');
 						formula.className = jS.cl.formula;
-						formula.onkeydown = jS.evt.keydownHandler.formulaKeydown;
+						formula.onkeydown = jS.evt.formula.keydown;
 						formula.onkeyup = function () {
 							jS.obj.inPlaceEdit().val(this.value);
 						};
@@ -2484,7 +2484,7 @@ jQuery.sheet = {
 
 						jS.setNav(true);
 
-						$doc.keydown(jS.evt.keydownHandler.documentKeydown);
+						$doc.keydown(jS.evt.doc.keydown);
 					}
 
 					return header;
@@ -3049,7 +3049,7 @@ jQuery.sheet = {
 						}
 					};
 					textarea.goToTd();
-					textarea.onkeydown = jS.evt.inPlaceEditOnKeyDown;
+					textarea.onkeydown = jS.evt.inPlaceEdit.keydown;
 					textarea.onkeyup = function() { formula[0].value = textarea.value; };
 					textarea.onchange = function() { formula[0].value = textarea.value; };
 					textarea.onfocus = function () { jS.setNav(false); };
@@ -3204,24 +3204,17 @@ jQuery.sheet = {
 			 */
 			evt:{
 
-				/**
-				 * Key down handlers
-				 * @memberOf jS.evt
-				 * @name keydownHandler
-				 * @namespace
-				 */
-				keydownHandler:{
-
+				inPlaceEdit:{
 					/**
 					 *
 					 * @param {Object} e jQuery event
 					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
-					 * @name enterOnInPlaceEdit
+					 * @methodOf jS.evt.inPlaceEdit
+					 * @name enter
 					 */
-					enterOnInPlaceEdit:function (e) {
+					enter:function (e) {
 						if (!e.shiftKey) {
-							return jS.evt.cellSetActiveFromKeyCode(e);
+							return jS.evt.cellSetActiveFromKeyCode(e, true);
 						} else {
 							return true;
 						}
@@ -3231,34 +3224,157 @@ jQuery.sheet = {
 					 *
 					 * @param {Object} e jQuery event
 					 * @returns {*}
+					 * @methodOf jS.evt.inPlaceEdit
+					 * @name tab
+					 */
+					tab:function (e) {
+						if (!e.shiftKey) {
+							jS.evt.cellSetActiveFromKeyCode(e, true);
+							return false;
+						} else {
+							return true;
+						}
+					},
+					/**
+					 * Edits the textarea that appears over cells for in place edit
+					 * @param {Object} e jQuery event
+					 * @returns {*}
+					 * @methodOf jS.evt.inPlaceEdit
+					 * @name keydown
+					 */
+					keydown:function (e) {
+						e = e || win.event;
+						jS.trigger('sheetFormulaKeydown', [true]);
+
+						switch (e.keyCode) {
+							case key.ENTER:
+								return jS.evt.inPlaceEdit.enter(e);
+								break;
+							case key.TAB:
+								return jS.evt.inPlaceEdit.tab(e);
+								break;
+							case key.ESCAPE:
+								jS.evt.cellEditAbandon();
+								return false;
+								break;
+						}
+					}
+				},
+
+				formula:{
+					/**
+					 *
+					 * @param {Object} e jQuery event
+					 * @returns {*}
+					 * @methodOf jS.evt.formula
+					 * @name keydown
+					 */
+					keydown:function (e) {
+						e = e || win.event;
+						if (jS.readOnly[jS.i]) return false;
+						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+
+						jS.trigger('sheetFormulaKeydown', [false]);
+
+						switch (e.keyCode) {
+							case key.C:
+								if (e.ctrlKey) {
+									return jS.evt.doc.copy(e);
+								} else {
+									jS.obj.tdActive().dblclick();
+									return true;
+								}
+							case key.X:
+								if (e.ctrlKey) {
+									return jS.evt.doc.cut(e);
+								} else {
+									jS.obj.tdActive().dblclick();
+									return true;
+								}
+							case key.Y:
+								if (e.ctrlKey) {
+									jS.evt.doc.redo(e);
+									return false;
+								} else {
+									jS.obj.tdActive().trigger('cellEdit');
+									return true;
+								}
+								break;
+							case key.Z:
+								if (e.ctrlKey) {
+									jS.evt.doc.undo(e);
+									return false;
+								} else {
+									jS.obj.tdActive().trigger('cellEdit');
+									return true;
+								}
+								break;
+							case key.ESCAPE:
+								jS.evt.cellEditAbandon();
+								break;
+							case key.ENTER:
+								jS.evt.cellSetActiveFromKeyCode(e, true);
+								return false;
+								break;
+							default:
+								jS.cellLast.isEdit = true;
+						}
+					},
+
+					/**
+					 * Helper for events
+					 * @param {Boolean} ifTrue
+					 * @param e {Object} jQuery event
+					 * @returns {*}
 					 * @methodOf jS.evt.keydownHandler
+					 * @name formulaKeydownIf
+					 */
+					If:function (ifTrue, e) {
+						if (ifTrue) {
+							jS.obj.tdActive().dblclick();
+							return true;
+						}
+						return false;
+					}
+				},
+
+				/**
+				 * Key down handlers
+				 * @memberOf jS.evt
+				 * @name docKeydownHandler
+				 * @namespace
+				 */
+				doc:{
+					/**
+					 *
+					 * @param {Object} e jQuery event
+					 * @returns {*}
+					 * @methodOf jS.evt.doc
 					 * @name enter
 					 */
 					enter:function (e) {
 						if (!jS.cellLast.isEdit && !e.ctrlKey) {
 							jS.obj.tdActive().dblclick();
-							return false;
-						} else {
-							return this.enterOnInPlaceEdit(e);
 						}
+						return false;
 					},
 
 					/**
 					 *
 					 * @param {Object} e jQuery event
 					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
+					 * @methodOf jS.evt.doc
 					 * @name tab
 					 */
 					tab:function (e) {
-						return jS.evt.cellSetActiveFromKeyCode(e);
+						jS.evt.cellSetActiveFromKeyCode(e);
 					},
 
 					/**
 					 *
 					 * @param {Object} e jQuery event
 					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
+					 * @methodOf jS.evt.doc
 					 * @name findCell
 					 */
 					findCell:function (e) {
@@ -3273,7 +3389,7 @@ jQuery.sheet = {
 					 *
 					 * @param {Object} e jQuery event
 					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
+					 * @methodOf jS.evt.doc
 					 * @name redo
 					 */
 					redo:function (e) {
@@ -3288,7 +3404,7 @@ jQuery.sheet = {
 					 *
 					 * @param {Object} e jQuery event
 					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
+					 * @methodOf jS.evt.doc
 					 * @name undo
 					 */
 					undo:function (e) {
@@ -3336,7 +3452,7 @@ jQuery.sheet = {
 					 * Manages the page up and down buttons
 					 * @param {Boolean} reverse Go up or down
 					 * @returns {Boolean}
-					 * @methodOf jS.evt.keydownHandler
+					 * @methodOf jS.evt.doc
 					 * @name pageUpDown
 					 */
 					pageUpDown:function (reverse) {
@@ -3368,85 +3484,11 @@ jQuery.sheet = {
 					 *
 					 * @param {Object} e jQuery event
 					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
-					 * @name formulaKeydown
+					 * @methodOf jS.evt.doc
+					 * @name keydown
 					 */
-					formulaKeydown:function (e) {
+					keydown:function (e) {
 						e = e || win.event;
-						if (jS.readOnly[jS.i]) return false;
-						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
-
-						jS.trigger('sheetFormulaKeydown', [false]);
-
-						switch (e.keyCode) {
-							case key.C:
-								if (e.ctrlKey) {
-									return jS.evt.keydownHandler.copy(e);
-								} else {
-									jS.obj.tdActive().dblclick();
-									return true;
-								}
-							case key.X:
-								if (e.ctrlKey) {
-									return jS.evt.keydownHandler.cut(e);
-								} else {
-									jS.obj.tdActive().dblclick();
-									return true;
-								}
-							case key.Y:
-								if (e.ctrlKey) {
-									jS.evt.keydownHandler.redo(e);
-									return false;
-								} else {
-									jS.obj.tdActive().trigger('cellEdit');
-									return true;
-								}
-								break;
-							case key.Z:
-								if (e.ctrlKey) {
-									jS.evt.keydownHandler.undo(e);
-									return false;
-								} else {
-									jS.obj.tdActive().trigger('cellEdit');
-									return true;
-								}
-								break;
-							case key.ESCAPE:
-								jS.evt.cellEditAbandon();
-								break;
-							case key.ENTER:
-								jS.evt.cellSetActiveFromKeyCode(e);
-								return false;
-								break;
-							default:
-								jS.cellLast.isEdit = true;
-						}
-					},
-
-					/**
-					 * Helper for events
-					 * @param {Boolean} ifTrue
-					 * @param e {Object} jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
-					 * @name formulaKeydownIf
-					 */
-					formulaKeydownIf:function (ifTrue, e) {
-						if (ifTrue) {
-							jS.obj.tdActive().dblclick();
-							return true;
-						}
-						return false;
-					},
-
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
-					 * @name documentKeydown
-					 */
-					documentKeydown:function (e) {
 						if (jS.readOnly[jS.i]) return false;
 						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
 
@@ -3457,7 +3499,7 @@ jQuery.sheet = {
 									jS.obj.formula().val('');
 									break;
 								case key.TAB:
-									jS.evt.keydownHandler.tab(e);
+									jS.evt.doc.tab(e);
 									break;
 								case key.ENTER:
 									jS.evt.cellSetActiveFromKeyCode(e);
@@ -3469,10 +3511,10 @@ jQuery.sheet = {
 									(e.shiftKey ? jS.evt.cellSetHighlightFromKeyCode(e) : jS.evt.cellSetActiveFromKeyCode(e));
 									break;
 								case key.PAGE_UP:
-									jS.evt.keydownHandler.pageUpDown(true);
+									jS.evt.doc.pageUpDown(true);
 									break;
 								case key.PAGE_DOWN:
-									jS.evt.keydownHandler.pageUpDown();
+									jS.evt.doc.pageUpDown();
 									break;
 								case key.HOME:
 								case key.END:
@@ -3480,7 +3522,7 @@ jQuery.sheet = {
 									break;
 								case key.V:
 									if (e.ctrlKey) {
-										return jS.evt.keydownHandler.formulaKeydownIf(!jS.evt.pasteOverCells(e), e);
+										return jS.evt.formula.If(!jS.evt.pasteOverCells(e), e);
 									} else {
 										jS.obj.tdActive().trigger('cellEdit');
 										return true;
@@ -3488,7 +3530,7 @@ jQuery.sheet = {
 									break;
 								case key.Y:
 									if (e.ctrlKey) {
-										jS.evt.keydownHandler.redo(e);
+										jS.evt.doc.redo(e);
 										return false;
 									} else {
 										jS.obj.tdActive().trigger('cellEdit');
@@ -3497,7 +3539,7 @@ jQuery.sheet = {
 									break;
 								case key.Z:
 									if (e.ctrlKey) {
-										jS.evt.keydownHandler.undo(e);
+										jS.evt.doc.undo(e);
 										return false;
 									} else {
 										jS.obj.tdActive().trigger('cellEdit');
@@ -3509,7 +3551,7 @@ jQuery.sheet = {
 									break;
 								case key.F:
 									if (e.ctrlKey) {
-										return jS.evt.keydownHandler.formulaKeydownIf(jS.evt.keydownHandler.findCell(e), e);
+										return jS.evt.formula.If(jS.evt.doc.findCell(e), e);
 									} else {
 										jS.obj.tdActive().trigger('cellEdit');
 										return true;
@@ -3564,31 +3606,6 @@ jQuery.sheet = {
 						jS.setDirty(true);
 						jS.setChanged(true);
 						return true;
-					}
-				},
-
-				/**
-				 * Edits the textarea that appears over cells for in place edit
-				 * @param {Object} e jQuery event
-				 * @returns {*}
-				 * @methodOf jS.evt
-				 * @name inPlaceEditOnKeyDown
-				 */
-				inPlaceEditOnKeyDown:function (e) {
-					e = e || win.event;
-					jS.trigger('sheetFormulaKeydown', [true]);
-
-					switch (e.keyCode) {
-						case key.ENTER:
-							return jS.evt.keydownHandler.enterOnInPlaceEdit(e);
-							break;
-						case key.TAB:
-							return jS.evt.keydownHandler.tab(e);
-							break;
-						case key.ESCAPE:
-							jS.evt.cellEditAbandon();
-							return false;
-							break;
 					}
 				},
 
@@ -3776,11 +3793,12 @@ jQuery.sheet = {
 				/**
 				 * Activates a cell from a key code
 				 * @param {Object} e jQuery event
+				 * @param {Boolean} skipMove optional
 				 * @returns {Boolean}
 				 * @methodOf jS.evt
 				 * @name cellSetActiveFromKeyCode
 				 */
-				cellSetActiveFromKeyCode:function (e) {
+				cellSetActiveFromKeyCode:function (e, skipMove) {
 					var loc = {
 							row: jS.cellLast.row,
 							col: jS.cellLast.col
@@ -3809,7 +3827,9 @@ jQuery.sheet = {
 							if (highlighted.length > 1) {
 								doNotClearHighlighted = true;
 							} else {
-								loc.row += (e.shiftKey ? -1 : 1);
+								if (!skipMove) {
+									loc.row += (e.shiftKey ? -1 : 1);
+								}
 								if (s.autoAddCells && loc.row > jS.sheetSize().rows) {
 									jS.controlFactory.addRow();
 								}
@@ -3822,7 +3842,9 @@ jQuery.sheet = {
 							if (highlighted.length > 1) {
 								doNotClearHighlighted = true;
 							} else {
-								loc.col += (e.shiftKey ? -1 : 1);
+								if (!skipMove) {
+									loc.col += (e.shiftKey ? -1 : 1);
+								}
 								if (s.autoAddCells && loc.col > jS.sheetSize().cols) {
 									jS.controlFactory.addColumn();
 								}
@@ -4048,7 +4070,7 @@ jQuery.sheet = {
 									scroll = scroll || jS.obj.scroll();
 									scroll.scrollLeft(x.value * (scroll.width() / me.size.cols));
 									return;
-								}
+								};
 
 								break;
 							case 'y':
@@ -4063,7 +4085,7 @@ jQuery.sheet = {
 									scroll = scroll || jS.obj.scroll();
 									scroll.scrollTop(y.value * (scroll.height() / me.size.rows));
 									return;
-								}
+								};
 								break;
 						}
 
@@ -4263,7 +4285,7 @@ jQuery.sheet = {
 					s.width = w;
 					s.height = h;
 
-					s.parent.append(fullScreen.children())
+					s.parent.append(fullScreen.children());
 
 					fullScreen.remove();
 
@@ -5289,7 +5311,7 @@ jQuery.sheet = {
 			},
 
 			isBusy:function () {
-				return (jS.busy.length > 0 ? true : false);
+				return (jS.busy.length > 0);
 			},
 
 			/**
@@ -5870,7 +5892,7 @@ jQuery.sheet = {
 								formulaParser = jS.FormulaParser;
 							}
 
-							jS.callStack++
+							jS.callStack++;
 							formulaParser.lexer.obj = cell;
 							formulaParser.lexer.handler = jS.cellHandler;
 							cell.result = formulaParser.parse(cell.formula);
@@ -7568,7 +7590,7 @@ jQuery.sheet = {
 							if (index < 0) {
 								this.i = this.lasts.length;
 								this.lasts.push(last);
-								index = this.lasts.length - 1
+								index = this.lasts.length - 1;
 								this.lastsCells[index] = [];
 							}
 							return this.lastsCells[index];
@@ -7612,7 +7634,7 @@ jQuery.sheet = {
 
 					stack.cleanAhead();
 
-					if (row > 0 & col > 0) {
+					if (row > 0 && col > 0) {
 						var clone = {};
 
 						for (var attr in cell) {
@@ -9234,7 +9256,6 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 		}
 	},
 	EQUAL: function(left, right) {
-		var resultl
 		this.html.pop();
 		this.html.pop();
 
@@ -9717,7 +9738,7 @@ var arrHelpers = {
 		var i = array.length - 1;
 		if (i > -1) {
 			do {
-				var newDiff = this.math.abs(num - array[i])
+				var newDiff = this.math.abs(num - array[i]);
 				if (newDiff < diff) {
 					diff = newDiff;
 					closest = array[i];

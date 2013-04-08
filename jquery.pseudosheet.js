@@ -115,7 +115,7 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 							formulaParser = jP.FormulaParser;
 						}
 
-						jP.callStack++
+						jP.callStack++;
 						formulaParser.lexer.obj = this;
 						formulaParser.lexer.handler = jP.objHandler;
 
