@@ -3213,11 +3213,10 @@ jQuery.sheet = {
 					 * @name enter
 					 */
 					enter:function (e) {
-						if (!e.shiftKey) {
-							return jS.evt.cellSetActiveFromKeyCode(e, true);
-						} else {
+						if (e.shiftKey) {
 							return true;
 						}
+						return jS.evt.cellSetActiveFromKeyCode(e, true);
 					},
 
 					/**
@@ -3228,12 +3227,10 @@ jQuery.sheet = {
 					 * @name tab
 					 */
 					tab:function (e) {
-						if (!e.shiftKey) {
-							jS.evt.cellSetActiveFromKeyCode(e, true);
-							return false;
-						} else {
+						if (e.shiftKey) {
 							return true;
 						}
+						return jS.evt.cellSetActiveFromKeyCode(e, true);
 					},
 					/**
 					 * Edits the textarea that appears over cells for in place edit
