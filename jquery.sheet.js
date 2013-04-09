@@ -967,7 +967,7 @@ jQuery.sheet = {
 	repeat:function (str, num) {
 		var result = '';
 		while (num > 0) {
-			if (num && 1) result += str;
+			if (num & 1) result += str;
 			num >>= 1, str += str;
 		}
 		return result;
@@ -987,32 +987,48 @@ jQuery.sheet = {
 	 * @methodOf jQuery.sheet
 	 */
 	nthCss:function (elementName, parentSelectorString, me, indexes, min, css) {
-		var style = [],
-			index = indexes.length;
-		css = css || '{display: none;}';
-		if (me.styleSheet) { //IE compatibility
-			do {
-				if (indexes[index] > min) {
-					style.push(parentSelectorString + ' ' + elementName + ':first-child' + this.repeat('+' + elementName, indexes[index] - 1));
-				}
-			} while (index--);
+		//the initial call overwrites this function so that it doesn't have to check if it is IE or not
 
-			if (style.length) {
-				return style.join(',') + css;
-			}
+		if (me.styleSheet) {//this is where we check IE8 compatibility
+			this.nthCss = function (elementName, parentSelectorString, me, indexes, min, css) {
+				var style = [],
+					index = indexes.length;
+				css = css || '{display: none;}';
+
+				do {
+					if (indexes[index] > min) {
+						style.push(parentSelectorString + ' ' + elementName + ':first-child' + this.repeat('+' + elementName, indexes[index] - 1));
+					}
+				} while (index--);
+
+				if (style.length) {
+					return style.join(',') + css;
+				}
+
+				return '';
+			};
 		} else {
-			do {
-				if (indexes[index] > min) {
-					style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
-				}
-			} while (index--);
+			this.nthCss = function (elementName, parentSelectorString, me, indexes, min, css) {
+				var style = [],
+					index = indexes.length;
+				css = css || '{display: none;}';
 
-			if (style.length) {
-				return style.join(',') + css;
-			}
+				do {
+					if (indexes[index] > min) {
+						style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
+					}
+				} while (index--);
+
+				if (style.length) {
+					return style.join(',') + css;
+				}
+
+				return '';
+			};
 		}
 
-		return '';
+		//this looks like a nested call, but will only trigger once, since the function is overwritten from the above
+		return this.nthCss(elementName, parentSelectorString, me, indexes, min, css);
 	},
 
 	/**
@@ -2615,11 +2631,8 @@ jQuery.sheet = {
 						var style = styleOverride || self.nthCss('col', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().col + 1) +
 							self.nthCss('td', '#' + jS.id.table + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
 
-						if (this.styleSheet) {
-							this.styleSheet.cssText = style;
-						} else {
-							this.innerHTML = style;
-						}
+						this.css(style);
+						this.touch();
 
 						jS.scrolledTo();
 						jS.scrolledArea[jS.i].start.col = math.max(indexes.pop() || 1, 1);
@@ -2627,14 +2640,6 @@ jQuery.sheet = {
 
 						jS.obj.barHelper().remove();
 					};
-					scrollStyleX.touch = function() {
-						if (this.styleSheet) {
-							this.styleSheet.cssText += ' ';
-						} else {
-							this.innerHTML += ' ';
-						}
-					};
-
 
 					scrollStyleY.updateStyle = function (indexes, styleOverride) {
 						indexes = indexes || [];
@@ -2644,11 +2649,8 @@ jQuery.sheet = {
 
 						var style = styleOverride || self.nthCss('tr', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().row + 1);
 
-						if (this.styleSheet) { //IE compatibility
-							this.styleSheet.cssText = style;
-						} else {
-							this.innerHTML = style;
-						}
+						this.css(style);
+						this.touch();
 
 						jS.scrolledTo();
 						jS.scrolledArea[jS.i].start.row = math.max(indexes.pop() || 1, 1);
@@ -2657,21 +2659,44 @@ jQuery.sheet = {
 						jS.obj.barHelper().remove();
 					};
 
+					if (scrollStyleY.styleSheet) {
+						scrollStyleY.css = scrollStyleX.css = function (css) {
+							this.styleSheet.cssText = '' + css;
+						};
+						scrollStyleY.touch = scrollStyleX.touch = function () {
+							this.styleSheet.cssText = this.styleSheet.cssText.replace('/**/', '');
+						};
+						scrollStyleX.styleString = scrollStyleY.styleString = function() {
+							return this.styleSheet.cssText;
+						};
+					} else {
+						scrollStyleX.css = scrollStyleY.css = function (css) {
+							this.innerHTML = css;
+						};
+						scrollStyleX.touch = scrollStyleY.touch = function () {
+							this.innerHTML += '.jS td {display: none;}';
+							this.innerHTML = this.innerHTML.replace('.jS td {display: none;}', '');
+						};
+						scrollStyleX.styleString = scrollStyleY.styleString = function() {
+							return this.innerHTML;
+						};
+					}
+
+					setInterval(function() {
+						scrollStyleY.touch();
+						scrollStyleX.touch();
+					}, 500);
+
 					jS.controls.bar.x.scroll[jS.i] = scrollStyleX;
 					jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
 
 					var xStyle, yStyle;
 
-					function styleString(o) {
-						if (o && o.styleSheet) return o.styleSheet.cssText;
-						return o.innerText;
-					}
-
 					pane.appendChild(scrollStyleX);
 					pane.appendChild(scrollStyleY);
 					pane.resizeScroll = function () {
-						xStyle = styleString(scrollStyleX);
-						yStyle = styleString(scrollStyleY);
+						xStyle = scrollStyleX.styleString();
+						yStyle = scrollStyleY.styleString();
 
 						scrollStyleX.updateStyle();
 						scrollStyleY.updateStyle();
@@ -2712,9 +2737,8 @@ jQuery.sheet = {
 								scrollOuter.scrollTop += div(-e.wheelDelta, scrollNoXY);
 							}
 
-						} else if ((detail = e.detail) || (detail = e.deltaX) || (detail = e.deltaY)) {
-							(100 < detail ? detail = 3 : -100 > detail && (detail = -3));
-
+						} else if (detail = (e.detail || e.deltaX || e.deltaY)) {
+							(9 < detail ? detail = 3 : -9 > detail && (detail = -3));
 							var top = 0, left = 0;
 							switch (detail) {
 								case 1:
@@ -2750,11 +2774,7 @@ jQuery.sheet = {
 						var style = self.nthCss('col', '#' + jS.id.table + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], 0) +
 							self.nthCss('td', '#' + jS.id.table + jS.i + ' tr', this, jS.toggleHide.hiddenColumns[jS.i], 0);
 
-						if (this.styleSheet) {
-							this.styleSheet.cssText = style;
-						} else {
-							this.innerHTML = style;
-						}
+						this.css(style);
 
 						jS.autoFillerGoToTd();
 					};
@@ -2762,11 +2782,7 @@ jQuery.sheet = {
 					toggleHideStyleY.updateStyle = function (e) {
 						var style = self.nthCss('tr', '#' + jS.id.table + jS.i, this, jS.toggleHide.hiddenRows[jS.i], 0);
 
-						if (this.styleSheet) {
-							this.styleSheet.cssText = style;
-						} else {
-							this.innerHTML = style;
-						}
+						this.css(style);
 
 						jS.autoFillerGoToTd();
 					};
