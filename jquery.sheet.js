@@ -4136,12 +4136,12 @@ jQuery.sheet = {
 
 						if (!pos.value) {
 							if (!me.p) return;
-							pos.value = me.p[arrHelpers.closest(me.v, Math.abs(pos.pixel / (me.sheetArea - me.area)) * 100, me.min)];
+							pos.value = me.p[arrHelpers.closest(me.v, Math.abs(pos.pixel / (me.sheetArea - me.area)) * 100, me.min)] - 1;
 						}
 
 						pos.max = pos.max || me.max;
 
-						var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min) - 1,
+						var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
 							indexes = [];
 
 						if (i > 0) {
@@ -6688,17 +6688,7 @@ jQuery.sheet = {
 				return $(doc.createElement('div')).text(sheetTab).html();
 			},
 
-			/**
-			 * scrolls the sheet to the selected cell
-			 * @param {jQuery|HTMLElement} td
-			 * @param {Boolean} onlyCheckIfVisible causes return of true || false if the td is visible
-			 * @methodOf jS
-			 * @name followMe
-			 */
-			followMe:function (td, onlyCheckIfVisible) {
-				td = td || jS.obj.tdActive();
-				if (!td.length) return;
-
+			tdNotVisible:function(td) {
 				var pane = jS.obj.pane(),
 					visibleFold = {
 						top:0,
@@ -6706,11 +6696,7 @@ jQuery.sheet = {
 						left:0,
 						right:pane.clientWidth
 					},
-					move = true,
-					i = 0,
-					x = 0,
-					y = 0,
-					max = 5,
+
 					tdWidth = td.width(),
 					tdHeight = td.height(),
 					tdLocation = {
@@ -6720,97 +6706,79 @@ jQuery.sheet = {
 						right:td[0].offsetLeft + tdWidth
 					},
 					tdParent = td.parent(),
-					directions,
 					tempHeight = 0,
-					tempWidth = 0,
-					checkVisible = {
-						up:true,
-						down:true,
-						left:true,
-						right:true
-					},
-					scrolledArea = jS.scrolledTo();
+					tempWidth = 0;
 
-				if (tdHeight > pane.clientHeight || tdWidth > pane.clientWidth) return;
+				if (tdHeight > pane.clientHeight || tdWidth > pane.clientWidth) {
+					return false;
+				}
 
-				jS.setBusy(true);
+				if (!td[0].barTop) return;
 
-				while (move == true && i < max) {
-					var tempTd = jS.getTd(jS.i, scrolledArea.end.row + y, scrolledArea.end.col + x),
-						xHidden = td[0].clientHeight == 0,
-						yHidden = tdParent[0].clientHeight == 0;
-
-					move = false;
-
-					directions = {
+				var xHidden = td[0].barTop.clientHeight == 0,
+					yHidden = tdParent[0].clientHeight == 0,
+					hidden = {
 						up:yHidden,
 						down:tdLocation.bottom - tempHeight > visibleFold.bottom,
 						left:xHidden,
 						right:tdLocation.right - tempWidth > visibleFold.right
 					};
 
+				if (hidden.up || hidden.down || hidden.left || hidden.right) {
+					return hidden;
+				}
+
+				return false;
+			},
+
+			/**
+			 * scrolls the sheet to the selected cell
+			 * @param {jQuery|HTMLElement} td
+			 * @methodOf jS
+			 * @name followMe
+			 */
+			followMe:function (td) {
+				td = td || jS.obj.tdActive();
+				if (!td.length) return;
+
+				var i = 0,
+					x = 0,
+					y = 0,
+					direction,
+					loc = jS.getTdLocation(td);
+
+				jS.setBusy(true);
+
+				while ((direction = this.tdNotVisible(td)) && i < 5) {
+					var scrolledArea = jS.scrolledTo();
+
 					//$.sheet.debugPositionBox(tdLocation.right -tempWidth, tdLocation.bottom - tempHeight, null, 'green', directions);
 
-					if (directions.left) {
-						if (onlyCheckIfVisible) {
-							checkVisible.left = false;
-						} else {
-							x--;
-							move = true;
-							jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col + x});
-						}
-					} else if (directions.right) {
-						if (onlyCheckIfVisible) {
-							checkVisible.right = false;
-						} else {
-							x++;
-							move = true;
-						}
+					if (direction.left) {
+						x--;
+						jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
+					} else if (direction.right) {
+						x++;
+						jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
 					}
 
-					if (directions.up) {
-						if (onlyCheckIfVisible) {
-							checkVisible.up = false;
-						} else {
-							y--;
-							move = true;
-							jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row + y});
-						}
-					} else if (directions.down) {
-						if (onlyCheckIfVisible) {
-							checkVisible.down = false;
-						} else {
-							y++;
-							move = true;
-						}
+					if (direction.up) {
+						y--;
+						jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
+					} else if (direction.down) {
+						y++;
+						jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
 					}
-
-					if (onlyCheckIfVisible) {
-						jS.setBusy(false);
-						return checkVisible;
-					}
-
-					tempHeight += tempTd.height();
-					tempWidth += tempTd.width();
 
 					i++;
 				}
 
-				if (x > 0) { //right
-					jS.evt.scroll.scrollTo({axis:'x', value:(scrolledArea.end.col + 1) + x});
-					jS.evt.scroll.stop();
-				}
-
-				if (y > 0) { //down
-					jS.evt.scroll.scrollTo({axis:'y', value:(scrolledArea.end.row + 1) + y});
-					jS.evt.scroll.stop();
-				}
 
 				setTimeout(function () {
 					jS.setBusy(false);
 				}, 100);
-
-				jS.autoFillerGoToTd(td, tdHeight, tdWidth);
+				jS.evt.scroll.stop();
+				jS.autoFillerGoToTd(td);
 			},
 
 			/**
