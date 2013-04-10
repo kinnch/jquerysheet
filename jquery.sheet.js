@@ -1455,6 +1455,8 @@ jQuery.sheet = {
 					.html('')
 					.removeData('sheetInstance');
 
+				jS.obj.menus().remove();
+
 				for (var i in $.sheet.events) {
 					s.parent.unbind($.sheet.events[i]);
 				}
@@ -4295,7 +4297,7 @@ jQuery.sheet = {
 					$body.removeClass('bodyNoScroll');
 					s.parent = fullScreen[0].origParent;
 
-					s.parent.append(fullScreen.children());
+					s.parent.prepend(fullScreen.children());
 
 					fullScreen.remove();
 
@@ -4306,7 +4308,6 @@ jQuery.sheet = {
 				} else { //here we make a full screen
 					$body.addClass('bodyNoScroll');
 
-					s.parent.bind('test', function(){});
 					var w = $win.width() - 15,
 						h = $win.height() - 15,
 						parent = $(s.parent),
@@ -4317,7 +4318,9 @@ jQuery.sheet = {
 
 					fullScreen.origParent = parent;
 					s.parent = jS.controls.fullScreen = $(fullScreen)
-						.append(parent.children())
+						.width(w)
+						.height(h)
+						.append(parent.children().not('div.ui-resizable-handle'))
 						.appendTo($body);
 
 					pane.resizeScroll();
