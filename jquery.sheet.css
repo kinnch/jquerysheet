@@ -54,6 +54,15 @@
 	position: relative ! important;
 }
 
+.jSTdMenu {
+	padding: 3px;
+	background-image: none ! important;
+	border: none ! important;
+	position: absolute;
+	z-index: 1001;
+	width: 200px;
+}
+
 .jSMenu {
 	padding: 3px;
 	background-image: none ! important;
@@ -97,7 +106,7 @@
 	border-width: 1px;
 	width: inherit;
 }
-.jSMenu li:hover,.jSMenu div:hover {
+.jSMenu li:hover,.jSMenu div:hover .jSTdMenu div:hover {
 	background-image: inherit;
 }
 
@@ -159,7 +168,6 @@
 	font-size: 1em ! important;
 }
 
-
 .jSScroll {
 	position: absolute;
 	overflow: scroll;
@@ -175,9 +183,8 @@
     empty-cells: show;
 	background-image: none ! important;
 	border-color: inherit ! important;
-	border-width: 1px ! important;
+	border-width: 1px 1px 0px 0px ! important;
 	cursor: cell;
-	border-collapse: collapse; /* IE7 and below */
 	width: 0px ! important;
 }
 .jS tbody
@@ -202,14 +209,14 @@
 }
 .jS td {
 	height: inherit;
-	border-width: 1px;
+	border-width: 0px 0px 1px 1px ! important;
 	border-color: inherit;
 	padding: 0px ! important;
 	border-style: solid ! important;
 	margin: 0px ! important;
 	font-size: 1em;
 	background-image: none ! important;
-	-moz-border-radius: 0px 0px 0px 0px;
+	-moz-border-radius: 0px 0px 1px 1px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -217,15 +224,15 @@
 }
 
 .jS td.jSBarCorner {
-	border-width: 0px;
+	border-width: 0px 0px 1px 0px;
 }
 
 .jS td.jSBarLeft {
-	border-width: 1px 0px 1px 0px;
+	border-width: 0px 0px 1px 1px;
 }
 
 .jS td.jSBarTop {
-	border-width: 0px 1px 0px 1px;
+	border-width: 0px 0px 1px 1px;
 }
 
 .jSCellHighighted {
@@ -243,7 +250,6 @@
 .jSBarCorner
 {
 	cursor: pointer;
-	border-width: 1px ! important;
 }
 
 .jSEditPane
@@ -256,6 +262,7 @@
 
 .jSEnclosure {
 	border-width: 0px ! important;
+	position: absolute;
 }
 /* Bar item styling */
 

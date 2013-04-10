@@ -1170,6 +1170,7 @@ jQuery.sheet = {
 				label:null,
 				menuLeft:[],
 				menuRight:[],
+				menus:[],
 				pane:[],
 				panes:null,
 				scroll:[],
@@ -1281,6 +1282,9 @@ jQuery.sheet = {
 				label:function () {
 					return jS.controls.label || $([]);
 				},
+				menus:function() {
+					return jS.controls.menus[jS.i] || $([]);
+				},
 				menuLeft:function () {
 					return jS.controls.menuLeft[jS.i] || $([]);
 				},
@@ -1384,6 +1388,7 @@ jQuery.sheet = {
 				pane:'jSEditPane',
 				tab:'jSTab',
 				tabContainer:'jSTabContainer',
+				tdMenu:'jSTdMenu',
 				title:'jSTitle',
 				enclosure:'jSEnclosure',
 				ui:'jSUI',
@@ -2153,28 +2158,30 @@ jQuery.sheet = {
 				 * @param menuItems
 				 * @returns {jQuery|HTMLElement}
 				 * @memberOf jS.controlFactory
-				 * @name makeMenu
+				 * @name menu
 				 */
-				makeMenu:function (bar, menuItems) {
+				menu:function (bar, menuItems) {
 					var menu, buttons = $([]);
 
 					switch (bar) {
 						case "top":
 							menu = $(doc.createElement('div'))
-								.addClass(jS.cl.uiMenu + ' ' + jS.cl.menu);
+								.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
 							jS.controls.bar.x.menu[jS.i] = menu;
 							break;
 						case "left":
 							menu = $(doc.createElement('div'))
-								.addClass(jS.cl.uiMenu + ' ' + jS.cl.menu);
+								.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
 							jS.controls.bar.y.menu[jS.i] = menu;
 							break;
 						case "cell":
 							menu = $(doc.createElement('div'))
-								.addClass(jS.cl.uiMenu + ' ' + jS.cl.menu);
+								.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
 							jS.controls.tdMenu[jS.i] = menu;
 							break;
 					}
+
+					jS.controls.menus[jS.i] = jS.obj.menus().add(menu);
 
 					menu
 						.mouseleave(function () {
@@ -2189,7 +2196,7 @@ jQuery.sheet = {
 						if (menuItems[msg]) {
 							if ($.isFunction(menuItems[msg])) {
 								buttons = buttons.add(
-									$('<div />')
+									$(doc.createElement('div'))
 										.text(msg)
 										.data('msg', msg)
 										.click(function () {
@@ -2207,7 +2214,7 @@ jQuery.sheet = {
 									);
 
 							} else if (menuItems[msg] == 'line') {
-								$('<hr />').appendTo(menu);
+								$(doc.createElement('hr')).appendTo(menu);
 							}
 						}
 					}
@@ -2236,8 +2243,10 @@ jQuery.sheet = {
 						var menu = jS.obj.barMenuTop().hide();
 
 						if (!menu.length) {
-							menu = jS.controlFactory.makeMenu('top', s.contextmenuTop);
+							menu = jS.controlFactory.menu('top', s.contextmenuTop);
 						}
+
+						jS.obj.menus().hide();
 
 						if (!target) {
 							menu
@@ -2303,8 +2312,10 @@ jQuery.sheet = {
 						menu = jS.obj.barMenuLeft();
 
 						if (!menu.length) {
-							menu = jS.controlFactory.makeMenu('left', s.contextmenuLeft);
+							menu = jS.controlFactory.menu('left', s.contextmenuLeft);
 						}
+
+						jS.obj.menus().hide();
 
 						menu
 							.css('left', (e.pageX - 5) + 'px')
@@ -2337,8 +2348,10 @@ jQuery.sheet = {
 					var menu = jS.obj.tdMenu();
 
 					if (!menu.length) {
-						menu = jS.controlFactory.makeMenu('cell', s.contextmenuCell);
+						menu = jS.controlFactory.menu('cell', s.contextmenuCell);
 					}
+
+					jS.obj.menus().hide();
 
 					menu
 						.css('left', (e.pageX - 5) + 'px')
@@ -2632,7 +2645,6 @@ jQuery.sheet = {
 							self.nthCss('td', '#' + jS.id.table + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
 
 						this.css(style);
-						this.touch();
 
 						jS.scrolledTo();
 						jS.scrolledArea[jS.i].start.col = math.max(indexes.pop() || 1, 1);
@@ -2640,6 +2652,9 @@ jQuery.sheet = {
 
 						jS.obj.barHelper().remove();
 					};
+
+					pane.appendChild(scrollStyleX);
+					pane.appendChild(scrollStyleY);
 
 					scrollStyleY.updateStyle = function (indexes, styleOverride) {
 						indexes = indexes || [];
@@ -2650,7 +2665,6 @@ jQuery.sheet = {
 						var style = styleOverride || self.nthCss('tr', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().row + 1);
 
 						this.css(style);
-						this.touch();
 
 						jS.scrolledTo();
 						jS.scrolledArea[jS.i].start.row = math.max(indexes.pop() || 1, 1);
@@ -2661,11 +2675,9 @@ jQuery.sheet = {
 
 					if (scrollStyleY.styleSheet) {
 						scrollStyleY.css = scrollStyleX.css = function (css) {
-							this.styleSheet.cssText = '' + css;
+							this.styleSheet.cssText = css;
 						};
-						scrollStyleY.touch = scrollStyleX.touch = function () {
-							this.styleSheet.cssText = this.styleSheet.cssText.replace('/**/', '');
-						};
+						scrollStyleY.touch = scrollStyleX.touch = function () {};
 						scrollStyleX.styleString = scrollStyleY.styleString = function() {
 							return this.styleSheet.cssText;
 						};
@@ -2674,26 +2686,18 @@ jQuery.sheet = {
 							this.innerHTML = css;
 						};
 						scrollStyleX.touch = scrollStyleY.touch = function () {
-							this.innerHTML += '.jS td {display: none;}';
-							this.innerHTML = this.innerHTML.replace('.jS td {display: none;}', '');
+							this.innerHTML =+ ' ';
 						};
 						scrollStyleX.styleString = scrollStyleY.styleString = function() {
 							return this.innerHTML;
 						};
 					}
 
-					setInterval(function() {
-						scrollStyleY.touch();
-						scrollStyleX.touch();
-					}, 500);
-
 					jS.controls.bar.x.scroll[jS.i] = scrollStyleX;
 					jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
 
 					var xStyle, yStyle;
 
-					pane.appendChild(scrollStyleX);
-					pane.appendChild(scrollStyleY);
 					pane.resizeScroll = function () {
 						xStyle = scrollStyleX.styleString();
 						yStyle = scrollStyleY.styleString();
@@ -2836,10 +2840,10 @@ jQuery.sheet = {
 						pane = enclosure.pane,
 						$pane = $(pane),
 						paneContextmenuEvent = function (e) {
+							e = e || win.event;
 							if (jS.isBusy()) {
 								return false;
 							}
-
 							if (jS.isBar(e.target)) {
 								var entity = e.target.entity,
 									i = jS.getBarIndex[entity](e.target);
@@ -2875,20 +2879,17 @@ jQuery.sheet = {
 						var formula = jS.obj.formula(),
 							mouseDownEntity = "";
 
-						pane.onmousedown = function (e) {
-							e = e || win.event;
-							e.target = e.target || e.srcElement;
-
+						$pane.mousedown(function (e) {
 							jS.setNav(true);
 							if (jS.isBusy()) {
 								return false;
 							}
 
 							if (jS.isCell(e.target)) {
+								jS.evt.cellOnMouseDown(e);
 								if (e.button == 2) {
 									paneContextmenuEvent.apply(this, [e]);
 								}
-								jS.evt.cellOnMouseDown(e);
 								return false;
 							}
 
@@ -2900,7 +2901,7 @@ jQuery.sheet = {
 								jS.evt.barInteraction.select(e.target);
 								return false;
 							}
-						};
+						});
 
 						pane.onmouseup = function() {
 							mouseDownEntity = "";
@@ -4292,12 +4293,6 @@ jQuery.sheet = {
 					$body.removeClass('bodyNoScroll');
 					s.parent = fullScreen[0].origParent;
 
-					var w = s.parent.width(),
-						h = s.parent.height();
-
-					s.width = w;
-					s.height = h;
-
 					s.parent.append(fullScreen.children());
 
 					fullScreen.remove();
@@ -4317,9 +4312,6 @@ jQuery.sheet = {
 						events = $._data(s.parent[0], 'events');
 
 					fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen;
-
-					s.width = w;
-					s.height = h;
 
 					fullScreen.origParent = parent;
 					s.parent = jS.controls.fullScreen = $(fullScreen)
@@ -6814,14 +6806,15 @@ jQuery.sheet = {
 				if (!s.autoFiller) return;
 
 				td = td || jS.obj.tdActive();
-				h = h || td.height();
-				w = w || td.width();
-				if (!h || !w) {
-					jS.autoFillerHide();
-					return;
-				}
 
 				if (td[0] && td[0].type == 'cell') { //ensure that it is a usable cell
+					h = h || td[0].clientHeight;
+					w = w || td[0].clientWidth;
+					if (!h || !w) {
+						jS.autoFillerHide();
+						return;
+					}
+
 					var tdPos = td.position();
 					jS.obj.autoFiller()
 						.show()
@@ -6910,8 +6903,8 @@ jQuery.sheet = {
 
 					// resizable container div
 					jS.resizableSheet(s.parent, {
-						minWidth:s.width * 0.1,
-						minHeight:s.height * 0.1,
+						minWidth:s.parent.width() * 0.1,
+						minHeight:s.parent.height() * 0.1,
 						start:function () {
 							jS.setBusy(true);
 							jS.obj.enclosure().hide();
@@ -6921,8 +6914,6 @@ jQuery.sheet = {
 							jS.obj.enclosure().show();
 							ui.tabContainer.show();
 							jS.setBusy(false);
-							s.width = s.parent.width();
-							s.height = s.parent.height();
 							jS.sheetSyncSize();
 							jS.obj.pane().resizeScroll();
 						}
@@ -7028,17 +7019,16 @@ jQuery.sheet = {
 			 * @name sheetSyncSize
 			 */
 			sheetSyncSize:function () {
-				var h = s.height;
+				var h = s.parent.height();
 				if (!h) {
 					h = 400; //Height really needs to be set by the parent
+					s.parent.height(h);
 				} else if (h < 200) {
 					h = 200;
+					s.parent.height(h);
 				}
-				s.parent
-					.height(h)
-					.width(s.width);
 
-				var w = s.width;
+				var w = s.parent.width();
 				h -= jS.obj.header().outerHeight();
 				h -= jS.obj.tabContainer().outerHeight() + jS.s.boxModelCorrection;
 
@@ -8250,10 +8240,15 @@ var jSE = jQuery.sheet.engine = {
 	/**
 	 * Available labels, used for their index
 	 * @memberOf jQuery.sheet.engine
+	 * @name alphabet
+	 */
+	alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+	/**
+	 * Available labels, used for their index
+	 * @memberOf jQuery.sheet.engine
 	 * @name columnLabels
 	 */
-	columnLabels:'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-
+	columnLabels: {},
 	/**
 	 * Get index of a column label
 	 * @param {String} str, A to 1, B to 2, Z to 26, AA to 27
@@ -8262,14 +8257,7 @@ var jSE = jQuery.sheet.engine = {
 	 * @name columnLabelIndex
 	 */
 	columnLabelIndex:function (str) {
-		var num = 0,
-			str = str.toUpperCase();
-
-		for (var i = 0; i < str.length; i++) {
-			var digit = this.columnLabels.indexOf(str[i]);
-			num = (num * 26) + digit;
-		}
-		return (num >= 0 ? num : 0) + 1;
+		return this.columnLabels[str.toUpperCase()];
 	},
 
 	/**
@@ -8301,13 +8289,13 @@ var jSE = jQuery.sheet.engine = {
 						++i;
 					}
 				}
-				if (i >= 0) s += this.columnLabels[i];
-				if (j >= 0) s += this.columnLabels[j];
-				if (k >= 0) s += this.columnLabels[k];
+				if (i >= 0) s += this.alphabet[i];
+				if (j >= 0) s += this.alphabet[j];
+				if (k >= 0) s += this.alphabet[k];
 				this.columnIndexes[l] = s;
+				this.columnLabels[s] = l;
 			}
 		}
-
 		return this.columnIndexes[index] || '';
 	},
 
@@ -9746,20 +9734,17 @@ var arrHelpers = {
 		num = num || 0;
 		min = min || 0;
 
-		var closest = array[min],
-			diff = this.math.abs(num - closest);
-		var i = array.length - 1;
-		if (i > -1) {
-			do {
-				var newDiff = this.math.abs(num - array[i]);
-				if (newDiff < diff) {
-					diff = newDiff;
-					closest = array[i];
-				}
-			} while (i--);
-		}
+		var arr = array.slice(min);
 
-		return closest;
+		while (arr.length > 1) {
+			var halfWayPoint = this.math.round(arr.length / 2);
+			if (num < arr[halfWayPoint]) {
+				arr.splice(halfWayPoint, halfWayPoint + 1);
+			} else {
+				arr.splice(0, halfWayPoint);
+			}
+		}
+		return arr[0];
 	}
 };
 
