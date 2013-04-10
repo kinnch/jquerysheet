@@ -4294,6 +4294,7 @@ jQuery.sheet = {
 				var fullScreen = jS.obj.fullScreen(),
 					pane = jS.obj.pane();
 				if (fullScreen.is(':visible')) {
+					$win.unbind('jSResize');
 					$body.removeClass('bodyNoScroll');
 					s.parent = fullScreen[0].origParent;
 
@@ -4308,9 +4309,7 @@ jQuery.sheet = {
 				} else { //here we make a full screen
 					$body.addClass('bodyNoScroll');
 
-					var w = $win.width() - 15,
-						h = $win.height() - 15,
-						parent = $(s.parent),
+					var parent = $(s.parent),
 						fullScreen = doc.createElement('div'),
 						events = $._data(s.parent[0], 'events');
 
@@ -4318,13 +4317,26 @@ jQuery.sheet = {
 
 					fullScreen.origParent = parent;
 					s.parent = jS.controls.fullScreen = $(fullScreen)
-						.width(w)
-						.height(h)
 						.append(parent.children())
 						.appendTo($body);
 
-					pane.resizeScroll();
-					jS.sheetSyncSize();
+					$win
+						.bind('resize', function() {
+							$win.trigger('jSResize');
+						})
+						.bind('jSResize', function () {
+							this.w = $win.width();
+							this.h = $win.height();
+							s.parent
+								.width(this.w)
+								.height(this.h);
+
+							pane.resizeScroll();
+							jS.sheetSyncSize();
+						})
+						.trigger('jSResize');
+
+
 					parent.trigger('sheetFullScreen', [true]);
 
 					for (var event in events) {
@@ -6457,6 +6469,7 @@ jQuery.sheet = {
 				jS.obj.barHelper().remove();
 
 				jS.obj.enclosure().remove();
+				jS.obj.menus().remove();
 				jS.obj.tabContainer().children().eq(jS.i).remove();
 				jS.spreadsheets.splice(oldI, 1);
 				jS.controls.autoFiller.splice(oldI, 1);
@@ -6492,6 +6505,7 @@ jQuery.sheet = {
 				jS.controls.enclosure.splice(oldI, 1);
 				jS.controls.fullScreen = null;
 				jS.controls.inPlaceEdit.splice(oldI, 1);
+				jS.controls.menus.splice(oldI, 1);
 				jS.controls.menuLeft.splice(oldI, 1);
 				jS.controls.menuRight.splice(oldI, 1);
 				jS.controls.pane.splice(oldI, 1);
@@ -7024,7 +7038,7 @@ jQuery.sheet = {
 			 * @name sheetSyncSize
 			 */
 			sheetSyncSize:function () {
-				var h = s.parent.height();
+				var h = s.parent[0].clientHeight;
 				if (!h) {
 					h = 400; //Height really needs to be set by the parent
 					s.parent.height(h);
@@ -7033,7 +7047,7 @@ jQuery.sheet = {
 					s.parent.height(h);
 				}
 
-				var w = s.parent.width();
+				var w = s.parent[0].clientWidth;
 				h -= jS.obj.header().outerHeight();
 				h -= jS.obj.tabContainer().outerHeight() + jS.s.boxModelCorrection;
 

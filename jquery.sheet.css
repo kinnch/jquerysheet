@@ -366,14 +366,14 @@
 
 .jSFullScreen
 {
-	top: 5px;
-	left: 5px;
+	top: 0px;
+	left: 0px;
 	position: fixed;
-	top: expression(eval(document.body.scrollTop + 15) + "px");
+	top: expression(eval(document.body.scrollTop) + "px");
 	left: expression(eval(document.body.scrollLeft) + "px");
 }
 
-.jSFullScreen < .ui-resizable-handle {
+.jSFullScreen > .ui-resizable-handle {
 	display: none;
 }
 
