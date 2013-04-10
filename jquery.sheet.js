@@ -5578,6 +5578,8 @@ jQuery.sheet = {
 
 				if (!td.is(jS.cellLast.td)) {
 					jS.followMe(td);
+				} else {
+					jS.autoFillerGoToTd(td);
 				}
 
 				//Show where we are to the user
