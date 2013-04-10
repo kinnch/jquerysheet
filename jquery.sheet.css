@@ -373,6 +373,10 @@
 	left: expression(eval(document.body.scrollLeft) + "px");
 }
 
+.jSFullScreen < .ui-resizable-handle {
+	display: none;
+}
+
 .jSAutoFiller
 {
 	position: absolute;

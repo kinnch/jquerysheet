@@ -4320,7 +4320,7 @@ jQuery.sheet = {
 					s.parent = jS.controls.fullScreen = $(fullScreen)
 						.width(w)
 						.height(h)
-						.append(parent.children().not('div.ui-resizable-handle'))
+						.append(parent.children())
 						.appendTo($body);
 
 					pane.resizeScroll();
