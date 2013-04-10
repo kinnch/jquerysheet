@@ -2613,6 +2613,11 @@ jQuery.sheet = {
 						scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
 						scrollStyleY = pane.scrollStyleY = doc.createElement('style');
 
+					pane.scrollUI = {
+						scrollOuter: scrollOuter,
+						scrollInner: scrollInner
+					};
+
 					scrollOuter.setAttribute('class', jS.cl.scroll);
 					scrollOuter.appendChild(scrollInner);
 
@@ -4068,7 +4073,11 @@ jQuery.sheet = {
 						jS.autoFillerHide();
 
 						pane = pane || jS.obj.pane();
-						var me = jS.evt.scroll;
+						var me = jS.evt.scroll,
+							scrollUI = pane.scrollUI,
+							inner = scrollUI.scrollInner,
+							outer = scrollUI.scrollOuter;
+
 						me.size = jS.sheetSize(pane.table);
 						me.td = jS.obj.tdActive();
 
@@ -4084,10 +4093,8 @@ jQuery.sheet = {
 								x.scrollStyle = pane.scrollStyleX;
 								x.area = pane.clientWidth;
 								x.sheetArea = pane.table.clientWidth;
-								x.scrollUpdate = function (scroll) {
-									scroll = scroll || jS.obj.scroll();
-									scroll.scrollLeft(x.value * (scroll.width() / me.size.cols));
-									return;
+								x.scrollUpdate = function () {
+									outer.scrollLeft = (x.value + 1) * ((inner.clientWidth - outer.clientWidth) / me.size.cols);
 								};
 
 								break;
@@ -4099,10 +4106,8 @@ jQuery.sheet = {
 								y.scrollStyle = pane.scrollStyleY;
 								y.area = pane.clientHeight;
 								y.sheetArea = pane.table.clientHeight;
-								y.scrollUpdate = function (scroll) {
-									scroll = scroll || jS.obj.scroll();
-									scroll.scrollTop(y.value * (scroll.height() / me.size.rows));
-									return;
+								y.scrollUpdate = function () {
+									outer.scrollTop = (y.value + 1) * ((inner.clientHeight - outer.clientHeight) / me.size.rows);
 								};
 								break;
 						}
@@ -6705,9 +6710,7 @@ jQuery.sheet = {
 						left:td[0].offsetLeft,
 						right:td[0].offsetLeft + tdWidth
 					},
-					tdParent = td.parent(),
-					tempHeight = 0,
-					tempWidth = 0;
+					tdParent = td.parent();
 
 				if (tdHeight > pane.clientHeight || tdWidth > pane.clientWidth) {
 					return false;
@@ -6719,9 +6722,9 @@ jQuery.sheet = {
 					yHidden = tdParent[0].clientHeight == 0,
 					hidden = {
 						up:yHidden,
-						down:tdLocation.bottom - tempHeight > visibleFold.bottom,
+						down:tdLocation.bottom > visibleFold.bottom,
 						left:xHidden,
-						right:tdLocation.right - tempWidth > visibleFold.right
+						right:tdLocation.right > visibleFold.right
 					};
 
 				if (hidden.up || hidden.down || hidden.left || hidden.right) {
