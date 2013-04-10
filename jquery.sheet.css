@@ -62,7 +62,10 @@
 	z-index: 1001;
 	width: 200px;
 }
-
+.jSTdMenu div
+{
+	border-width: 0px ! important;
+}
 .jSMenu {
 	padding: 3px;
 	background-image: none ! important;

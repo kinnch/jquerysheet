@@ -2686,7 +2686,7 @@ jQuery.sheet = {
 							this.innerHTML = css;
 						};
 						scrollStyleX.touch = scrollStyleY.touch = function () {
-							this.innerHTML =+ ' ';
+							this.innerHTML = this.innerHTML + ' ';
 						};
 						scrollStyleX.styleString = scrollStyleY.styleString = function() {
 							return this.innerHTML;
@@ -2886,10 +2886,12 @@ jQuery.sheet = {
 							}
 
 							if (jS.isCell(e.target)) {
-								jS.evt.cellOnMouseDown(e);
 								if (e.button == 2) {
 									paneContextmenuEvent.apply(this, [e]);
+									jS.evt.cellOnMouseDown(e);
+									return true;
 								}
+								jS.evt.cellOnMouseDown(e);
 								return false;
 							}
 
