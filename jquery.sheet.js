@@ -6695,6 +6695,13 @@ jQuery.sheet = {
 				return $(doc.createElement('div')).text(sheetTab).html();
 			},
 
+			/**
+			 * detects if a td is not visible
+			 * @param {jQuery|HTMLElement} td
+			 * @methodOf jS
+			 * @name tdNotVisible
+			 * @returns {Boolean|Object}
+			 */
 			tdNotVisible:function(td) {
 				var pane = jS.obj.pane(),
 					visibleFold = {
