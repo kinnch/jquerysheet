@@ -1,5 +1,5 @@
 /* Controls styling */
-.jSLoc
+.jSParent .jSLoc
 {
 	border-width: 0px ! important;
 	background: none ! important;
@@ -7,18 +7,18 @@
 	text-align: right;
 }
 
-.jSFormula
+.jSParent .jSFormula
 {
 	width: 99%;
     height: 17px;
 }
 
-.jSFormulaParent
+.jSParent .jSFormulaParent
 {
 	border: none ! important;
 }
 
-.jSHeader, .jSHeader table
+.jSParent .jSHeader, .jSHeader table
 {
 	padding: 0px ! important;
 	border: none ! important;
@@ -26,35 +26,35 @@
 	margin: 0px;
 }
 
-.jSHeader img
+.jSParent .jSHeader img
 {
 	border: none;
 }
 
 /* Menu */
-.jSBarHelper {
+.jSParent .jSBarHelper {
 	height: 0px;
 	border: none ! important;
 	width: 0px;
 }
-.jSBarTopMenuButton {
+.jSParent .jSBarTopMenuButton {
 	width: inherit ! important;
 	height: 0px ! important;
 	float: right;
 	margin-right: 30px;
 }
-.jSBarTopMenuButton * {
+.jSParent .jSBarTopMenuButton * {
 	position: absolute;
 	height: 16px ! important;
 	width: 18px ! important;
 	background-color: inherit ! important;
 }
 
-.jSMenuFixed {
+.jSParent .jSMenuFixed {
 	position: relative ! important;
 }
 
-.jSTdMenu {
+.jSParent .jSTdMenu {
 	padding: 3px;
 	background-image: none ! important;
 	border: none ! important;
@@ -62,18 +62,18 @@
 	z-index: 1001;
 	width: 200px;
 }
-.jSTdMenu div
+.jSParent .jSTdMenu div
 {
 	border-width: 0px ! important;
 }
-.jSMenu {
+.jSParent .jSMenu {
 	padding: 3px;
 	background-image: none ! important;
 	border: none ! important;
 	position: absolute;
 	z-index: 1001;
 }
-.jSMenu *
+.jSParent .jSMenu *
 {
 	border-color: inherit ! important;
 	border-width: 1px;
@@ -81,7 +81,7 @@
 	width: auto;
 }
 
-.jSMenu ul,.jSMenu div
+.jSParent .jSMenu ul,.jSMenu div
 {
 	cursor: pointer;
 	padding: 0px ! important;
@@ -95,12 +95,12 @@
 	list-style-position:outside;
 }
 
-.jSMenu a
+.jSParent .jSMenu a
 {
 	padding:0px 5px;
 }
 
-.jSMenu li
+.jSParent .jSMenu li
 {
 	float:left;
 	position:relative;
@@ -109,36 +109,36 @@
 	border-width: 1px;
 	width: inherit;
 }
-.jSMenu li:hover,.jSMenu div:hover .jSTdMenu div:hover {
+.jSParent .jSMenu li:hover,.jSMenu div:hover .jSTdMenu div:hover {
 	background-image: inherit;
 }
 
-.jSMenu ul ul {
+.jSParent .jSMenu ul ul {
 	position:absolute;
 	display:none;
 	width:12em;
 	top:1.5em;
 }
 
-.jSMenu li ul a{
+.jSParent .jSMenu li ul a{
 	width:12em;
 	height:auto;
 	float:left;
 }
 
-.jSMenu ul ul{
+.jSParent .jSMenu ul ul{
 	top:auto;
-}	
+}
 
-.jSMenu li ul ul {
+.jSParent .jSMenu li ul ul {
 	left:12em;
 	margin:0px 0 0 10px;
 }
 
-.jSMenu li:hover ul ul, .jSMenu li:hover ul ul ul, .jSMenu li:hover ul ul ul ul{
+.jSParent .jSMenu li:hover ul ul, .jSMenu li:hover ul ul ul, .jSMenu li:hover ul ul ul ul{
 	display:none;
 }
-.jSMenu li:hover ul, .jSMenu li li:hover ul, .jSMenu li li li:hover ul, .jSMenu li li li li:hover ul{
+.jSParent .jSMenu li:hover ul, .jSMenu li li:hover ul, .jSMenu li li li:hover ul, .jSMenu li li li li:hover ul{
 	display:block;
 }
 
@@ -147,31 +147,31 @@
 	filter:alpha(opacity=1);
 }
 
-.jSUI
+.jSParent .jSUI
 {
 	width: inherit ! important;
 	border-color: inherit ! important;
 }
-.jSTabContainer
+.jSParent .jSTabContainer
 {
 	vertical-align: bottom;
 	text-align: left ! important;
 }
-.jSTabContainer span
+.jSParent .jSTabContainer span
 {
 	
 	padding: 2px 5px 0 5px ! important;
 	cursor: pointer;
 }
-.jSTab {
+.jSParent .jSTab {
 	cursor: pointer;
 }
-.jSTabContainer *, .Div *
+.jSParent .jSTabContainer *, .Div *
 {
 	font-size: 1em ! important;
 }
 
-.jSScroll {
+.jSParent .jSScroll {
 	position: absolute;
 	overflow: scroll;
 	height: inherit;
@@ -179,7 +179,7 @@
 }
 
 /* Sheet styling */
-.jS
+.jSParent .jS
 {
 	position: absolute;
     table-layout: fixed;
@@ -190,27 +190,27 @@
 	cursor: cell;
 	width: 0px ! important;
 }
-.jS tbody
+.jSParent .jS tbody
 {
 	background-color: transparent;
 	color: inherit ! important;
 	border-color: inherit ! important;
 }
 
-.jS colgroup {
+.jSParent .jS colgroup {
 	border-color: inherit ! important;
 }
-.jS col {
+.jSParent .jS col {
 	background-image: none ! important;
 	border-color: inherit ! important;
 }
 
-.jS tr {
+.jSParent .jS tr {
 	border-color: inherit ! important;
 	color:  inherit ! important;
 	background-image: none ! important;
 }
-.jS td {
+.jSParent .jS td {
 	height: inherit;
 	border-width: 0px 0px 1px 1px ! important;
 	border-color: inherit;
@@ -226,23 +226,23 @@
 	-ms-text-overflow: ellipsis;
 }
 
-.jS td.jSBarCorner {
+.jSParent .jS td.jSBarCorner {
 	border-width: 0px 0px 1px 0px;
 }
 
-.jS td.jSBarLeft {
+.jSParent .jS td.jSBarLeft {
 	border-width: 0px 0px 1px 1px;
 }
 
-.jS td.jSBarTop {
+.jSParent .jS td.jSBarTop {
 	border-width: 0px 0px 1px 1px;
 }
 
-.jSCellHighighted {
+.jSParent .jSCellHighighted {
 	background-image: none ! important;
 }
 
-.jSError {
+.jSParent .jSError {
 	text-align: left;
 	overflow: hidden;
 	padding: 0px;
@@ -250,12 +250,12 @@
 }
 
 /* Containers styleing*/
-.jSBarCorner
+.jSParent .jSBarCorner
 {
 	cursor: pointer;
 }
 
-.jSEditPane
+.jSParent .jSEditPane
 {
     overflow: hidden ! important;
 	background-image: none ! important;
@@ -263,13 +263,13 @@
 	position: absolute ! important;
 }
 
-.jSEnclosure {
+.jSParent .jSEnclosure {
 	border-width: 0px ! important;
 	position: absolute;
 }
 /* Bar item styling */
 
-.jSBarTopParent
+.jSParent .jSBarTopParent
 {
 	font-size: 0.8em ! important;
 	text-align: center;
@@ -278,12 +278,12 @@
 	border-width: 0px ! important;
 }
 
-.jSBarController {
+.jSParent .jSBarController {
 	border: none ! important;
 	position: absolute ! important;
 }
 
-.jSBarTopParent .jSBarController .ui-resizable-handle {
+.jSParent .jSBarTopParent .jSBarController .ui-resizable-handle {
 	width: 10px;
 	top: -3px;
 	right: -6px;
@@ -291,40 +291,40 @@
 	border-bottom-width: 0px;
 }
 
-.jSBarLeft {
+.jSParent .jSBarLeft {
 	border-left-width: 0px ! important;
 }
-.jSBarLeft .jSBarController {
+.jSParent .jSBarLeft .jSBarController {
 	height: 0px;
 	position: absolute;
 }
-.jSBarLeft .jSBarController .ui-resizable-handle {
+.jSParent .jSBarLeft .jSBarController .ui-resizable-handle {
 	display: inline ! important;
 	height: 10px;
 	border: none ! important;
 	padding-left:1px;
 }
 
-.jSBarController .ui-resizable-handle {
+.jSParent .jSBarController .ui-resizable-handle {
 	border-width: 0px;
 }
 
-.jSBarController .ui-resizable-handle:hover {
+.jSParent .jSBarController .ui-resizable-handle:hover {
 	background: inherit;
 }
 
-.jSBarControllerChild {
+.jSParent .jSBarControllerChild {
 	background: inherit;
 	top: 3px ! important;
 	left: 0px;
 }
 
-.jSBarControllerChild .ui-resizable-handle {
+.jSParent .jSBarControllerChild .ui-resizable-handle {
 	border-left-width: 1px;
 	border-right-width: 1px;
 }
 
-.jSBarHandleFreezeTop
+.jSParent .jSBarHandleFreezeTop
 {
 	top: 1px ! important;
 	cursor: move ! important;
@@ -333,7 +333,7 @@
 	background-image: none ! important;
 }
 
-.jSBarHandleFreezeLeft
+.jSParent .jSBarHandleFreezeLeft
 {
 	left: 1px ! important;
 	cursor: move ! important;
@@ -341,7 +341,7 @@
 	position: absolute;
 	background-image: none ! important;
 }
-.jSBarLeft
+.jSParent .jSBarLeft
 {
 	font-size: 0.8em ! important;
 	text-align: center;
@@ -350,7 +350,7 @@
 	overflow: visible ! important;
 }
 
-.jSInPlaceEdit
+.jSParent .jSInPlaceEdit
 {
 	position: absolute;
 	background-image: none ! important;
@@ -377,7 +377,7 @@
 	display: none;
 }
 
-.jSAutoFiller
+.jSParent .jSAutoFiller
 {
 	position: absolute;
 	height: 8px;
@@ -388,31 +388,31 @@
 	display: none;
 }
 
-.jSTitle
+.jSParent .jSTitle
 {
 	width: auto;
 	text-align: center;
 	border: none ! important;
 }
 
-.jSChart
+.jSParent .jSChart
 {
 	width: inherit;
 	height: inherit;
 }
 
-.jSChart svg {
+.jSParent .jSChart svg {
 	position: relative ! important;
 }
 
-.jSDropdown {
+.jSParent .jSDropdown {
 	cursor: pointer;
 	width: 100%;
 }
-.jSCheckbox, .jSCheckbox * {
+.jSParent .jSCheckbox, .jSCheckbox * {
 	cursor: pointer;
 }
-.jSRadio, .jSRadio * {
+.jSParent .jSRadio, .jSRadio * {
 	cursor: pointer;
 }
 

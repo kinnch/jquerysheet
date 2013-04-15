@@ -4318,7 +4318,7 @@ jQuery.sheet = {
 						fullScreen = doc.createElement('div'),
 						events = $._data(s.parent[0], 'events');
 
-					fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen;
+					fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + ' ' + jS.cl.parent;
 
 					fullScreen.origParent = parent;
 					s.parent = jS.controls.fullScreen = $(fullScreen)
