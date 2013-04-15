@@ -54,7 +54,7 @@
 	position: relative ! important;
 }
 
-.jSParent .jSTdMenu {
+.jSTdMenu {
 	padding: 3px;
 	background-image: none ! important;
 	border: none ! important;
@@ -62,18 +62,18 @@
 	z-index: 1001;
 	width: 200px;
 }
-.jSParent .jSTdMenu div
+.jSTdMenu div
 {
 	border-width: 0px ! important;
 }
-.jSParent .jSMenu {
+.jSMenu {
 	padding: 3px;
 	background-image: none ! important;
 	border: none ! important;
 	position: absolute;
 	z-index: 1001;
 }
-.jSParent .jSMenu *
+.jSMenu *
 {
 	border-color: inherit ! important;
 	border-width: 1px;
@@ -81,7 +81,7 @@
 	width: auto;
 }
 
-.jSParent .jSMenu ul,.jSMenu div
+.jSMenu ul,.jSMenu div
 {
 	cursor: pointer;
 	padding: 0px ! important;
@@ -95,12 +95,12 @@
 	list-style-position:outside;
 }
 
-.jSParent .jSMenu a
+.jSMenu a
 {
 	padding:0px 5px;
 }
 
-.jSParent .jSMenu li
+.jSMenu li
 {
 	float:left;
 	position:relative;
@@ -109,36 +109,36 @@
 	border-width: 1px;
 	width: inherit;
 }
-.jSParent .jSMenu li:hover,.jSMenu div:hover .jSTdMenu div:hover {
+.jSMenu li:hover,.jSMenu div:hover .jSTdMenu div:hover {
 	background-image: inherit;
 }
 
-.jSParent .jSMenu ul ul {
+.jSMenu ul ul {
 	position:absolute;
 	display:none;
 	width:12em;
 	top:1.5em;
 }
 
-.jSParent .jSMenu li ul a{
+.jSMenu li ul a{
 	width:12em;
 	height:auto;
 	float:left;
 }
 
-.jSParent .jSMenu ul ul{
+.jSMenu ul ul{
 	top:auto;
 }
 
-.jSParent .jSMenu li ul ul {
+.jSMenu li ul ul {
 	left:12em;
 	margin:0px 0 0 10px;
 }
 
-.jSParent .jSMenu li:hover ul ul, .jSMenu li:hover ul ul ul, .jSMenu li:hover ul ul ul ul{
+.jSMenu li:hover ul ul, .jSMenu li:hover ul ul ul, .jSMenu li:hover ul ul ul ul{
 	display:none;
 }
-.jSParent .jSMenu li:hover ul, .jSMenu li li:hover ul, .jSMenu li li li:hover ul, .jSMenu li li li li:hover ul{
+.jSMenu li:hover ul, .jSMenu li li:hover ul, .jSMenu li li li:hover ul, .jSMenu li li li li:hover ul{
 	display:block;
 }
 
