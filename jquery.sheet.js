@@ -6884,19 +6884,17 @@ jQuery.sheet = {
 					},
 					tdParent = td.parent();
 
-				if (tdHeight > pane.clientHeight || tdWidth > pane.clientWidth) {
+				if (!td[0].col) {
 					return false;
 				}
 
-				if (!td[0].barTop) return;
-
-				var xHidden = td[0].barTop.clientHeight == 0,
-					yHidden = tdParent[0].clientHeight == 0,
+				var xHidden = $(td[0].barTop).is(':hidden'),
+					yHidden = $(tdParent[0]).is(':hidden'),
 					hidden = {
 						up:yHidden,
-						down:tdLocation.bottom > visibleFold.bottom,
+						down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
 						left:xHidden,
-						right:tdLocation.right > visibleFold.right
+						right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
 					};
 
 				if (hidden.up || hidden.down || hidden.left || hidden.right) {
@@ -6929,8 +6927,6 @@ jQuery.sheet = {
 
 				while ((direction = this.tdNotVisible(td)) && i < 25) {
 					var scrolledArea = jS.scrolledTo();
-
-					//$.sheet.debugPositionBox(tdLocation.right -tempWidth, tdLocation.bottom - tempHeight, null, 'green', directions);
 
 					if (direction.left) {
 						x--;
@@ -8262,11 +8258,12 @@ jQuery.sheet = {
 	 * @name getScrollBarSize
 	 */
 	getScrollBarSize:function () {
-		var inner = $('<p></p>').css({
+		var doc = document,
+			inner = $(doc.createElement('p')).css({
 				width:'100%',
 				height:'100%'
 			}),
-			outer = $('<div></div>').css({
+			outer = $(doc.createElement('div')).css({
 				position:'absolute',
 				width:'100px',
 				height:'100px',
@@ -8276,7 +8273,7 @@ jQuery.sheet = {
 				overflow:'hidden'
 			}).append(inner);
 
-		jQuery(document.body).append(outer);
+		jQuery(doc.body).append(outer);
 
 		var w1 = inner.width(),
 			h1 = inner.height();
