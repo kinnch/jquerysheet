@@ -1965,7 +1965,7 @@ jQuery.sheet = {
 
 				/**
 				 * Creates all the bars to the left of the spreadsheet, if they exist, they are first removed
-				 * @param {jQuery|HTMLElement} Table of spreadsheet
+				 * @param {jQuery|HTMLElement} table Table of spreadsheet
 				 * @methodOf jS.controlFactory
 				 * @name barLeft
 				 */
@@ -2629,9 +2629,7 @@ jQuery.sheet = {
 				 * @name scrollUI
 				 */
 				scrollUI:function (enclosure, pane, sheet) {
-					var x = 0,
-						y = 0,
-						scrollOuter = doc.createElement('div'),
+					var scrollOuter = doc.createElement('div'),
 						scrollInner = doc.createElement('div'),
 						scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
 						scrollStyleY = pane.scrollStyleY = doc.createElement('style');
@@ -2665,42 +2663,50 @@ jQuery.sheet = {
 
 					jS.controls.scrolls = jS.obj.scrolls().add(scrollOuter);
 
-					scrollStyleX.updateStyle = function (indexes, styleOverride) {
+					scrollStyleX.updateStyle = function (indexes, style) {
 						indexes = indexes || [];
 
-						if (indexes.length == x) return;
-						x = indexes.length;
+						if (indexes.length != this.i || style) {
+							this.i = indexes.length || this.i;
 
-						var style = styleOverride || self.nthCss('col', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().col + 1) +
-							self.nthCss('td', '#' + jS.id.table + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
+							style = style || self.nthCss('col', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().col + 1) +
+								self.nthCss('td', '#' + jS.id.table + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
 
-						this.css(style);
+							this.css(style);
 
-						jS.scrolledTo();
-						jS.scrolledArea[jS.i].start.col = math.max(indexes.pop() || 1, 1);
-						jS.scrolledArea[jS.i].end.col = math.max(indexes.shift() || 1, 1);
+							jS.scrolledTo();
 
-						jS.obj.barHelper().remove();
+							if (indexes.length) {
+								jS.scrolledArea[jS.i].start.col = math.max(indexes.pop() || 1, 1);
+								jS.scrolledArea[jS.i].end.col = math.max(indexes.shift() || 1, 1);
+							}
+
+							jS.obj.barHelper().remove();
+						}
 					};
 
 					pane.appendChild(scrollStyleX);
 					pane.appendChild(scrollStyleY);
 
-					scrollStyleY.updateStyle = function (indexes, styleOverride) {
+					scrollStyleY.updateStyle = function (indexes, style) {
 						indexes = indexes || [];
 
-						if (indexes.length == y) return;
-						y = indexes.length;
+						if (indexes.length != this.i || style) {
+							this.i = indexes.length || this.i;
 
-						var style = styleOverride || self.nthCss('tr', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().row + 1);
+							style = style || self.nthCss('tr', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().row + 1);
 
-						this.css(style);
+							this.css(style);
 
-						jS.scrolledTo();
-						jS.scrolledArea[jS.i].start.row = math.max(indexes.pop() || 1, 1);
-						jS.scrolledArea[jS.i].end.row = math.max(indexes.shift() || 1, 1);
+							jS.scrolledTo();
 
-						jS.obj.barHelper().remove();
+							if (indexes.length) {
+								jS.scrolledArea[jS.i].start.row = math.max(indexes.pop() || 1, 1);
+								jS.scrolledArea[jS.i].end.row = math.max(indexes.shift() || 1, 1);
+							}
+
+							jS.obj.barHelper().remove();
+						}
 					};
 
 					jS.controlFactory.styleUpdater(scrollStyleX);
@@ -2709,19 +2715,21 @@ jQuery.sheet = {
 					jS.controls.bar.x.scroll[jS.i] = scrollStyleX;
 					jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
 
-					var xStyle, yStyle;
+					var xStyle,
+						yStyle;
 
 					pane.resizeScroll = function () {
 						xStyle = scrollStyleX.styleString();
 						yStyle = scrollStyleY.styleString();
 
-						scrollStyleX.updateStyle();
-						scrollStyleY.updateStyle();
+						scrollStyleX.updateStyle(null, ' ');
+						scrollStyleY.updateStyle(null, ' ');
 
 						scrollInner.setAttribute('style', 'width:' + sheet.clientWidth + 'px;height:' + sheet.clientHeight + 'px;');
 						scrollInner.style.height = sheet.clientHeight + 'px';
 						scrollInner.style.width = sheet.clientWidth + 'px';
 
+						scrollOuter.setAttribute('style', 'width:' + enclosure.clientWidth + 'px;height:' + enclosure.clientHeight + 'px;');
 						scrollOuter.style.height = enclosure.clientHeight + 'px';
 						scrollOuter.style.width = enclosure.clientWidth + 'px';
 
@@ -6912,11 +6920,14 @@ jQuery.sheet = {
 					x = 0,
 					y = 0,
 					direction,
-					loc = jS.getTdLocation(td);
+					pane = jS.obj.pane();
+
+				pane.scrollStyleX.i = 0;
+				pane.scrollStyleY.i = 0;
 
 				jS.setBusy(true);
 
-				while ((direction = this.tdNotVisible(td)) && i < 5) {
+				while ((direction = this.tdNotVisible(td)) && i < 25) {
 					var scrolledArea = jS.scrolledTo();
 
 					//$.sheet.debugPositionBox(tdLocation.right -tempWidth, tdLocation.bottom - tempHeight, null, 'green', directions);
