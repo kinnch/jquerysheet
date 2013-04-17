@@ -72,7 +72,6 @@ case 7:
 break;
 case 8:
 
-
 			if (is_numeric($S[$O-2]) && is_numeric($S[$O])) {
 			  $thisS = $S[$O-2] + $S[$O];
 			} else {
@@ -80,7 +79,6 @@ case 8:
 			}
 		
 break;
-case 9:$thisS = $S[$O-1] * 1;
 break;
 case 10:
 			$thisS = ($S[$O-3] * 1) <= ($S[$O] * 1);
@@ -114,34 +112,32 @@ break;
 case 16:
 			$thisS = ($S[$O-2] * 1) - ($S[$O] * 1);
 
-
 		
 break;
 case 17:
 			$thisS = ($S[$O-2] * 1) * ($S[$O] * 1);
-
 
 		
 break;
 case 18:
 			$thisS = ($S[$O-2] * 1) / ($S[$O] * 1);
 
-
 		
 break;
 case 19:
-
 
 
 			$thisS = pow(($S[$O-2] * 1), ($S[$O] * 1));
 		
 break;
 case 20:
-			$thisS = $S[$O] * -1;
+
+			$thisS = $S[$O-1] * 1;
 		
 break;
 case 21:
-			$thisS = $S[$O] * 1;
+
+			$thisS = $S[$O-1] * 1;
 		
 break;
 case 22:/*$thisS = Math.E;*/;

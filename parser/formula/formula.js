@@ -12,22 +12,22 @@ switch (yystate) {
 case 1:return $$[$0-1];
 break;
 case 2:
-			this.$ = yy.lexer.handler.variable.apply(yy.lexer.obj, $$[$0]);//js
+			this.$ = yy.handler.variable.apply(yy.obj, $$[$0]);//js
             //php this.$ = this->variable($$[$0]);
 		
 break;
 case 3:
-			this.$ = yy.lexer.handler.time.apply(yy.lexer.obj, [$$[$0], true]);//js
+			this.$ = yy.handler.time.apply(yy.obj, [$$[$0], true]);//js
 		
 break;
 case 4:
-			this.$ = yy.lexer.handler.time.apply(yy.lexer.obj, [$$[$0]]);//js
+			this.$ = yy.handler.time.apply(yy.obj, [$$[$0]]);//js
 		
 break;
 case 5:
-			this.$ = $$[$0] * 1;
+			//php this.$ = $$[$0] * 1;
 
-			if (isNaN(this.$)) this.$ = 0;//js
+			this.$ = yy.handler.number.apply(yy.obj, [$$[$0]]);//js
 		
 break;
 case 6:
@@ -38,19 +38,15 @@ break;
 case 7:
 			//php this.$ = $$[$0-2] == $$[$0];
 
-			this.$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['EQUAL', [$$[$0-2], $$[$0]]]);//js
+			yy.obj.html.pop();//js
+			this.$ = yy.handler.callFunction.apply(yy.obj, ['EQUAL', [$$[$0-2], $$[$0]]]);//js
 		
 break;
 case 8:
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
-
-			if (!isNaN($$[$0-2]) && !isNaN($$[$0])) {//js
-				this.$ = ($$[$0-2] * 1) + ($$[$0] * 1);//js
-			} else {//js
-				this.$ = yy.lexer.handler.concatenate.apply(yy.lexer.obj, [$$[$0-2],$$[$0]]);//js
-			}//js
+			this.$ = yy.handler.performMath.apply(yy.obj, ['+', $$[$0-2], $$[$0]]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 
 			//php if (is_numeric($$[$0-2]) && is_numeric($$[$0])) {
 			//php   this.$ = $$[$0-2] + $$[$0];
@@ -59,16 +55,16 @@ case 8:
 			//php }
 		
 break;
-case 9:this.$ = $$[$0-1] * 1;
+case 9:this.$ = yy.handler.number.apply(yy.obj, [$$[$0-1]]);//js
 break;
 case 10:
 			//php this.$ = ($$[$0-3] * 1) <= ($$[$0] * 1);
-			this.$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['LESS_EQUAL', [$$[$0-3], $$[$0-1]]]);//js
+			this.$ = yy.handler.callFunction.apply(yy.obj, ['LESS_EQUAL', [$$[$0-3], $$[$0-1]]]);//js
 		
 break;
 case 11:
 			//php this.$ = ($$[$0-3] * 1) >= ($$[$0] * 1);
-			this.$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['GREATER_EQUAL', [$$[$0-3], $$[$0-1]]]);//js
+			this.$ = yy.handler.callFunction.apply(yy.obj, ['GREATER_EQUAL', [$$[$0-3], $$[$0-1]]]);//js
 		
 break;
 case 12:
@@ -76,122 +72,125 @@ case 12:
 
 			if (isNaN(this.$)) this.$ = 0;//js
 
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		
 break;
 case 13:
 			this.$ = $$[$0-2] != $$[$0];
 
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		
 break;
 case 14:
 			//php this.$ = ($$[$0-2] * 1) > ($$[$0] * 1);
 
-			this.$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['GREATER', [$$[$0-2], $$[$0]]]);//js
+			this.$ = yy.handler.callFunction.apply(yy.obj, ['GREATER', [$$[$0-2], $$[$0]]]);//js
 		
 break;
 case 15:
 			//php this.$ = ($$[$0-2] * 1) < ($$[$0] * 1);
 
-			this.$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['LESS', [$$[$0-2], $$[$0]]]);//js
+			this.$ = yy.handler.callFunction.apply(yy.obj, ['LESS', [$$[$0-2], $$[$0]]]);//js
 		
 break;
 case 16:
 			this.$ = ($$[$0-2] * 1) - ($$[$0] * 1);
 
-			if (isNaN(this.$)) this.$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			this.$ = yy.handler.performMath.apply(yy.obj, ['-', $$[$0-2], $$[$0]]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		
 break;
 case 17:
-			this.$ = ($$[$0-2] * 1) * ($$[$0] * 1);
+			//php this.$ = ($$[$0-2] * 1) * ($$[$0] * 1);
 
-			if (isNaN(this.$)) this.$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			this.$ = yy.handler.performMath.apply(yy.obj, ['*', $$[$0-2], $$[$0]]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		
 break;
 case 18:
-			this.$ = ($$[$0-2] * 1) / ($$[$0] * 1);
+			//php this.$ = ($$[$0-2] * 1) / ($$[$0] * 1);
 
-			if (isNaN(this.$)) this.$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			this.$ = yy.handler.performMath.apply(yy.obj, ['/', $$[$0-2], $$[$0]]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		
 break;
 case 19:
-			this.$ = Math.pow(($$[$0-2] * 1), ($$[$0] * 1));//js
+			var n1 = yy.handler.number.apply(yy.obj, [$$[$0-2]]),//js
+				n2 = yy.handler.number.apply(yy.obj, [$$[$0]]);//js
 
-			if (isNaN(this.$)) this.$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			this.$ = yy.handler.performMath.apply(yy.obj, ['^', $$[$0-2], $$[$0]]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 
 			//php this.$ = pow(($$[$0-2] * 1), ($$[$0] * 1));
 		
 break;
 case 20:
-			this.$ = $$[$0] * -1;
+			var n1 = yy.handler.number.apply(yy.obj, [$$[$0]]);//js
+			this.$ = n1 * -1;//js
 			if (isNaN(this.$)) this.$ = 0;//js
+
+			//php this.$ = $$[$0-1] * 1;
 		
 break;
 case 21:
-			this.$ = $$[$0] * 1;
+			var n1 = yy.handler.number.apply(yy.obj, [$$[$0]]);//js
+			this.$ = n1 * 1;//js
 			if (isNaN(this.$)) this.$ = 0;//js
+
+			//php this.$ = $$[$0-1] * 1;
 		
 break;
 case 22:/*this.$ = Math.E;*/;
 break;
 case 23:
-			this.$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, [$$[$0-2], '']);//js
+			this.$ = yy.handler.callFunction.apply(yy.obj, [$$[$0-2], '']);//js
 			//php this.$ = this->callFunction($$[$0-2]);
 		
 break;
 case 24:
-			this.$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, [$$[$0-3], $$[$0-1]]);//js
+			this.$ = yy.handler.callFunction.apply(yy.obj, [$$[$0-3], $$[$0-1]]);//js
 			//php this.$ = this->callFunction($$[$0-3], $$[$0-1]);
 		
 break;
 case 28:
-			this.$ = yy.lexer.handler.fixedCellValue.apply(yy.lexer.obj, [$$[$0]]);//js
+			this.$ = yy.handler.fixedCellValue.apply(yy.obj, [$$[$0]]);//js
 			//php this.$ = this->fixedCellValue($$[$0]);
 		
 break;
 case 29:
-			this.$ = yy.lexer.handler.fixedCellRangeValue.apply(yy.lexer.obj, [$$[$0-2], $$[$0]]);//js
+			this.$ = yy.handler.fixedCellRangeValue.apply(yy.obj, [$$[$0-2], $$[$0]]);//js
 			//php this.$ = this->fixedCellRangeValue($$[$0-2], $$[$0]);
 		
 break;
 case 30:
-			this.$ = yy.lexer.handler.cellValue.apply(yy.lexer.obj, [$$[$0]]);//js
+			this.$ = yy.handler.cellValue.apply(yy.obj, [$$[$0]]);//js
 			//php this.$ = this->cellValue($$[$0]);
 		
 break;
 case 31:
-			this.$ = yy.lexer.handler.cellRangeValue.apply(yy.lexer.obj, [$$[$0-2], $$[$0]]);//js
+			this.$ = yy.handler.cellRangeValue.apply(yy.obj, [$$[$0-2], $$[$0]]);//js
 			//php this.$ = this->cellRangeValue($$[$0-2], $$[$0]);
 		
 break;
 case 32:
-			this.$ = yy.lexer.handler.remoteCellValue.apply(yy.lexer.obj, [$$[$0-2], $$[$0]]);//js
+			this.$ = yy.handler.remoteCellValue.apply(yy.obj, [$$[$0-2], $$[$0]]);//js
 			//php this.$ = this->remoteCellValue($$[$0-2], $$[$0]);
 		
 break;
 case 33:
-			this.$ = yy.lexer.handler.remoteCellRangeValue.apply(yy.lexer.obj, [$$[$0-4], $$[$0-2], $$[$0]]);//js
+			this.$ = yy.handler.remoteCellRangeValue.apply(yy.obj, [$$[$0-4], $$[$0-2], $$[$0]]);//js
 			//php this.$ = this->remoteCellRangeValue($$[$0-4], $$[$0-2], $$[$0]);
 		
 break;
@@ -239,7 +238,7 @@ case 40:
 		
 break;
 case 41:
-			yy.lexer.obj.html.push($$[$0-1] + $$[$0]);//js
+			yy.obj.html.push($$[$0-1] + $$[$0]);//js
 			this.$ = $$[$0-1] * 0.01;
 		
 break;
@@ -449,7 +448,26 @@ parse: function parse(input) {
 
     return true;
 }};
-/* generated by jison-lex 0.1.0 */
+
+if (typeof(window) !== 'undefined') {
+	window.Formula = function(handler) {
+		var formulaLexer = function () {};
+		formulaLexer.prototype = formula.lexer;
+
+		var formulaParser = function () {
+			this.lexer = new formulaLexer();
+			this.yy = {};
+		};
+
+		formulaParser.prototype = formula;
+		var newParser = new formulaParser;
+		newParser.setObj = function(obj) {
+			newParser.yy.obj = obj;
+		};
+		newParser.yy.handler = handler;
+		return newParser;
+	};
+}/* generated by jison-lex 0.1.0 */
 var lexer = (function(){
 var lexer = {
 EOF:1,
@@ -636,7 +654,7 @@ break;
 case 5:return 8;
 break;
 case 6:
-	if (yy.lexer.obj.type == 'cell') return 29;//js
+	if (yy.obj.type == 'cell') return 29;//js
 	return 'VARIABLE';//js
 
 	//php if ($this->type == 'cell') return 'SHEET';
@@ -644,7 +662,7 @@ case 6:
 
 break;
 case 7:
-	if (yy.lexer.obj.type == 'cell') return 26;//js
+	if (yy.obj.type == 'cell') return 26;//js
 	return 'VARIABLE';//js
 
 	//php if ($this->type == 'cell') return 'FIXEDCELL';
@@ -652,7 +670,7 @@ case 7:
 
 break;
 case 8:
-	if (yy.lexer.obj.type == 'cell') return 28;//js
+	if (yy.obj.type == 'cell') return 28;//js
 	return 'VARIABLE';//js
 
 	//php if ($this->type == 'cell') return 'CELL';

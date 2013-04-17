@@ -13,7 +13,7 @@
 									{return 'TIME_24';}
 'SHEET'[0-9]+
 %{
-	if (yy.lexer.obj.type == 'cell') return 'SHEET';//js
+	if (yy.obj.type == 'cell') return 'SHEET';//js
 	return 'VARIABLE';//js
 
 	//php if ($this->type == 'cell') return 'SHEET';
@@ -21,7 +21,7 @@
 %}
 '$'[A-Za-z]+'$'[0-9]+
 %{
-	if (yy.lexer.obj.type == 'cell') return 'FIXEDCELL';//js
+	if (yy.obj.type == 'cell') return 'FIXEDCELL';//js
 	return 'VARIABLE';//js
 
 	//php if ($this->type == 'cell') return 'FIXEDCELL';
@@ -29,7 +29,7 @@
 %}
 [A-Za-z]+[0-9]+
 %{
-	if (yy.lexer.obj.type == 'cell') return 'CELL';//js
+	if (yy.obj.type == 'cell') return 'CELL';//js
 	return 'VARIABLE';//js
 
 	//php if ($this->type == 'cell') return 'CELL';
@@ -90,22 +90,22 @@ expressions
 expression :
 	variableSequence
 		{
-			$$ = yy.lexer.handler.variable.apply(yy.lexer.obj, $1);//js
+			$$ = yy.handler.variable.apply(yy.obj, $1);//js
             //php $$ = $this->variable($1);
 		}
 	| TIME_AMPM
 		{
-			$$ = yy.lexer.handler.time.apply(yy.lexer.obj, [$1, true]);//js
+			$$ = yy.handler.time.apply(yy.obj, [$1, true]);//js
 		}
 	| TIME_24
 		{
-			$$ = yy.lexer.handler.time.apply(yy.lexer.obj, [$1]);//js
+			$$ = yy.handler.time.apply(yy.obj, [$1]);//js
 		}
 	| number
 		{
-			$$ = $1 * 1;
+			//php $$ = $1 * 1;
 
-			if (isNaN($$)) $$ = 0;//js
+			$$ = yy.handler.number.apply(yy.obj, [$1]);//js
 		}
 	| STRING
 		{
@@ -116,19 +116,15 @@ expression :
 		{
 			//php $$ = $1 == $3;
 
-			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['EQUAL', [$1, $3]]);//js
+			yy.obj.html.pop();//js
+			$$ = yy.handler.callFunction.apply(yy.obj, ['EQUAL', [$1, $3]]);//js
 		}
 	| expression '+' expression
 		{
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
-
-			if (!isNaN($1) && !isNaN($3)) {//js
-				$$ = ($1 * 1) + ($3 * 1);//js
-			} else {//js
-				$$ = yy.lexer.handler.concatenate.apply(yy.lexer.obj, [$1,$3]);//js
-			}//js
+			$$ = yy.handler.performMath.apply(yy.obj, ['+', $1, $3]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 
 			//php if (is_numeric($1) && is_numeric($3)) {
 			//php   $$ = $1 + $3;
@@ -137,16 +133,16 @@ expression :
 			//php }
 		}
 	| '(' expression ')'
-		{$$ = $2 * 1;}
+		{$$ = yy.handler.number.apply(yy.obj, [$2]);//js}
 	| expression '<' '=' expression
 		{
 			//php $$ = ($1 * 1) <= ($4 * 1);
-			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['LESS_EQUAL', [$1, $3]]);//js
+			$$ = yy.handler.callFunction.apply(yy.obj, ['LESS_EQUAL', [$1, $3]]);//js
 		}
 	| expression '>' '=' expression
 		{
 			//php $$ = ($1 * 1) >= ($4 * 1);
-			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['GREATER_EQUAL', [$1, $3]]);//js
+			$$ = yy.handler.callFunction.apply(yy.obj, ['GREATER_EQUAL', [$1, $3]]);//js
 		}
 	| expression '<' '>' expression
 		{
@@ -154,92 +150,95 @@ expression :
 
 			if (isNaN($$)) $$ = 0;//js
 
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		}
 	| expression NOT expression
 		{
 			$$ = $1 != $3;
 
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		}
 	| expression '>' expression
 		{
 			//php $$ = ($1 * 1) > ($3 * 1);
 
-			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['GREATER', [$1, $3]]);//js
+			$$ = yy.handler.callFunction.apply(yy.obj, ['GREATER', [$1, $3]]);//js
 		}
 	| expression '<' expression
 		{
 			//php $$ = ($1 * 1) < ($3 * 1);
 
-			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, ['LESS', [$1, $3]]);//js
+			$$ = yy.handler.callFunction.apply(yy.obj, ['LESS', [$1, $3]]);//js
 		}
 	| expression '-' expression
 		{
 			$$ = ($1 * 1) - ($3 * 1);
 
-			if (isNaN($$)) $$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			$$ = yy.handler.performMath.apply(yy.obj, ['-', $1, $3]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		}
 	| expression '*' expression
 		{
-			$$ = ($1 * 1) * ($3 * 1);
+			//php $$ = ($1 * 1) * ($3 * 1);
 
-			if (isNaN($$)) $$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			$$ = yy.handler.performMath.apply(yy.obj, ['*', $1, $3]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		}
 	| expression '/' expression
 		{
-			$$ = ($1 * 1) / ($3 * 1);
+			//php $$ = ($1 * 1) / ($3 * 1);
 
-			if (isNaN($$)) $$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			$$ = yy.handler.performMath.apply(yy.obj, ['/', $1, $3]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 		}
 	| expression '^' expression
 		{
-			$$ = Math.pow(($1 * 1), ($3 * 1));//js
+			var n1 = yy.handler.number.apply(yy.obj, [$1]),//js
+				n2 = yy.handler.number.apply(yy.obj, [$3]);//js
 
-			if (isNaN($$)) $$ = 0;//js
-
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.pop();//js
-			yy.lexer.obj.html.push(null);//js
+			$$ = yy.handler.performMath.apply(yy.obj, ['^', $1, $3]);//js
+			yy.obj.html.pop();//js
+			yy.obj.html.pop();//js
+			yy.obj.html.push(null);//js
 
 			//php $$ = pow(($1 * 1), ($3 * 1));
 		}
 	| '-' expression
 		{
-			$$ = $2 * -1;
+			var n1 = yy.handler.number.apply(yy.obj, [$2]);//js
+			$$ = n1 * -1;//js
 			if (isNaN($$)) $$ = 0;//js
+
+			//php $$ = $1 * 1;
 		}
 	| '+' expression
 		{
-			$$ = $2 * 1;
+			var n1 = yy.handler.number.apply(yy.obj, [$2]);//js
+			$$ = n1 * 1;//js
 			if (isNaN($$)) $$ = 0;//js
+
+			//php $$ = $1 * 1;
 		}
 	| E
 		{/*$$ = Math.E;*/;}
 	| FUNCTION '(' ')'
 		{
-			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, [$1, '']);//js
+			$$ = yy.handler.callFunction.apply(yy.obj, [$1, '']);//js
 			//php $$ = $this->callFunction($1);
 		}
 	| FUNCTION '(' expseq ')'
 		{
-			$$ = yy.lexer.handler.callFunction.apply(yy.lexer.obj, [$1, $3]);//js
+			$$ = yy.handler.callFunction.apply(yy.obj, [$1, $3]);//js
 			//php $$ = $this->callFunction($1, $3);
 		}
 	| cell
@@ -250,32 +249,32 @@ expression :
 cell :
 	FIXEDCELL
 		{
-			$$ = yy.lexer.handler.fixedCellValue.apply(yy.lexer.obj, [$1]);//js
+			$$ = yy.handler.fixedCellValue.apply(yy.obj, [$1]);//js
 			//php $$ = $this->fixedCellValue($1);
 		}
 	| FIXEDCELL ':' FIXEDCELL
 		{
-			$$ = yy.lexer.handler.fixedCellRangeValue.apply(yy.lexer.obj, [$1, $3]);//js
+			$$ = yy.handler.fixedCellRangeValue.apply(yy.obj, [$1, $3]);//js
 			//php $$ = $this->fixedCellRangeValue($1, $3);
 		}
 	| CELL
 		{
-			$$ = yy.lexer.handler.cellValue.apply(yy.lexer.obj, [$1]);//js
+			$$ = yy.handler.cellValue.apply(yy.obj, [$1]);//js
 			//php $$ = $this->cellValue($1);
 		}
 	| CELL ':' CELL
 		{
-			$$ = yy.lexer.handler.cellRangeValue.apply(yy.lexer.obj, [$1, $3]);//js
+			$$ = yy.handler.cellRangeValue.apply(yy.obj, [$1, $3]);//js
 			//php $$ = $this->cellRangeValue($1, $3);
 		}
 	| SHEET '!' CELL
 		{
-			$$ = yy.lexer.handler.remoteCellValue.apply(yy.lexer.obj, [$1, $3]);//js
+			$$ = yy.handler.remoteCellValue.apply(yy.obj, [$1, $3]);//js
 			//php $$ = $this->remoteCellValue($1, $3);
 		}
 	| SHEET '!' CELL ':' CELL
 		{
-			$$ = yy.lexer.handler.remoteCellRangeValue.apply(yy.lexer.obj, [$1, $3, $5]);//js
+			$$ = yy.handler.remoteCellRangeValue.apply(yy.obj, [$1, $3, $5]);//js
 			//php $$ = $this->remoteCellRangeValue($1, $3, $5);
 		}
 ;
@@ -333,7 +332,7 @@ number :
 		}
 	| number '%'
 		{
-			yy.lexer.obj.html.push($1 + $2);//js
+			yy.obj.html.push($1 + $2);//js
 			$$ = $1 * 0.01;
 		}
 ;
@@ -346,3 +345,24 @@ error :
 			$$ = $2 + $3 + $4;
 		}
 ;
+
+%%
+if (typeof(window) !== 'undefined') {
+	window.Formula = function(handler) {
+		var formulaLexer = function () {};
+		formulaLexer.prototype = formula.lexer;
+
+		var formulaParser = function () {
+			this.lexer = new formulaLexer();
+			this.yy = {};
+		};
+
+		formulaParser.prototype = formula;
+		var newParser = new formulaParser;
+		newParser.setObj = function(obj) {
+			newParser.yy.obj = obj;
+		};
+		newParser.yy.handler = handler;
+		return newParser;
+	};
+}

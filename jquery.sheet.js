@@ -417,6 +417,11 @@ jQuery.fn.extend({
 						}
 						switch (typeof val) {
 							case 'object':
+								//check if it is a date
+								if (val.getMonth) {
+									return globalize.format(val, 'd');
+								}
+
 								return val;
 							case 'number':
 								return globalize.format(val, "n10").replace(this.endOfNumber, function (orig, radix, num) {
@@ -562,6 +567,23 @@ jQuery.fn.extend({
 							this.html.push(val);
 							this.value = val;
 							this.valueOverride = val.substring(0, this.value.length - 1) / 100;
+						}
+					},
+					cellTypeHandlers: {
+						date: function() {
+							var date = globalize.parseDate(this.value);
+							this.valueOverride = date;
+							this.td.html(globalize.format(date, 'd'));
+						},
+						time: function() {
+							var date = globalize.parseDate(this.value);
+							this.valueOverride = date;
+							this.td.html(globalize.format(date, 't'));
+						},
+						currency: function() {
+							var num = globalize.parseFloat(this.value);
+							this.valueOverride = num;
+							this.td.html(globalize.format(num, 'c'));
 						}
 					}
 				},
@@ -1943,12 +1965,12 @@ jQuery.sheet = {
 
 				/**
 				 * Creates all the bars to the left of the spreadsheet, if they exist, they are first removed
-				 * @param {jQuery|HTMLElement} sheet Table of spreadsheet
+				 * @param {jQuery|HTMLElement} Table of spreadsheet
 				 * @methodOf jS.controlFactory
 				 * @name barLeft
 				 */
-				barLeft:function (sheet) {
-					var tr = sheet.tbody.children,
+				barLeft:function (table) {
+					var tr = table.tbody.children,
 						i = tr.length - 1;
 
 					//table / tbody / tr
@@ -1990,6 +2012,7 @@ jQuery.sheet = {
 					barTopParent.className = jS.cl.barTopParent;
 					table.tbody.insertBefore(barTopParent, table.tbody.children[0]);
 					table.barTopParent = barTopParent;
+					table.corner = tdCorner;
 					jS.controls.barTopParent[jS.i] = $(barTopParent);
 
 					i = trFirst.children.length - 1;
@@ -2061,7 +2084,7 @@ jQuery.sheet = {
 									.appendTo(pane)
 									.css('position', 'absolute')
 									.addClass('ui-state-highlight ' + jS.cl.barHelper)
-									.height(pane.table.tbody.children[0].children[0].clientHeight)
+									.height(pane.table.corner.clientHeight)
 									.fadeTo(0,0.33);
 							},
 							drag:function() {
@@ -2680,25 +2703,8 @@ jQuery.sheet = {
 						jS.obj.barHelper().remove();
 					};
 
-					if (scrollStyleY.styleSheet) {
-						scrollStyleY.css = scrollStyleX.css = function (css) {
-							this.styleSheet.cssText = css;
-						};
-						scrollStyleY.touch = scrollStyleX.touch = function () {};
-						scrollStyleX.styleString = scrollStyleY.styleString = function() {
-							return this.styleSheet.cssText;
-						};
-					} else {
-						scrollStyleX.css = scrollStyleY.css = function (css) {
-							this.innerHTML = css;
-						};
-						scrollStyleX.touch = scrollStyleY.touch = function () {
-							this.innerHTML = this.innerHTML + ' ';
-						};
-						scrollStyleX.styleString = scrollStyleY.styleString = function() {
-							return this.innerHTML;
-						};
-					}
+					jS.controlFactory.styleUpdater(scrollStyleX);
+					jS.controlFactory.styleUpdater(scrollStyleY);
 
 					jS.controls.bar.x.scroll[jS.i] = scrollStyleX;
 					jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
@@ -2773,6 +2779,28 @@ jQuery.sheet = {
 					return scrollOuter;
 				},
 
+				styleUpdater: function (style){
+					if (style.styleSheet) {
+						style.css = function (css) {
+							this.styleSheet.cssText = css;
+						};
+						style.touch = function () {};
+						style.styleString = function() {
+							return this.styleSheet.cssText;
+						};
+					} else {
+						style.css = function (css) {
+							this.innerHTML = css;
+						};
+						style.touch = function () {
+							this.innerHTML = this.innerHTML + ' ';
+						};
+						style.styleString = function() {
+							return this.innerHTML;
+						};
+					}
+				},
+
 				hide:function (enclosure, pane, sheet) {
 					pane = pane || jS.obj.pane();
 
@@ -2797,6 +2825,9 @@ jQuery.sheet = {
 
 						jS.autoFillerGoToTd();
 					};
+
+					jS.controlFactory.styleUpdater(toggleHideStyleX);
+					jS.controlFactory.styleUpdater(toggleHideStyleY);
 
 					jS.controls.toggleHide.x[jS.i] = $(toggleHideStyleX);
 					jS.controls.toggleHide.y[jS.i] = $(toggleHideStyleY);
@@ -4062,62 +4093,61 @@ jQuery.sheet = {
 
 					/**
 					 * prepairs everything needed for a scroll, needs activated every time spreadsheet changes in size
-					 * @param {String} axis x or y
+					 * @param {String} axisName x or y
 					 * @param {jQuery|HTMLElement} pane pane object
-					 * @param {HTMLElement} scrollStyle
 					 * @methodOf jS.evt.scroll
 					 * @name start
 					 */
-					start:function (axis, pane) {
-
+					start:function (axisName, pane) {
 						jS.autoFillerHide();
 
 						pane = pane || jS.obj.pane();
 						var me = jS.evt.scroll,
 							scrollUI = pane.scrollUI,
 							inner = scrollUI.scrollInner,
-							outer = scrollUI.scrollOuter;
+							outer = scrollUI.scrollOuter,
+							axis = me.axis[axisName];
 
 						me.size = jS.sheetSize(pane.table);
 						me.td = jS.obj.tdActive();
 
-						me.axis[axis].v = [];
-						me.axis[axis].p = [];
+						axis.v = [];
+						axis.name = axisName;
 
-						switch (axis || 'x') {
+						switch (axisName || 'x') {
 							case 'x':
-								var x = me.axis.x;
-								x.max = me.size.cols;
-								x.min = 1;
+								axis.max = me.size.cols;
+								axis.min = 0;
+								axis.size = me.size.cols - 1;
 								pane.scrollStyleX.updateStyle();
-								x.scrollStyle = pane.scrollStyleX;
-								x.area = pane.clientWidth;
-								x.sheetArea = pane.table.clientWidth;
-								x.scrollUpdate = function () {
-									outer.scrollLeft = (x.value + 1) * ((inner.clientWidth - outer.clientWidth) / me.size.cols);
+								axis.scrollStyle = pane.scrollStyleX;
+								axis.area = pane.clientWidth - pane.table.corner.clientWidth;
+								axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
+								axis.scrollUpdate = function () {
+									outer.scrollLeft = (axis.value) * ((inner.clientWidth - outer.clientWidth) / axis.size);
 								};
-
+								axis.gridSize = 100 / (me.size.cols - 1);
 								break;
 							case 'y':
-								var y = me.axis.y;
-								y.max = me.size.rows;
-								y.min = 1;
+								axis.max = me.size.rows;
+								axis.min = 0;
+								axis.size = me.size.rows - 1;
 								pane.scrollStyleY.updateStyle();
-								y.scrollStyle = pane.scrollStyleY;
-								y.area = pane.clientHeight;
-								y.sheetArea = pane.table.clientHeight;
-								y.scrollUpdate = function () {
-									outer.scrollTop = (y.value + 1) * ((inner.clientHeight - outer.clientHeight) / me.size.rows);
+								axis.scrollStyle = pane.scrollStyleY;
+								axis.area = pane.clientHeight - pane.table.corner.clientHeight;
+								axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
+								axis.scrollUpdate = function () {
+									outer.scrollTop = (axis.value) * ((inner.clientHeight - outer.clientHeight) / axis.size);
 								};
+								axis.gridSize = 100 / (me.size.rows - 1);
 								break;
 						}
 
-						me.axis[axis].gridSize = 100 / (me.axis[axis].max - me.axis[axis].min);
-
-						for (var i = me.axis[axis].min; i <= me.axis[axis].max; i++) {
-							me.axis[axis].v[i] = me.axis[axis].gridSize * i;
-							me.axis[axis].p[me.axis[axis].gridSize * i] = i + 1;
-						}
+						var i = axis.max;
+						do {
+							axis.v[i] = new Number(axis.gridSize * i);
+							axis.v[i].index = i + 1;
+						} while(i--);
 					},
 
 					/**
@@ -4130,18 +4160,15 @@ jQuery.sheet = {
 						pos = pos || {};
 						pos.axis = pos.axis || 'x';
 						pos.value = pos.value || 0;
-						pos.pixel = pos.pixel || 1;
+						pos.pixel = pos.pixel || 0;
 
 						if (!jS.evt.scroll.axis) {
 							jS.evt.scroll.start(pos.axis);
 						}
 						var me = jS.evt.scroll.axis[pos.axis];
 
-						//if (pos.value == me.value && me.value !== u) return;
-
 						if (!pos.value) {
-							if (!me.p) return;
-							pos.value = me.p[arrHelpers.closest(me.v, Math.abs(pos.pixel / (me.sheetArea - me.area)) * 100, me.min)] - 1;
+							pos.value = arrHelpers.closest(me.v, math.abs(pos.pixel / (me.sheetArea - (me.area * 1.2))) * 100, me.min).index;
 						}
 
 						pos.max = pos.max || me.max;
@@ -4149,10 +4176,10 @@ jQuery.sheet = {
 						var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
 							indexes = [];
 
-						if (i > 0) {
+						if (i >= 0) {
 							do {
 								indexes.push(i + me.min);
-							} while(i--);
+							} while(i-- > 0);
 						}
 						if (indexes.length) {
 							if (me.scrollStyle) me.scrollStyle.updateStyle(indexes);
@@ -4486,7 +4513,7 @@ jQuery.sheet = {
 					jS.obj.toggleHideStyleY()[0].updateStyle();
 				},
 				rowShowAll:function () {
-					$.each(this.hiddenRows[jS.i], function (j) {
+					$.each(this.hiddenRows[jS.i] || [], function (j) {
 						$(this).removeData('hidden');
 					});
 					jS.obj.toggleHideStyleY().html('');
@@ -4523,12 +4550,16 @@ jQuery.sheet = {
 
 			/**
 			 * Merges cells together
+			 * @param {Object} tds
 			 * @methodOf jS
 			 * @name merge
 			 */
-			merge:function () {
+			merge:function (tds) {
+				tds = tds || jS.highlighted();
+				if (!tds.length) {
+					return;
+				}
 				var cellsValue = [],
-					tds = jS.highlighted(),
 					tdFirstLoc = jS.getTdLocation(tds[0]),
 					tdLastLoc = jS.getTdLocation(tds[tds.length - 1]),
 					colI = 0,
@@ -4536,7 +4567,7 @@ jQuery.sheet = {
 					firstCell = tds[0].jSCell,
 					last = new Date();
 
-				if (tds.length > 1 && tdFirstLoc.row) {
+				if (tdFirstLoc.row) {
 					jS.setDirty(true);
 					jS.setChanged(true);
 
@@ -4602,12 +4633,16 @@ jQuery.sheet = {
 
 			/**
 			 * Unmerges cells together
+			 * @param {Object} td
 			 * @methodOf jS
 			 * @name unmerge
 			 */
-			unmerge:function () {
-				var td = jS.highlighted()[0],
-					loc = jS.getTdLocation(td),
+			unmerge:function (td) {
+				td = td || jS.highlighted()[0];
+				if (!td) {
+					return;
+				}
+				var loc = jS.getTdLocation(td),
 					last = new Date();
 
 				var rowMax = math.max(td.getAttribute('rowSpan') * 1, 1);
@@ -4633,15 +4668,26 @@ jQuery.sheet = {
 			 * Fills values down or up to highlighted cells from active cell;
 			 * @param {Boolean} goUp default is down, when set to true value are filled from bottom, up;
 			 * @param {String} v the value to set cells to, if not set, formula will be used;
+			 * @param {Object} cells
 			 * @methodOf jS
 			 * @name fillUpOrDown
 			 */
-			fillUpOrDown:function (goUp, v) {
+			fillUpOrDown:function (goUp, v, cells) {
 				jS.evt.cellEditDone();
-				var cells = jS.highlighted(true),
-					activeTd = jS.obj.tdActive(),
-					last = new Date(),
-					startLoc = jS.getTdLocation(cells[0].td),
+				cells = cells || jS.highlighted(true);
+
+				if (cells.length < 1) {
+					return;
+				}
+
+				var activeTd = jS.obj.tdActive(),
+					last = new Date();
+
+				if (cells.length < 1) {
+					return;
+				}
+
+				var startLoc = jS.getTdLocation(cells[0].td),
 					endLoc = jS.getTdLocation(cells[cells.length - 1].td),
 					relativeLoc = jS.getTdLocation(activeTd),
 					offset = {
@@ -5752,15 +5798,19 @@ jQuery.sheet = {
 			 * sets a cells class for styling
 			 * @param {String} setClass class(es) to set cells to
 			 * @param {String} removeClass class(es) to remove from cell if the setClass would conflict with
+			 * @param {Object} tds
 			 * @returns {Boolean}
 			 * @methodOf jS
 			 * @name cellStyleToggle
 			 */
-			cellStyleToggle:function (setClass, removeClass) {
+			cellStyleToggle:function (setClass, removeClass, tds) {
+				tds = tds || jS.highlighted();
+				if (tds.length < 1) {
+					return;
+				}
 				jS.setDirty(true);
 				//Lets check to remove any style classes
-				var tds = jS.highlighted(),
-					td,
+				var td,
 					$td,
 					i = tds.length - 1,
 					cells = jS.obj.cellsEdited(),
@@ -5799,13 +5849,41 @@ jQuery.sheet = {
 				return false;
 			},
 
+			cellTypeToggle:function(type, cells) {
+				cells = cells || jS.highlighted(true);
+
+				if (cells.length < 1) {
+					return;
+				}
+
+				var i = cells.length - 1,
+					remove = cells[i].type == type;
+
+				if (i >= 0) {
+					do {
+						if (remove) {
+							cells[i].type = null;
+						} else {
+							cells[i].type = type;
+						}
+						jS.updateCellDependencies.apply(cells[i]);
+					} while(i--);
+				}
+			},
+
 			/**
 			 * Resizes fonts in a cell by 1 pixel
 			 * @param {String} direction "up" or "down"
+			 * @param {Object} tds
 			 * @methodOf jS
 			 * @name fontReSize
 			 */
-			fontReSize:function (direction) {
+			fontReSize:function (direction, tds) {
+				tds = tds || jS.highlighted();
+				if (tds.length < 1) {
+					return;
+				}
+
 				var resize = 0;
 				switch (direction) {
 					case 'up':
@@ -5817,8 +5895,7 @@ jQuery.sheet = {
 				}
 
 				//Lets check to remove any style classes
-				var tds = jS.highlighted(),
-					td,
+				var td,
 					$td,
 					i = tds.length - 1,
 					size,
@@ -5914,7 +5991,7 @@ jQuery.sheet = {
 							var formulaParser;
 							if (jS.callStack) { //we prevent parsers from overwriting each other
 								if (!cell.formulaParser) { //cut down on un-needed parser creation
-									cell.formulaParser = (new jS.formulaParser);
+									cell.formulaParser = Formula(jS.cellHandler);
 								}
 								formulaParser = cell.formulaParser
 							} else {//use the sheet's parser if there aren't many calls in the callStack
@@ -5922,8 +5999,7 @@ jQuery.sheet = {
 							}
 
 							jS.callStack++;
-							formulaParser.lexer.obj = cell;
-							formulaParser.lexer.handler = jS.cellHandler;
+							formulaParser.setObj(cell);
 							cell.result = formulaParser.parse(cell.formula);
 						} catch (e) {
 							cell.result = e.toString();
@@ -5931,6 +6007,8 @@ jQuery.sheet = {
 						}
 						jS.callStack--;
 						jS.filterValue.apply(cell);
+					} else if (cell.type && s.cellTypeHandlers[cell.type]) {
+						s.cellTypeHandlers[cell.type].apply(cell);
 					} else {
 						if (cell.value != u && cell.value.charAt) {
 							fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
@@ -6046,6 +6124,83 @@ jQuery.sheet = {
 				 */
 				time:function (time, isAMPM) {
 					return times.fromString(time, isAMPM);
+				},
+
+				/**
+				 * get a number from variable
+				 * @param {*} num
+				 * @returns {Number}
+				 * @methodOf jS.cellHandler
+				 * @name number
+				 */
+				number:function (num) {
+					switch (typeof num) {
+						case 'number':
+							return num;
+						case 'string':
+							if (!isNaN(num)) {
+								return num * 1;
+							}
+						case 'object':
+							if (num.getMonth) {
+								return dates.toCentury(num);
+							}
+					}
+					return 0;
+				},
+
+				performMath: function (mathType, num1, num2) {
+					var type1, type2, value, output = function(val) {return val;};
+					switch (type1 = (typeof num1)) {
+						case 'number':break;
+						case 'string':
+							if (!isNaN(num1)) {
+								num1 *= 1;
+							}
+							break;
+						case 'object':
+							if (num1.getMonth) {
+								num1 = dates.toCentury(num1);
+								output = dates.get;
+							}
+							break;
+						default:
+					}
+
+					switch (type2 = (typeof num2)) {
+						case 'number':break;
+						case 'string':
+							if (!isNaN(num2)) {
+								num2 *= 1;
+							}
+							break;
+						case 'object':
+							if (num2.getMonth) {
+								num2 = dates.toCentury(num2);
+							}
+							break;
+						default:
+					}
+
+					switch (mathType) {
+						case '+':
+							value = num1 + num2;
+							break;
+						case '-':
+							value = num1 - num2;
+							break;
+						case '/':
+							value = num1 / num2;
+							break;
+						case '*':
+							value = num1 * num2;
+							break;
+						case '^':
+							value = math.pow(num1, num2);
+							break;
+					}
+
+					return output(value);
 				},
 
 				/**
@@ -6340,9 +6495,8 @@ jQuery.sheet = {
 			 * @name cellLookup
 			 */
 			cellLookup:function () {
-				var formulaParser = (new jS.formulaParser);
-				formulaParser.lexer.obj = this.obj;
-				formulaParser.lexer.handler = $.extend(formulaParser.lexer.handler, jS.cellLookupHandlers);
+				var formulaParser = Formula($.extend(formulaParser.lexer.handler, jS.cellLookupHandlers));
+				formulaParser.setObj(this.obj);
 
 				var args = formulaParser.parse(this.obj.formula),
 					lookupTable = [];
@@ -6389,20 +6543,17 @@ jQuery.sheet = {
 
 			/**
 			 * Where jS.spreadsheets are calculated, and returned to their td counterpart
-			 * @param {Number} tableI table index
+			 * @param {Number} tableIndex table index
 			 * @methodOf jS
 			 * @name calc
 			 */
-			calc:function (tableI) { /* harnesses formula engine's calculation function
-			 tableI: int, the current table integer;
-			 fuel: variable holder, used to prevent memory leaks, and for calculations;
-			 */
-				tableI = (tableI ? tableI : jS.i);
-				if (jS.readOnly[tableI] || jS.isChanged() === false) return; //readonly is no calc at all
+			calc:function (tableIndex) {
+				tableIndex = tableIndex || jS.i;
+				if (jS.readOnly[tableIndex] || jS.isChanged() === false) return; //readonly is no calc at all
 
 				jS.log('Calculation Started');
 				jS.calcLast = new Date();
-				jSE.calc(tableI, jS.spreadsheetsToArray()[tableI], jS.updateCellValue);
+				jSE.calc(tableIndex, jS.spreadsheetsToArray()[tableIndex], jS.updateCellValue);
 				jS.trigger('sheetCalculation', [
 					{which:'speadsheet'}
 				]);
@@ -6557,7 +6708,9 @@ jQuery.sheet = {
 
 				qty = (end - start) + 1;
 
-				if (start < 1 || size.cols < 2 || qty >= size.rows) return;
+				if (start < 1 || size.cols < 2 || qty >= size.rows) {
+					return;
+				}
 
 				i = end;
 
@@ -6612,7 +6765,9 @@ jQuery.sheet = {
 
 				qty = (end - start) + 1;
 
-				if (start < 1 || size.cols < 2 || qty >= size.cols) return;
+				if (start < 1 || size.cols < 2 || qty >= size.cols) {
+					return;
+				}
 
 				i = end;
 
@@ -7054,10 +7209,16 @@ jQuery.sheet = {
 			 * changes a cell's style and makes it undoable/redoable
 			 * @param style
 			 * @param value
+			 * @param cells
 			 */
-			cellChangeStyle:function (style, value) {
+			cellChangeStyle:function (style, value, cells) {
+				cells = cells || jS.highlighted(true);
+				if (cells.length < 1) {
+					return;
+				}
+
 				jS.setDirty(this);
-				var cells = jS.highlighted(true), i = cells.length - 1;
+				var i = cells.length - 1;
 
 				if ( i >= 0) {
 					do {
@@ -7711,10 +7872,10 @@ jQuery.sheet = {
 			 * @methodOf jS
 			 * @name rowTds
 			 */
-			rowTds:function (o, row) {
-				o = o || jS.obj.table();
+			rowTds:function (table, row) {
+				table = table || jS.obj.table();
 
-				var rows = jS.rows(o);
+				var rows = jS.rows(table);
 
 				if (row == u) {
 					row = rows.length - 1;
@@ -7754,7 +7915,7 @@ jQuery.sheet = {
 					i;
 
 				if (!(tag = highlighted) || !highlighted.length || !(tag = tag[0]) || !tag.tagName) {
-					return obj;
+					return cells ? obj : $(obj);
 				}
 
 				switch (tag.tagName) {
@@ -7872,17 +8033,8 @@ jQuery.sheet = {
 			win.scrollBarSize = $.sheet.getScrollBarSize();
 		}
 
-		//ready the sheet's parser
-		jS.formulaLexer = function () {
-		};
-		jS.formulaLexer.prototype = formula.lexer;
-		jS.formulaParser = function () {
-			this.lexer = new jS.formulaLexer();
-			this.yy = {};
-		};
-		jS.formulaParser.prototype = formula;
-
-		jS.FormulaParser = new jS.formulaParser;
+		//ready the sheet's parser;
+		jS.FormulaParser = Formula(jS.cellHandler);
 
 		//We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
 		//$(this).html(s.loading);
@@ -9753,18 +9905,22 @@ var arrHelpers = {
 };
 
 var dates = {
+	dayDiv: 86400000,
 	math: Math,
-	dayDiv:86400000,
-	toCentury:function (date) {
-		return this.math.round(this.math.abs((new Date(1900, 0, -1)) - date) / this.dayDiv);
+	toCentury:function (date, dayDiv) {
+		dayDiv = dayDiv || 86400000;
+
+		return this.math.round(this.math.abs((new Date(1900, 0, -1)) - date) / dayDiv);
 	},
-	get:function (date) {
+	get:function (date, dayDiv) {
+		dayDiv = dayDiv || 86400000;
+
 		if (date.getMonth) {
 			return date;
 		} else if (isNaN(date)) {
 			return new Date(Globalize.parseDate(date));
 		} else {
-			date *= this.dayDiv;
+			date *= dayDiv;
 			//date = new Date(date);
 			var newDate = (new Date(1900, 0, -1)) * 1;
 			date += newDate;
@@ -9772,9 +9928,11 @@ var dates = {
 			return date;
 		}
 	},
-	week:function (date) {
+	week:function (date, dayDiv) {
+		dayDiv = dayDiv || 86400000;
+
 		var onejan = new Date(date.getFullYear(), 0, 1);
-		return this.math.ceil((((date - onejan) / this.dayDiv) + onejan.getDay() + 1) / 7);
+		return this.math.ceil((((date - onejan) / dayDiv) + onejan.getDay() + 1) / 7);
 	},
 	toString:function (date, pattern) {
 		if (!pattern) {
@@ -9782,14 +9940,16 @@ var dates = {
 		}
 		return Globalize.format(date, Globalize.culture().calendar.patterns[pattern]);
 	},
-	diff:function (start, end, basis) {
+	diff:function (start, end, basis, dayDiv) {
+		dayDiv = dayDiv || 86400000;
+
 		switch (basis) {
 			case 0:
 				return this.days360Nasd(start, end, 0, true);
 			case 1:
 			case 2:
 			case 3:
-				var result = this.math.abs(end - start) / this.dayDiv;
+				var result = this.math.abs(end - start) / dayDiv;
 				return result;
 			case 4:
 				return this.days360Euro(start, end);

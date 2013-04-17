@@ -32,7 +32,8 @@ jQuery.fn.extend({
 					return jP.objHandler.getObjectValue(this.$obj);
 				}
 			},
-			formulaFunctions: {}
+			formulaFunctions: {},
+			formulaVariables: {}
 		}, settings);
 
 		var jP = jQuery.pseudoSheet.createInstance(this, settings);
@@ -108,16 +109,15 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 						var formulaParser;
 						if (jP.callStack) { //we prevent parsers from overwriting each other
 							if (!this.formulaParser) { //cut down on un-needed parser creation
-								this.formulaParser = (new jP.formulaParser);
+								this.formulaParser = Formula(jP.objHandler);
 							}
-							formulaParser = this.formulaParser
+							formulaParser = this.formulaParser;
 						} else {//use the sheet's parser if there aren't many calls in the callStack
 							formulaParser = jP.FormulaParser;
 						}
 
 						jP.callStack++;
-						formulaParser.lexer.obj = this;
-						formulaParser.lexer.handler = jP.objHandler;
+						formulaParser.setObj(this);
 
 						var data = $obj.data();
 						jQuery.each(data, function(i) {
@@ -136,16 +136,16 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 
 
 						if (data.formula) {
-							try {
+							//try {
 								if (data.formula.charAt(0) == '=') {
 									data.formula = data.formula.substring(1, data.formula.length);
 								}
 
 								this.result = formulaParser.parse(data.formula);
-							} catch(e) {
-								console.log(e);
-								obj.val = e.toString().replace(/\n/g, '<br />'); //error
-							}
+							//} catch(e) {
+							//	console.log(e);
+							//	obj.val = e.toString().replace(/\n/g, '<br />'); //error
+							//}
 							jP.callStack--;
 
 							jP.filterValue.apply(this);
@@ -225,6 +225,10 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 							}
 						}
 
+						if (s.formulaVariables[vars[0]]) {
+							return s.formulaVariables[vars[0]];
+						}
+
 						var $obj = jQuery('#' + vars[0]);
 						if (!$obj.length) $obj = jQuery('[name="' + vars[0] + '"]');
 						if (!$obj.length) return s.error.apply(this, [{error: "Object not found"}]);
@@ -240,6 +244,32 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 						}
 
 						return jP.objHandler.getObjectValue($obj);
+					},
+					number: function(num) {
+						if (isNaN) {
+							return num;
+						} else {
+							return num * 1;
+						}
+					},
+					performMath: function(mathType, num1, num2) {
+						switch (mathType) {
+							case '+':
+								return num1 + num2;
+								break;
+							case '-':
+								return num1 - num2;
+								break;
+							case '/':
+								return num1 / num2;
+								break;
+							case '*':
+								return num1 * num2;
+								break;
+							case '^':
+								return Math.pow(num1, num2);
+								break;
+						}
 					},
 					time: function(time, isAMPM) {
 						return times.fromString(time, isAMPM);
@@ -282,15 +312,7 @@ jQuery.pseudoSheet = { //jQuery.pseudoSheet
 		}
 
 		//ready the sheet's formulaParser
-		jP.formulaLexer = function() {};
-		jP.formulaLexer.prototype = formula.lexer;
-		jP.formulaParser = function() {
-			this.lexer = new jP.formulaLexer();
-			this.yy = {};
-		};
-		jP.formulaParser.prototype = formula;
-
-		jP.FormulaParser = new jP.formulaParser;
+		jP.FormulaParser = Formula(jP.objHandler);
 
 		return jP;
 	}
