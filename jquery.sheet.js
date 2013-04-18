@@ -2632,7 +2632,9 @@ jQuery.sheet = {
 					var scrollOuter = doc.createElement('div'),
 						scrollInner = doc.createElement('div'),
 						scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
-						scrollStyleY = pane.scrollStyleY = doc.createElement('style');
+						scrollStyleY = pane.scrollStyleY = doc.createElement('style'),
+						$scrollOuter = $(scrollOuter),
+						$scrollInner = $(scrollInner);
 
 					pane.scrollUI = {
 						scrollOuter: scrollOuter,
@@ -2716,22 +2718,32 @@ jQuery.sheet = {
 					jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
 
 					var xStyle,
-						yStyle;
+						yStyle,
+						sheetWidth,
+						sheetHeight,
+						enclosureWidth,
+						enclosureHeight,
+						firstRow = sheet.tbody.children[0];
 
 					pane.resizeScroll = function () {
-						xStyle = scrollStyleX.styleString();
-						yStyle = scrollStyleY.styleString();
+						xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.styleString());
+						yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.styleString());
 
 						scrollStyleX.updateStyle(null, ' ');
 						scrollStyleY.updateStyle(null, ' ');
 
-						scrollInner.setAttribute('style', 'width:' + sheet.clientWidth + 'px;height:' + sheet.clientHeight + 'px;');
-						scrollInner.style.height = sheet.clientHeight + 'px';
-						scrollInner.style.width = sheet.clientWidth + 'px';
+						sheetWidth = (firstRow.clientWidth || sheet.clientWidth) + 'px';
+						sheetHeight = sheet.clientHeight + 'px';
+						enclosureWidth = enclosure.clientWidth + 'px';
+						enclosureHeight = enclosure.clientHeight + 'px';
 
-						scrollOuter.setAttribute('style', 'width:' + enclosure.clientWidth + 'px;height:' + enclosure.clientHeight + 'px;');
-						scrollOuter.style.height = enclosure.clientHeight + 'px';
-						scrollOuter.style.width = enclosure.clientWidth + 'px';
+						$scrollInner
+							.css('width', sheetWidth)
+							.css('height', sheetWidth);
+
+						$scrollOuter
+							.css('width', enclosureWidth)
+							.css('height' + enclosureHeight);
 
 						jS.evt.scroll.start('x', pane, sheet, scrollStyleX);
 						jS.evt.scroll.start('y', pane, sheet, scrollStyleY);
@@ -4112,7 +4124,6 @@ jQuery.sheet = {
 						pane = pane || jS.obj.pane();
 						var me = jS.evt.scroll,
 							scrollUI = pane.scrollUI,
-							inner = scrollUI.scrollInner,
 							outer = scrollUI.scrollOuter,
 							axis = me.axis[axisName];
 
@@ -4126,35 +4137,36 @@ jQuery.sheet = {
 							case 'x':
 								axis.max = me.size.cols;
 								axis.min = 0;
-								axis.size = me.size.cols - 1;
+								axis.size = me.size.cols;
 								pane.scrollStyleX.updateStyle();
 								axis.scrollStyle = pane.scrollStyleX;
-								axis.area = pane.clientWidth - pane.table.corner.clientWidth;
+								axis.area = outer.scrollWidth - outer.clientWidth;
 								axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
 								axis.scrollUpdate = function () {
-									outer.scrollLeft = (axis.value) * ((inner.clientWidth - outer.clientWidth) / axis.size);
+									outer.scrollLeft = (axis.value) * (axis.area / axis.size);
 								};
-								axis.gridSize = 100 / (me.size.cols - 1);
+								axis.gridSize = 100 / axis.size;
 								break;
 							case 'y':
 								axis.max = me.size.rows;
 								axis.min = 0;
-								axis.size = me.size.rows - 1;
+								axis.size = me.size.rows;
 								pane.scrollStyleY.updateStyle();
 								axis.scrollStyle = pane.scrollStyleY;
-								axis.area = pane.clientHeight - pane.table.corner.clientHeight;
+								axis.area = outer.scrollHeight - outer.clientHeight;
 								axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
 								axis.scrollUpdate = function () {
-									outer.scrollTop = (axis.value) * ((inner.clientHeight - outer.clientHeight) / axis.size);
+									outer.scrollTop = (axis.value) * (axis.area / axis.size);
 								};
-								axis.gridSize = 100 / (me.size.rows - 1);
+								axis.gridSize = 100 / axis.size;
 								break;
 						}
 
 						var i = axis.max;
 						do {
-							axis.v[i] = new Number(axis.gridSize * i);
-							axis.v[i].index = i + 1;
+							var position = new Number(axis.gridSize * i);
+							position.index = i + 1;
+							axis.v.unshift(position);
 						} while(i--);
 					},
 
@@ -4176,7 +4188,7 @@ jQuery.sheet = {
 						var me = jS.evt.scroll.axis[pos.axis];
 
 						if (!pos.value) {
-							pos.value = arrHelpers.closest(me.v, math.abs(pos.pixel / (me.sheetArea - (me.area * 1.2))) * 100, me.min).index;
+							pos.value = arrHelpers.closest(me.v, math.abs(pos.pixel / me.area) * 100, me.min).index;
 						}
 
 						pos.max = pos.max || me.max;
@@ -4342,9 +4354,8 @@ jQuery.sheet = {
 
 					fullScreen.remove();
 
-					pane.resizeScroll();
 					jS.sheetSyncSize();
-
+					pane.resizeScroll();
 					jS.trigger('sheetFullScreen', [false]);
 				} else { //here we make a full screen
 					$body.addClass('bodyNoScroll');
@@ -4371,8 +4382,8 @@ jQuery.sheet = {
 								.width(this.w)
 								.height(this.h);
 
-							pane.resizeScroll();
 							jS.sheetSyncSize();
+							pane.resizeScroll();
 						})
 						.trigger('jSResize');
 
