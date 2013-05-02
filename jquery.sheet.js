@@ -884,6 +884,11 @@ jQuery.fn.extend({
 			result += node.data.replace(/^\s*(.*)\s*$/g, "$1");
 		}
 		return result;
+	},
+	mousewheel: function(fn) {
+		jQuery(this).each(function() {
+			this.onwheel = this.onmousewheel = this.onDOMMouseScroll = this.onMozMousePixelScroll = fn;
+		});
 	}
 });
 
@@ -2634,7 +2639,8 @@ jQuery.sheet = {
 						scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
 						scrollStyleY = pane.scrollStyleY = doc.createElement('style'),
 						$scrollOuter = $(scrollOuter),
-						$scrollInner = $(scrollInner);
+						$scrollInner = $(scrollInner),
+						$pane = $(pane);
 
 					pane.scrollUI = {
 						scrollOuter: scrollOuter,
@@ -2756,45 +2762,57 @@ jQuery.sheet = {
 						}
 					};
 
-
-					function mousewheel(e) {
+					/*
+					* Mousewheel rewrites itself the first time it is triggered in order to perform faster*/
+					var chooseMouseWheel = function (e) {
 						e = e || win.event;
-						var detail;
-
+						var mousewheel;
 						if ("mousewheel" == e.type) {
-							var scrollNoXY = 1,
-								div = function (a, b) {
+							var div = function (a, b) {
 									return 0 != a % b ? a : a / b;
-								};
-
+								},
+								scrollNoXY = 1;
 							if (e.wheelDeltaX !== u) {
-								scrollOuter.scrollTop += div(-e.wheelDeltaY, scrollNoXY);
-								scrollOuter.scrollLeft += div(-e.wheelDeltaX, scrollNoXY);
+								mousewheel = function(e) {
+									e = e || win.event;
+									scrollOuter.scrollTop += div(-e.wheelDeltaY, scrollNoXY);
+									scrollOuter.scrollLeft += div(-e.wheelDeltaX, scrollNoXY);
+									return false;
+								};
 							} else {
-								scrollOuter.scrollTop += div(-e.wheelDelta, scrollNoXY);
+								mousewheel = function(e) {
+									e = e || win.event;
+									scrollOuter.scrollTop += div(-e.wheelDelta, scrollNoXY);
+									return false;
+								};
 							}
+						} else {
+							mousewheel = function(e) {
+								if (this.detail = (e.detail || e.deltaX || e.deltaY)) {
+									(9 < this.detail ? this.detail = 3 : -9 > this.detail && (this.detail = -3));
+									var top = 0, left = 0;
+									switch (this.detail) {
+										case 1:
+										case -1:
+											left = this.detail * 50;
+											break;
+										case 3:
+										case -3:
+											top = this.detail * 15;
+											break;
+									}
 
-						} else if (detail = (e.detail || e.deltaX || e.deltaY)) {
-							(9 < detail ? detail = 3 : -9 > detail && (detail = -3));
-							var top = 0, left = 0;
-							switch (detail) {
-								case 1:
-								case -1:
-									left = detail * 50;
-									break;
-								case 3:
-								case -3:
-									top = detail * 15;
-									break;
-							}
-
-							scrollOuter.scrollTop += top;
-							scrollOuter.scrollLeft += left;
+									scrollOuter.scrollTop += top;
+									scrollOuter.scrollLeft += left;
+								}
+								return false;
+							};
 						}
+						$pane.mousewheel(mousewheel);
 						return false;
 					}
 
-					pane.onwheel = pane.onmousewheel = pane.onDOMMouseScroll = pane.onMozMousePixelScroll = mousewheel;
+					$pane.mousewheel(chooseMouseWheel);
 
 					return scrollOuter;
 				},
@@ -2802,21 +2820,21 @@ jQuery.sheet = {
 				styleUpdater: function (style){
 					if (style.styleSheet) {
 						style.css = function (css) {
-							this.styleSheet.cssText = css;
+							style.styleSheet.cssText = css;
 						};
 						style.touch = function () {};
 						style.styleString = function() {
-							return this.styleSheet.cssText;
+							return style.styleSheet.cssText;
 						};
 					} else {
 						style.css = function (css) {
-							this.innerHTML = css;
+							style.innerHTML = css;
 						};
 						style.touch = function () {
-							this.innerHTML = this.innerHTML + ' ';
+							style.innerHTML = this.innerHTML + ' ';
 						};
 						style.styleString = function() {
-							return this.innerHTML;
+							return style.innerHTML;
 						};
 					}
 				},
