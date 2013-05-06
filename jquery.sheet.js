@@ -2820,21 +2820,26 @@ jQuery.sheet = {
 				styleUpdater: function (style){
 					if (style.styleSheet) {
 						style.css = function (css) {
-							style.styleSheet.cssText = css;
+							if (!this.styleSheet.disabled) {
+								this.styleSheet.cssText = css;
+							}
 						};
 						style.touch = function () {};
 						style.styleString = function() {
-							return style.styleSheet.cssText;
+							if (!this.styleSheet.disabled) {
+								return this.styleSheet.cssText;
+							}
+							return '';
 						};
 					} else {
 						style.css = function (css) {
-							style.innerHTML = css;
+							this.innerHTML = css;
 						};
 						style.touch = function () {
-							style.innerHTML = this.innerHTML + ' ';
+							this.innerHTML = this.innerHTML + ' ';
 						};
 						style.styleString = function() {
-							return style.innerHTML;
+							return this.innerHTML;
 						};
 					}
 				},
