@@ -6112,7 +6112,9 @@ jQuery.sheet = {
 				} else if (html) {
 					this.td.html(this.html);
 				} else {
-					this.td[0].innerHTML = s.encode(this.value);
+					if (this.value != "" || this.td[0].innerHTML != "") {
+						this.td[0].innerHTML = s.encode(this.value);
+					}
 				}
 			},
 
