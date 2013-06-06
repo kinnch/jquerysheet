@@ -923,15 +923,25 @@ jQuery.sheet = {
 	 * @memberOf jQuery.sheet
 	 */
 	optional:{
+		//native
+		advancedfn:{script:'plugins/jquery.sheet.advancedfn.js'},
+		dts:{script:'plugins/jquery.sheet.dts.js'},
+		financefn:{script:'plugins/jquery.sheet.financefn.js'},
+
+		//3rd party
+		colorPicker:{
+			css:'plugins/jquery.colorPicker.css',
+			script:'plugins/jquery.colorPicker.min.js'},
+
+		elastic:{script:'plugins/jquery.elastic.min.js'},
+
 		globalizeCultures:{script:'plugins/globalize.cultures.js'},
+
 		raphael:{script:'plugins/raphael-min.js'},
 		gRaphael:{script:'plugins/g.raphael-min.js'},
-		colorPicker:{css:'plugins/jquery.colorPicker.css'},
-		colorPicker:{script:'plugins/jquery.colorPicker.min.js'},
-		elastic:{script:'plugins/jquery.elastic.min.js'},
-		advancedfn:{script:'plugins/jquery.sheet.advancedfn.js'},
-		financefn:{script:'plugins/jquery.sheet.financefn.js'},
-		dts:{script:'plugins/jquery.sheet.dts.js'},
+
+		undomanager:{script: 'plugins/undomanager.js'},
+
 		zeroclipboard:{script:'plugins/ZeroClipboard.js'}
 	},
 
@@ -959,7 +969,8 @@ jQuery.sheet = {
 		var g = function () {
 			if (this.script) {
 				document.write('<script src="' + path + this.script + '"></script>');
-			} else if (this.css) {
+			}
+			if (this.css) {
 				document.write('<link rel="stylesheet" type="text/css" href="' + path + this.css + '"></link>');
 			}
 		};
@@ -1083,6 +1094,7 @@ jQuery.sheet = {
 					parent.insertBefore(newElement, targetElement.nextSibling);
 				}
 			},
+
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index]
 			 * @name jS
@@ -2424,6 +2436,8 @@ jQuery.sheet = {
 
 						title.className = jS.cl.title;
 						jS.controls.title = $(title).html(s.title)
+					} else {
+						$(title).hide();
 					}
 					firstRowTr.appendChild(title);
 
@@ -3491,7 +3505,7 @@ jQuery.sheet = {
 					 */
 					redo:function (e) {
 						if (e.ctrlKey && !jS.cellLast.isEdit) {
-							jS.cellUndoable.undoOrRedo();
+							jS.undo.manager.redo();
 							return false;
 						}
 						return true;
@@ -3506,7 +3520,7 @@ jQuery.sheet = {
 					 */
 					undo:function (e) {
 						if (e.ctrlKey && !jS.cellLast.isEdit) {
-							jS.cellUndoable.undoOrRedo(true);
+							jS.undo.manager.undo();
 							return false;
 						}
 						return true;
@@ -5835,6 +5849,7 @@ jQuery.sheet = {
 
 				return _grid;
 			},
+			editedLast: [],
 
 			/**
 			 * sets a cells class for styling
@@ -5848,7 +5863,7 @@ jQuery.sheet = {
 			cellStyleToggle:function (setClass, removeClass, tds) {
 				tds = tds || jS.highlighted();
 				if (tds.length < 1) {
-					return;
+					return false;
 				}
 				jS.setDirty(true);
 				//Lets check to remove any style classes
@@ -6615,22 +6630,33 @@ jQuery.sheet = {
 				jS.calcDependenciesLast = last;
 
 				if (!skipUndoable) {
-					jS.cellUndoable.add.apply(this, [last]);
-				}
+					jS.undo.createCells([this], null, function() {
+						jS.trigger('sheetPreCalculation', [
+							{which:'cell', cell:this}
+						]);
 
-				jS.trigger('sheetPreCalculation', [
-					{which:'cell', cell:this}
-				]);
-				jS.setDirty(true);
-				jS.setChanged(true);
-				jS.updateCellValue.apply(this);
-				jS.updateCellDependencies.apply(this);
-				jS.trigger('sheetCalculation', [
-					{which:'cell', cell: this}
-				]);
+						jS.setDirty(true);
+						jS.setChanged(true);
+						jS.updateCellValue.apply(this);
+						jS.updateCellDependencies.apply(this);
+						jS.trigger('sheetCalculation', [
+							{which:'cell', cell: this}
+						]);
 
-				if (!skipUndoable) {
-					jS.cellUndoable.add.apply(this, [last, true]);
+						return [this];
+					});
+				} else {
+					jS.trigger('sheetPreCalculation', [
+						{which:'cell', cell:this}
+					]);
+
+					jS.setDirty(true);
+					jS.setChanged(true);
+					jS.updateCellValue.apply(this);
+					jS.updateCellDependencies.apply(this);
+					jS.trigger('sheetCalculation', [
+						{which:'cell', cell: this}
+					]);
 				}
 			},
 
@@ -7264,12 +7290,14 @@ jQuery.sheet = {
 				var i = cells.length - 1;
 
 				if ( i >= 0) {
-					do {
-						jS.cellUndoable.add(cells[i]); //save state, make it undoable
-						cells[i].td.css(style, value);
-						jS.cellUndoable.add(cells[i], true); //save state, make it redoable
+					jS.undo.createCells(cells, null, function() { //save state, make it undoable
+						do {
+							cells[i].td.css(style, value);
+						} while(i--);
 
-					} while(i--);
+						jS.editedLast = cells;
+						return cells;
+					});
 					return true;
 				}
 
@@ -7726,136 +7754,65 @@ jQuery.sheet = {
 			},
 
 			/**
-			 * Undoable manager
-			 * there should always be 2 cellUndoable.add()'s every time used, one to save the current state, the second to save the new
-			 * @memberOf jS
-			 * @name cellUndoable
-			 * @namespace
+			 *
 			 */
-			cellUndoable:{
-				/**
-				 * undo stack
-				 * @param undo
-				 * @memberOf jS.cellUndoable
-				 * @name stacks
-				 */
-				stacks:[],
-
-				/**
-				 * @param {Boolean} undo
-				 * @methodOf jS.cellUndoable
-				 * @name undoOrRedo
-				 */
-				undoOrRedo:function (undo) {
-					if (!this.stacks[jS.i]) return;
-
-					//hide the autoFiller, it can get confused
-					jS.autoFillerHide();
-
-					var stack = this.stack(), cells;
-
-					if (undo) {
-						stack.moveBackward();
-					} else {
-						stack.moveForward();
+			undo:{
+				manager:(window.UndoManager? new UndoManager:{}),
+				cells:[],
+				id:0,
+				createCells: function(cells, id, fn) {
+					if (id == u) {
+						jS.undo.id++;
+						id = jS.undo.id;
 					}
 
-					cells = stack.getCells();
+					var before = new jSCellRange(cells).clone().cells,
+						after = (fn ? new jSCellRange(fn()).clone().cells : before);
 
-					for (var i in cells) {
-						var td = cells[i].td,
-							loc = jS.getTdLocation(td);
+					before.id = id;
+					after.id = id;
 
-						jS.spreadsheets[jS.i][loc.row][loc.col] = cells[i];
+					jS.undo.manager.register(u, jS.undo.removeCells, [before, id], 'Remove Cells', u, jS.undo.createCells, [after, id], 'Create Cells');
 
-						td
-							.data('formula', cells[i].formula)
-							.attr('style', cells[i].style)
-							.addClass(cells[i].cl);
-
-						jS.cellLast.td = $([]);
-
-						jS.calcDependencies.apply(cells[i], null, true);
+					if (id != jS.undo.id || !fn) {
+						jS.undo.draw(after);
 					}
 				},
-
-				/**
-				 * gets the current element
-				 * @returns {jQuery|HTMLElement}
-				 * @name get
-				 * @methodOf jS.cellUndoable
-				 */
-				stack:function () {
-					if (!this.stacks[jS.i]) this.stacks[jS.i] = {
-						i: 0,
-						max: 20,
-						lasts: [],
-						lastsCells: [],
-						getCells: function(last) {
-							var index = (last ? $.inArray(last, this.lasts) : this.i);
-							if (index < 0) {
-								this.i = this.lasts.length;
-								this.lasts.push(last);
-								index = this.lasts.length - 1;
-								this.lastsCells[index] = [];
-							}
-							return this.lastsCells[index];
-						},
-						cleanAhead: function() {
-							this.lasts.splice(this.i + 1, this.lasts.length - this.i);
-							this.lastsCells.splice(this.i + 1, this.lasts.length - this.i);
-						},
-						cleanBehind: function() {
-							while (this.lasts.length > this.max) {
-								this.lasts.shift();
-								this.lastsCells.shift();
-							}
-						},
-						moveForward: function() {
-							this.i += 1;
-							this.i = math.min(this.i, this.lasts.length - 1);
-						},
-						moveBackward: function() {
-							this.i -= 1;
-							this.i = math.max(this.i, 0);
-						}
-					};
-
-					return this.stacks[jS.i];
-				},
-
-				/**
-				 * adds elements to the undoable stack
-				 * @param {Date} last
-				 * @param {Number} sheet
-				 * @param {Number} row
-				 * @param {Number} col
-				 * @param {Boolean} after
-				 * @name add
-				 * @methodOf jS.cellUndoable
-				 */
-				add:function (last, sheet, row, col, after) {
-					var stack = jS.cellUndoable.stack(),
-						cells = stack.getCells(last.valueOf() + (after ? 1 : 0));
-
-					stack.cleanAhead();
-
-					if (row > 0 && col > 0) {
-						var clone = {};
-
-						for (var attr in cell) {
-							clone[attr] = this[attr];
-						}
-						clone.style = this.td.attr('style');
-						clone.cl = (this.td.attr('class') || '')
-							.replace(jS.cl.uiTdActive , '')
-							.replace(jS.cl.uiTdHighlighted, '');
-						clone.sheet = this.sheet;
+				removeCells: function(cells, id) {
+					var i = 0, index = -1;
+					if (cells.id === id) {
+						index = i;
 					}
 
-					cells.push(clone);
+					if (index !== -1) {
+						//jS.undo.cells.splice(index, 1);
+					}
+					jS.undo.draw(cells);
+				},
+				draw: function(clones) {
+					var i;
+					for (i = 0; i < clones.length; i++) {
+						var clone = clones[i],
+							loc = jS.getTdLocation(clone.td),
+							cell = jS.spreadsheets[clone.sheet][loc.row][loc.col];
 
-					stack.cleanBehind();
+						cell.value = clone.value;
+						cell.formula = clone.formula;
+						cell.td = clone.td;
+						cell.dependencies = clone.dependencies;
+						cell.needsUpdated = clone.needsUpdated;
+						cell.calcCount = clone.calcCount;
+						cell.sheet = clone.sheet;
+						cell.calcLast = clone.calcLast;
+						cell.html = clone.html;
+						cell.state = clone.state;
+						cell.jS = clone.jS;
+						cell.calcDependenciesLast = clone.calcDependenciesLast;
+						cell.td.attr('style', clone.style);
+						cell.td.attr('class', clone.cl);
+
+						jS.updateCellValue.apply(cell);
+					}
 				}
 			},
 
@@ -8070,7 +8027,38 @@ jQuery.sheet = {
 			emptyFN = function () {
 			},
 			u = undefined,
-			math = Math;
+			math = Math,
+			jSCellRange = function(cells) {
+				this.cells = cells || [];
+			};
+
+		jSCellRange.prototype = {
+			clone: function() {
+				var clones = [];
+				for(var i = 0; i < this.cells.length;i++) {
+					var cell = this.cells[i],
+						clone = {
+							value:cell.value,
+							formula:cell.formula,
+							td: cell.td,
+							dependencies: cell.dependencies,
+							needsUpdated: cell.needsUpdated,
+							calcCount: cell.calcCount,
+							sheet: cell.sheet,
+							calcLast: cell.calcLast,
+							html: cell.html,
+							state: cell.state,
+							jS: cell.jS,
+							calcDependenciesLast: cell.calcDependenciesLast,
+							calcLast: cell.calcLast,
+							style: cell.style || cell.td.attr('style') || '',
+							cl: cell.cl || cell.td.attr('class') || ''
+						};
+					clones.push(clone);
+				}
+				return new jSCellRange(clones);
+			}
+		};
 
 		if (!win.scrollBarSize) {
 			win.scrollBarSize = $.sheet.getScrollBarSize();

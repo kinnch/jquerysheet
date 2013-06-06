@@ -8,8 +8,8 @@
 	<li>
 		<a href="#">Edit</a>
 		<ul>
-            <li><a onclick="sheetInstance.cellUndoable.undoOrRedo(true); return false;">Undo</a></li>
-            <li><a onclick="sheetInstance.cellUndoable.undoOrRedo(); return false;">Redo</a></li>
+            <li><a onclick="sheetInstance.undo.manager.undo(); return false;">Undo</a></li>
+            <li><a onclick="sheetInstance.undo.manager.redo(); return false;">Redo</a></li>
             <li><a class="jSCut">Cut</a></li>
             <li><a class="jSCopy">Copy</a></li>
             <li><a class="jSPaste">Paste</a></li>
