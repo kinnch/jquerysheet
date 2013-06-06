@@ -1103,37 +1103,34 @@ jQuery.sheet = {
             u = undefined,
             math = Math,
             jSCellRange = function(cells) {
-                if (!jSCellRange.prototype.setup) {
-                    jSCellRange.prototype = {
-                        setup: true,
-                        clone: function() {
-                            var clones = [];
-                            for(var i = 0; i < this.cells.length;i++) {
-                                var cell = this.cells[i],
-                                    clone = {
-                                        value:cell.value,
-                                        formula:cell.formula,
-                                        td: cell.td,
-                                        dependencies: cell.dependencies,
-                                        needsUpdated: cell.needsUpdated,
-                                        calcCount: cell.calcCount,
-                                        sheet: cell.sheet,
-                                        calcLast: cell.calcLast,
-                                        html: cell.html,
-                                        state: cell.state,
-                                        jS: cell.jS,
-                                        calcDependenciesLast: cell.calcDependenciesLast,
-                                        calcLast: cell.calcLast,
-                                        style: cell.style || cell.td.attr('style') || '',
-                                        cl: cell.cl || cell.td.attr('class') || ''
-                                    };
-                                clones.push(clone);
-                            }
-                            return new jSCellRange(clones);
-                        }
-                    };
-                }
                 this.cells = cells || [];
+            },
+            jSCP = jSCellRange.prototype = {
+                clone: function() {
+                    var clones = [];
+                    for(var i = 0; i < this.cells.length;i++) {
+                        var cell = this.cells[i],
+                            clone = {
+                                value:cell.value,
+                                formula:cell.formula,
+                                td: cell.td,
+                                dependencies: cell.dependencies,
+                                needsUpdated: cell.needsUpdated,
+                                calcCount: cell.calcCount,
+                                sheet: cell.sheet,
+                                calcLast: cell.calcLast,
+                                html: cell.html,
+                                state: cell.state,
+                                jS: cell.jS,
+                                calcDependenciesLast: cell.calcDependenciesLast,
+                                calcLast: cell.calcLast,
+                                style: cell.style || cell.td.attr('style') || '',
+                                cl: cell.cl || cell.td.attr('class') || ''
+                            };
+                        clones.push(clone);
+                    }
+                    return new jSCellRange(clones);
+                }
             },
 
 			/**
@@ -5890,7 +5887,6 @@ jQuery.sheet = {
 
                     return _grid;
                 },
-                editedLast: [],
 
                 /**
                  * sets a cells class for styling
@@ -6671,20 +6667,21 @@ jQuery.sheet = {
                     jS.calcDependenciesLast = last;
 
                     if (!skipUndoable) {
-                        jS.undo.createCells([this], null, function() {
+                        var cell = this;
+                        jS.undo.createCells([this], function(cells) {
                             jS.trigger('sheetPreCalculation', [
-                                {which:'cell', cell:this}
+                                {which:'cell', cell:cell}
                             ]);
 
                             jS.setDirty(true);
                             jS.setChanged(true);
-                            jS.updateCellValue.apply(this);
-                            jS.updateCellDependencies.apply(this);
+                            jS.updateCellValue.apply(cell);
+                            jS.updateCellDependencies.apply(cell);
                             jS.trigger('sheetCalculation', [
-                                {which:'cell', cell: this}
+                                {which:'cell', cell: cell}
                             ]);
 
-                            return [this];
+                            return cells;
                         });
                     } else {
                         jS.trigger('sheetPreCalculation', [
@@ -7331,12 +7328,11 @@ jQuery.sheet = {
                     var i = cells.length - 1;
 
                     if ( i >= 0) {
-                        jS.undo.createCells(cells, null, function() { //save state, make it undoable
+                        jS.undo.createCells(cells, function(cells) { //save state, make it undoable
                             do {
                                 cells[i].td.css(style, value);
                             } while(i--);
 
-                            jS.editedLast = cells;
                             return cells;
                         });
                         return true;
@@ -7810,12 +7806,12 @@ jQuery.sheet = {
                     ),
                     cells:[],
                     id:0,
-                    createCells: function(cells, id, fn) {
+                    createCells: function(cells, fn, id) {
                         if (this.manager.notLoaded) {
-                            this.createCells = function(cells, id, fn) {
-                                return fn();
+                            this.createCells = function(cells, fn, id) {
+                                return fn(cells);
                             };
-                            return this.createCells(cells, id, fn);
+                            return this.createCells(cells, fn, id);
                         }
                         if (id == u) {
                             jS.undo.id++;
@@ -7823,12 +7819,12 @@ jQuery.sheet = {
                         }
 
                         var before = new jSCellRange(cells).clone().cells,
-                            after = (fn ? new jSCellRange(fn()).clone().cells : before);
+                            after = (fn ? new jSCellRange(fn(cells)).clone().cells : before);
 
                         before.id = id;
                         after.id = id;
 
-                        jS.undo.manager.register(u, jS.undo.removeCells, [before, id], 'Remove Cells', u, jS.undo.createCells, [after, id], 'Create Cells');
+                        jS.undo.manager.register(u, jS.undo.removeCells, [before, id], 'Remove Cells', u, jS.undo.createCells, [after, null, id], 'Create Cells');
 
                         if (id != jS.undo.id || !fn) {
                             jS.undo.draw(after);
