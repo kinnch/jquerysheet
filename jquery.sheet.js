@@ -1094,6 +1094,47 @@ jQuery.sheet = {
 					parent.insertBefore(newElement, targetElement.nextSibling);
 				}
 			},
+            win = window,
+            $win = $(win),
+            doc = document,
+            $doc = $(doc),
+            $body = $('body'),
+            emptyFN = function () {},
+            u = undefined,
+            math = Math,
+            jSCellRange = function(cells) {
+                if (!jSCellRange.prototype.setup) {
+                    jSCellRange.prototype = {
+                        setup: true,
+                        clone: function() {
+                            var clones = [];
+                            for(var i = 0; i < this.cells.length;i++) {
+                                var cell = this.cells[i],
+                                    clone = {
+                                        value:cell.value,
+                                        formula:cell.formula,
+                                        td: cell.td,
+                                        dependencies: cell.dependencies,
+                                        needsUpdated: cell.needsUpdated,
+                                        calcCount: cell.calcCount,
+                                        sheet: cell.sheet,
+                                        calcLast: cell.calcLast,
+                                        html: cell.html,
+                                        state: cell.state,
+                                        jS: cell.jS,
+                                        calcDependenciesLast: cell.calcDependenciesLast,
+                                        calcLast: cell.calcLast,
+                                        style: cell.style || cell.td.attr('style') || '',
+                                        cl: cell.cl || cell.td.attr('class') || ''
+                                    };
+                                clones.push(clone);
+                            }
+                            return new jSCellRange(clones);
+                        }
+                    };
+                }
+                this.cells = cells || [];
+            },
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index]
@@ -1102,6963 +1143,6936 @@ jQuery.sheet = {
 			 * @type {Object}
 			 */
 			jS = {
-			/**
-			 * Current version of jQuery.sheet
-			 * @memberOf jS
-			 * @name version
-			 * @type {String}
-			 */
-			version:'3.x',
-
-			/**
-			 * The active sheet index within the a set of sheets
-			 * @memberOf jS
-			 * @name i
-			 * @type {Number}
-			 */
-			i:0,
-
-			/**
-			 * The instance index
-			 * @memberOf jS
-			 * @name I
-			 * @type {Number}
-			 */
-			I:I,
-
-			/**
-			 * The current count of sheet's within the instance
-			 * @memberOf jS
-			 * @name sheetCount
-			 * @type {Number}
-			 */
-			sheetCount:0,
-
-			/**
-			 * The current scrolled area, col.start, col.end, row.start, row.end
-			 * @memberOf jS
-			 * @named scrolledArea
-			 */
-			scrolledArea:[],
-
-			/**
-			 * The internal storage array of the spreadsheets for an instance, constructed as array 3 levels deep, spreadsheet, rows, cells, can easily be used for custom exporting/saving
-			 * @memberOf jS
-			 * @name spreadsheets
-			 * @type {Array}
-			 */
-			spreadsheets:[],
-
-			/**
-			 * Internal storage array of controls for an instance
-			 * @memberOf jS
-			 * @name controls
-			 */
-			controls:{
-				autoFiller:[],
-				bar:{
-					helper:[],
-					corner:[],
-					x:{
-						controls:[],
-						handleFreeze:[],
-						menu:[],
-						menuParent:[],
-						parent:[],
-						scroll:[],
-						td:[],
-						tds:function () {
-							var tds = $([]);
-							for (var i in this.td[jS.i]) {
-								tds = tds.add(this.td[jS.i][i]);
-							}
-							return tds;
-						}
-					},
-					y:{
-						controls:[],
-						handleFreeze:[],
-						menu:[],
-						parent:[],
-						scroll:[],
-						td:[],
-						tds:function () {
-							var tds = $([]);
-							for (var i in this.td[jS.i]) {
-								tds = tds.add(this.td[jS.i][i]);
-							}
-							return tds;
-						}
-					}
-				},
-				barMenuLeft:[],
-				barMenuTop:[],
-				barLeft:[],
-				barTop:[],
-				barTopParent:[],
-				chart:[],
-				tdMenu:[],
-				cellsEdited:[],
-				enclosure:[],
-				enclosures:null,
-				formula:null,
-				fullScreen:null,
-				header:null,
-				inPlaceEdit:[],
-				inputs:[],
-				label:null,
-				menuLeft:[],
-				menuRight:[],
-				menus:[],
-				pane:[],
-				panes:null,
-				scroll:[],
-				scrolls:null,
-				table:[],
-				tabls:null,
-				tab:[],
-				tabContainer:null,
-				tabs:null,
-				title:null,
-				toggleHide:{
-					x:[],
-					y:[]
-				},
-				ui:null
-			},
-
-			/**
-			 * Object selectors for interacting with a spreadsheet, dynamically id'd from both sheet index and instance index
-			 * @memberOf jS
-			 * @name obj
-			 * @type {Object}
-			 */
-			obj:{
-				autoFiller:function () {
-					return jS.controls.autoFiller[jS.i] || $([]);
-				},
-				barCorner:function () {
-					return jS.controls.bar.corner[jS.i] || $([]);
-				},
-				barHelper:function () {
-					return jS.controls.bar.helper[jS.i] || (jS.controls.bar.helper[jS.i] = $([]));
-				},
-				barLeft:function (i) {
-					return (jS.controls.bar.y.td[jS.i] && jS.controls.bar.y.td[jS.i][i] ? jS.controls.bar.y.td[jS.i][i] : $([]));
-				},
-				barLeftControls:function () {
-					return jS.controls.bar.y.controls[jS.i] || $([]);
-				},
-				barLefts:function () {
-					return jS.controls.bar.y.tds();
-				},
-				barHandleFreezeLeft:function () {
-					return jS.controls.bar.y.handleFreeze[jS.i] || $([]);
-				},
-				barMenuLeft:function () {
-					return jS.controls.bar.y.menu[jS.i] || $([]);
-				},
-				barTop:function (i) {
-					return (jS.controls.bar.x.td[jS.i] && jS.controls.bar.x.td[jS.i][i] ? jS.controls.bar.x.td[jS.i][i] : $([]));
-				},
-				barTopControls:function () {
-					return jS.controls.bar.x.controls[jS.i] || $([]);
-				},
-				barTops:function () {
-					return jS.controls.bar.x.tds();
-				},
-				barTopParent:function () {
-					return jS.controls.bar.x.parent[jS.i] || $([]);
-				},
-				barHandleFreezeTop:function () {
-					return jS.controls.bar.x.handleFreeze[jS.i] || $([]);
-				},
-				barMenuParentTop:function () {
-					return jS.controls.bar.x.menuParent[jS.i] || $([]);
-				},
-				barMenuTop:function () {
-					return jS.controls.bar.x.menu[jS.i] || $([]);
-				},
-				tdActive:function () {
-					return jS.cellLast.td || $([]);
-				},
-				tdMenu:function () {
-					return jS.controls.tdMenu[jS.i] || $([]);
-				},
-				cellsEdited: function () {
-					return jS.controls.cellsEdited[jS.i] || $([]);
-				},
-				chart:function () {
-					return jS.controls.chart[jS.i] || $([]);
-				},
-				enclosure:function () {
-					return jS.controls.enclosure[jS.i] || $([]);
-				},
-				enclosures:function () {
-					return jS.controls.enclosures || $([]);
-				},
-				formula:function () {
-					return jS.controls.formula || $([]);
-				},
-				fullScreen:function () {
-					return jS.controls.fullScreen || $([]);
-				},
-				header:function () {
-					return jS.controls.header || $([]);
-				},
-				highlighted: function() {
-					return jS.highlightedLast.obj || $([]);
-				},
-				menuRight:function () {
-					return jS.controls.menuRight[jS.i] || $([]);
-				},
-				inPlaceEdit:function () {
-					return jS.controls.inPlaceEdit[jS.i] || $([]);
-				},
-				inputs:function() {
-					return jS.controls.inputs[jS.i] || $([]);
-				},
-				label:function () {
-					return jS.controls.label || $([]);
-				},
-				menus:function() {
-					return jS.controls.menus[jS.i] || $([]);
-				},
-				menuLeft:function () {
-					return jS.controls.menuLeft[jS.i] || $([]);
-				},
-				pane:function () {
-					return jS.controls.pane[jS.i] || {};
-				},
-				panes:function () {
-					return jS.controls.panes || $([]);
-				},
-				parent:function () {
-					return s.parent;
-				},
-				scrollStyleX:function () {
-					return jS.controls.bar.x.scroll[jS.i] || {};
-				},
-				scrollStyleY:function () {
-					return jS.controls.bar.y.scroll[jS.i] || $([]);
-				},
-				scrollStyles:function() {
-					return $(this.scrollStyleX()).add(this.scrollStyleY());
-				},
-				scroll:function () {
-					return jS.controls.scroll[jS.i] || $([]);
-				},
-				scrolls:function () {
-					return jS.controls.scrolls || $([]);
-				},
-				table:function () {
-					return jS.controls.table[jS.i] || $([]);
-				},
-				tables:function () {
-					return jS.controls.tables || $([]);
-				},
-				tab:function () {
-					return jS.controls.tab[jS.i] || $([]);
-				},
-				tabs:function () {
-					return jS.controls.tabs || $([]);
-				},
-				tabContainer:function () {
-					return jS.controls.tabContainer || $([]);
-				},
-				toggleHideStyleX:function () {
-					return jS.controls.toggleHide.x[jS.i] || $([]);
-				},
-				toggleHideStyleY:function () {
-					return jS.controls.toggleHide.y[jS.i] || $([]);
-				},
-				title:function () {
-					return jS.controls.title || $([]);
-				},
-				ui:function () {
-					return jS.controls.ui || $([]);
-				}
-			},
-
-			/**
-			 * Internal id's of objects, dynamically id'd from both sheet index and instance index
-			 * @memberOf jS
-			 * @name id
-			 * @type {Object}
-			 */
-			id:{
-				table:'jS_' + I + '_'
-			},
-
-			/**
-			 * Internal css classes of objects
-			 * @memberOf jS
-			 * @name cl
-			 * @type {Object}
-			 */
-			cl:{
-				/*
-				 cl = class references
-				 */
-				autoFiller:'jSAutoFiller',
-				autoFillerHandle:'jSAutoFillerHandle',
-				autoFillerCover:'jSAutoFillerCover',
-				barCorner:'jSBarCorner',
-				barController:'jSBarController',
-				barHelper:'jSBarHelper',
-				barLeft:'jSBarLeft',
-				barHandleFreezeLeft:'jSBarHandleFreezeLeft',
-				barTop:'jSBarTop',
-				barTopMenuButton: 'jSBarTopMenuButton',
-				barHandleFreezeTop:'jSBarHandleFreezeTop',
-				barTopParent:'jSBarTopParent',
-				chart:'jSChart',
-				formula:'jSFormula',
-				formulaParent:'jSFormulaParent',
-				header:'jSHeader',
-				fullScreen:'jSFullScreen',
-				inPlaceEdit:'jSInPlaceEdit',
-				menu:'jSMenu',
-				menuFixed:'jSMenuFixed',
-				parent:'jSParent',
-				scroll:'jSScroll',
-				table:'jS',
-				label:'jSLoc',
-				pane:'jSEditPane',
-				tab:'jSTab',
-				tabContainer:'jSTabContainer',
-				tdMenu:'jSTdMenu',
-				title:'jSTitle',
-				enclosure:'jSEnclosure',
-				ui:'jSUI',
-				uiAutoFiller:'ui-state-active',
-				uiBar:'ui-widget-header',
-				uiBarHighlight:'ui-state-active',
-				uiBarHandleFreezeLeft:'ui-state-default',
-				uiBarHandleFreezeTop:'ui-state-default',
-				uiBarMenuTop:'ui-state-default',
-				uiTdActive:'ui-state-active',
-				uiTdHighlighted:'ui-state-highlight',
-				uiControl:'ui-widget-header ui-corner-top',
-				uiControlTextBox:'ui-widget-content',
-				uiFullScreen:'ui-widget-content ui-corner-all',
-				uiInPlaceEdit:'ui-state-highlight',
-				uiMenu:'ui-widget-header',
-				uiMenuUl:'ui-widget-header',
-				uiMenuLi:'ui-widget-header',
-				uiPane: 'ui-widget-content',
-				uiParent:'ui-widget-content ui-corner-all',
-				uiTable:'ui-widget-content',
-				uiTab:'ui-widget-header',
-				uiTabActive:'ui-state-highlight'
-			},
-
-			/**
-			 * Messages for user interface
-			 * @memberOf jS
-			 * @name msg
-			 * @type {Object}
-			 */
-			msg:{
-				addRowMulti:"How many rows would you like to add?",
-				addColumnMulti:"How many columns would you like to add?",
-				cellFind:"What are you looking for in this spreadsheet?",
-				cellNoFind:"No results found.",
-				dragToFreezeCol:"Drag to freeze column",
-				dragToFreezeRow:"Drag to freeze row",
-				addSheet:"Add a spreadsheet",
-				openSheet:"Are you sure you want to open a different sheet?  All unsaved changes will be lost.",
-				toggleHideRow:"No row selected.",
-				toggleHideColumn:"No column selected.",
-				loopDetected:"Loop Detected",
-				newSheetTitle:"What would you like the sheet's title to be?",
-				notFoundColumn:"Column not found",
-				notFoundRow:"Row not found",
-				notFoundSheet:"Sheet not found",
-				setCellRef:"Enter the name you would like to reference the cell by.",
-				sheetTitleDefault:"Spreadsheet {index}"
-			},
-
-			/**
-			 * Deletes a jQuery sheet instance
-			 * @methodOf jS
-			 * @name kill
-			 */
-			kill:function () {
-				$doc.unbind('keydown');
-				jS.obj.fullScreen().remove();
-				jS.obj.inPlaceEdit().trigger('destroy');
-				s.parent
-					.trigger('sheetKill')
-					.removeClass(jS.cl.uiParent)
-					.html('')
-					.removeData('sheetInstance');
-
-				jS.obj.menus().remove();
-
-				for (var i in $.sheet.events) {
-					s.parent.unbind($.sheet.events[i]);
-				}
-
-				$.sheet.instance.splice(I, 1);
-				jS = null;
-			},
-
-			/**
-			 * Event trigger for jQuery sheet, wraps jQuery's trigger event to always return jS
-			 * @param {String} eventType event type
-			 * @param {Array} extraParameters optional
-			 * @methodOf jS
-			 * @name trigger
-			 */
-			trigger:function (eventType, extraParameters) {
-				//wrapper for $ trigger of parent, in case of further mods in the future
-				extraParameters = extraParameters || [];
-				s.parent.trigger(eventType, [jS].concat(extraParameters));
-			},
-
-			/**
-			 * Returns all spreadsheets within an instance as an array, builds it if it doesn't exist
-			 * @param forceRebuild
-			 * @returns {Array|spreadsheets}
-			 * @methodOf jS
-			 * @name spreadsheetsToArray
-			 */
-			spreadsheetsToArray:function (forceRebuild) {
-				if (forceRebuild || jS.spreadsheets.length == 0) {
-					jS.cycleCellsAll(function (sheet, row, col) {
-						jS.createCell(sheet, row, col);
-					});
-				}
-				return jS.spreadsheets;
-			},
-
-			/**
-			 * Returns singe spreadsheet from a set of spreadsheets within as instance, builds if it doesn't exist
-			 * @param {Boolean} forceRebuild Enforces the spreadsheet to be rebuilt
-			 * @param {Number} i Spreadsheet index
-			 * @methodOf jS
-			 * @name spreadsheetToArray
-			 */
-			spreadsheetToArray:function (forceRebuild, i) {
-				i = (i ? i : jS.i);
-				if (forceRebuild || !jS.spreadsheets[i]) {
-					jS.cycleCells(function (sheet, row, col) {
-						jS.createCell(sheet, row, col);
-					});
-				}
-			},
-
-			/**
-			 * Creates a single cell within
-			 * @param {Number} sheetIndex
-			 * @param {Number} rowIndex
-			 * @param {Number} colIndex
-			 * @param {Number} calcCount
-			 * @param {Date} calcLast
-			 * @param {Date} calcDependenciesLast
-			 * @returns {Object} jSCell
-			 * @methodOf jS
-			 * @name createCell
-			 */
-			createCell:function (sheetIndex, rowIndex, colIndex, calcCount, calcLast, calcDependenciesLast) {
-				//first create cell
-				var sheet, row, jSCell, table, colGroup, col, tBody, tr, td, $td, tdsX, tdsY;
-				if (!(sheet = jS.spreadsheets[sheetIndex])) { //check if spreadsheet exists, if not, create it as an array
-					sheet = jS.spreadsheets[sheetIndex] = [];
-				}
-
-				if (!(row = sheet[rowIndex])) { //check if row exists, if not, create it
-					row = sheet[rowIndex] = [];
-				}
-
-				if (!(table = jS.controls.tables[sheetIndex])) {
-					return {};
-				}
-				if (!(tBody = table.tbody)) {
-					return {};
-				}
-				if (!(tr = tBody.children[rowIndex])) {
-					return {};
-				}
-				if (!(td = tr.children[colIndex])) {
-					return {};
-				}
-
-				$td = $(td);
-
-				jSCell = row[colIndex] = td.jSCell = { //create cell
-					td:$td,
-					dependencies: [],
-					formula:td.getAttribute('data-formula') || '',
-					value:td.textContent || td.innerText || '',
-					calcCount:calcCount || 0,
-					calcLast:calcLast || -1,
-					calcDependenciesLast:calcDependenciesLast || -1,
-					html:[],
-					sheet:sheetIndex,
-					type: 'cell',
-					jS: jS,
-					state: [],
-					needsUpdated: true
-				};
-
-				if (jSCell.formula && jSCell.formula.charAt(0) == '=') {
-					jSCell.formula = jSCell.formula.substring(1);
-				}
-
-
-				//attach cells to col
-				colGroup = table.colgroup;
-				if (!(col = colGroup.children[colIndex]).jSCells) col.jSCells = [];
-				col.jSCells.unshift(jSCell);
-
-				//attach td to col
-				if (!col.tds) col.tds = [];
-				col.tds.unshift(td);
-
-				//attach col to td
-				td.col = col;
-				td.type = 'cell';
-				td.barLeft = tr.children[0];
-				td.barTop = tBody.children[0].children[colIndex];
-
-				//attach cells to tr
-				if (!tr.jSCells) tr.jSCells = [];
-				tr.jSCells.unshift(jSCell);
-
-				//attach td's to tr
-				if (!tr.tds) tr.tds = [];
-				tr.tds.unshift(td);
-
-				//attach cells to table
-				if (!table.jSCells) table.jSCells = [];
-				table.jSCells.unshift(jSCell);
-
-				//attach td's to table
-				if (!table.tds) table.tds = [];
-				table.tds.unshift(td);
-
-				//attach table to td
-				td.table = table;
-
-				//now create row
-				if (!(tdsY = jS.controls.bar.y.td[sheetIndex])) {
-					tdsY = jS.controls.bar.y.td[sheetIndex] = [];
-				}
-				if (!tdsY[rowIndex]) {
-					tdsY[rowIndex] = $(tr.children[0]);
-				}
-
-				if (!(tdsX = jS.controls.bar.x.td[sheetIndex])) {
-					tdsX = jS.controls.bar.x.td[sheetIndex] = [];
-				}
-				if (!tdsX[colIndex]) {
-					tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
-				}
-
-				//return cell
-				return jSCell;
-			},
-
-			/**
-			 * Tracks which spreadsheet is active to intercept keystrokes for navigation
-			 * @type {Boolean}
-			 * @memberOf jS
-			 * @name nav
-			 */
-			nav:false,
-
-			/**
-			 * Turns off all intercept keystroke navigation instances, with exception of supplied instance index
-			 * @param {Number} nav Instance index
-			 * @methodOf jS
-			 * @name setNav
-			 */
-			setNav:function (nav) {
-				$.sheet.instance.each(function () {
-					this.nav = false;
-				});
-
-				jS.nav = nav;
-			},
-
-			/**
-			 * Creates the different objects required by sheets
-			 * @memberOf jS
-			 * @name controlFactory
-			 * @type {Object}
-			 * @namespace
-			 */
-			controlFactory:{
-				/**
-				 * Creates multi rows
-				 * @param {Number} i, optional, row index
-				 * @param {Number} qty the number of cells you'd like to add, if not specified, a dialog will ask
-				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
-				 * @param {Boolean} skipFormulaReparse re-parses formulas if needed
-				 * @methodOf jS.controlFactory
-				 * @name addRowMulti
-				 */
-				addRowMulti:function (i, qty, isBefore, skipFormulaReparse) {
-					if (!qty) {
-						qty = prompt(jS.msg.addRowMulti);
-					}
-					if (qty) {
-						if (!isNaN(qty)) {
-							jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'row', skipFormulaReparse);
-							jS.trigger('sheetAddRow', [i, isBefore, qty]);
-						}
-					}
-				},
-
-				/**
-				 * Creates multi columns
-				 * @param {Number} i, optional, column index
-				 * @param {Number} qty the number of cells you'd like to add, if not specified, a dialog will ask
-				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
-				 * @param {Boolean} skipFormulaReparse re-parses formulas if needed
-				 * @methodOf jS.controlFactory
-				 * @name addColumnMulti
-				 */
-				addColumnMulti:function (i, qty, isBefore, skipFormulaReparse) {
-					if (!qty) {
-						qty = prompt(jS.msg.addColumnMulti);
-					}
-					if (qty) {
-						if (!isNaN(qty)) {
-							jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'col', skipFormulaReparse);
-							jS.trigger('sheetAddColumn', [i, isBefore, qty]);
-						}
-					}
-				},
-
-				/**
-				 * Creates cells for sheet and the bars that go along with them
-				 * @param {Number} i optional, index where cells should be added, if null, cells go to end
-				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end;
-				 * @param {Number} qty how many rows/columsn to add
-				 * @param {String} type "row" or "col", default "col"
-				 * @param {Boolean} skipFormulaReparse re-parses formulas if needed
-				 * @methodOf jS.controlFactory
-				 * @name addCells
-				 */
-				addCells:function (i, isBefore, qty, type, skipFormulaReparse) {
-					//hide the autoFiller, it can get confused
-					jS.autoFillerHide();
-
-					jS.setDirty(true);
-					jS.setChanged(true);
-					jS.obj.barHelper().remove();
-
-					var $sheet = jS.obj.table(),
-						sheet = $sheet[0],
-						sheetSize = jS.sheetSize(sheet),
-						isLast = false,
-						activeCell = jS.obj.tdActive(),
-						o;
-
-					qty = qty || 1;
-					type = type || 'col';
-
-					if (i == u) {
-						i = (type == 'row' ? sheetSize.rows : sheetSize.cols);
-						isLast = true;
-					}
-
-					switch (type) {
-						case "row":
-							o = {
-								el:function () {
-									//table / tbody / tr / td
-									var tds = jS.rowTds(sheet, i);
-									if (!tds || !tds[0]) return [];
-									return [tds[0].parentNode];
-								},
-								size:function () {
-									if (!o.Size) {
-										var tr = o.el()[0];
-										o.Size = tr.children.length - 1;
-									}
-									return o.Size;
-								},
-								loc:function () {
-									var tr = o.el();
-									return jS.getTdLocation(tr[0].children);
-								},
-								trs: [],
-								newObj:function () {
-									var j = o.size(),
-										tr = doc.createElement('tr');
-
-									tr.setAttribute('style', 'height: ' + s.colMargin + 'px;');
-									for (var i = 0; i <= j; i++) {
-										var td = doc.createElement('td');
-										if (i == 0) {
-											td.setAttribute('class', jS.cl.barLeft + ' ' + jS.cl.uiBar);
-											td.entity = 'left';
-											td.type = 'bar';
-										}
-										tr.appendChild(td);
-									}
-
-									o.trs.push(tr);
-
-									return tr;
-								},
-								offset:{row:qty, col:0},
-								start:function () {
-									return {row:(isBefore ? i : i + qty)};
-								},
-								createCells:function () {
-									for (var row = 0; row < o.trs.length; row++) {
-										row = row * 1;
-										var offset = (isBefore ? 0 : 1) + i;
-										jS.spreadsheets[jS.i].splice(row + offset, 0, []);
-										for (var col = 0; col < o.trs[row].children.length; col++) {
-											col = col * 1;
-											if (col == 0) {//skip bar
-												jS.controls.bar.y.td[jS.i].splice(row + offset, 0, $(o.trs[row].children[col]));
-											} else {
-												jS.createCell(jS.i, row + offset, col);
-											}
-										}
-									}
-
-									jS.refreshRowLabels(i);
-								}
-							};
-							break;
-						case "col":
-							o = {
-								el:function () {
-									var tdStart = jS.rowTds(sheet, 1)[i],
-										lastRow = jS.rowTds(sheet),
-										tdEnd = lastRow[lastRow.length - 1],
-
-										loc1 = jS.getTdLocation(tdStart),
-										loc2 = jS.getTdLocation(tdEnd),
-
-										tds = [];
-
-									for (var j = 0; j <= loc2.row; j++) {
-										tds.push(sheet.tbody.children[j].children[i]);
-									}
-
-									return tds;
-								},
-								col:function () {
-									return jS.col(sheet, i);
-								},
-								cols: [],
-								newCol:function () {
-									var col = doc.createElement('col');
-									col.setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
-									o.cols.push(col);
-									return col;
-								},
-								loc:function (tds) {
-									tds = (tds ? tds : o.el());
-									return jS.getTdLocation(tds[0]);
-								},
-								tds: [],
-								newObj:function () {
-									var td = doc.createElement('td');
-									o.tds.push(td);
-									return td;
-								},
-								offset:{row:0, col:qty},
-								start:function () {
-									return {col:(isBefore ? i : i + qty)};
-								},
-								createCells:function () {
-									var rows = jS.rows(sheet);
-									for (var row = 0; row < rows.length; row++) {
-										var col = (isBefore ? 0 : 1) + i,
-											colMax = col + qty,
-											j = 0;
-										for (col; col < colMax; col++) {
-											var td = sheet.tbody.children[row].children[col],
-												$td = $(td);
-											if (row == 0) {
-												jS.controls.bar.x.td[jS.i].splice(col, 0, $td);
-												td.innerText = jSE.columnLabelString(col);
-												td.className = jS.cl.barTop + ' ' + jS.cl.uiBar;
-												td.type = 'bar';
-												td.entity = 'top';
-
-												o.cols[j].setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
-												o.cols[j].bar = td;
-												j++;
-											} else {
-												jS.spreadsheets[jS.i][row].splice(col, 0, {});
-												jS.createCell(jS.i, row, col);
-											}
-										}
-									}
-
-									jS.refreshColumnLabels(i);
-								}
-							};
-							break;
-					}
-
-					var el = o.el(),
-						loc = o.loc(el),
-						col,
-						j = el.length - 1,
-						k;
-
-					if (isBefore) {
-						do {
-							k = qty - 1;
-							do {
-								el[j].parentNode.insertBefore(o.newObj(), el[j]);
-							} while (k--);
-						} while (j--);
-
-						if (o.newCol) {
-							col = o.col();
-							k = qty - 1;
-							do {
-								col.parentNode.insertBefore(o.newCol(), col);
-							} while (k--);
-						}
-					} else {
-						do {
-							k = qty - 1;
-							do {
-								insertAfter(o.newObj(), el[j]);
-							} while (k--);
-						} while (j--);
-
-						if (o.newCol) {
-							col = o.col();
-							k = qty - 1;
-							do {
-								insertAfter(o.newCol(), col)
-							} while (k--);
-						}
-					}
-
-					o.createCells();
-
-					if (!skipFormulaReparse && isLast != true) {
-						//offset formulas
-						jS.offsetFormulas(loc, o.offset, isBefore);
-					}
-
-					jS.obj.pane().resizeScroll();
-
-					if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
-						jS.colLast = activeCell[0].cellIndex;
-						jS.rowLast = activeCell[0].parentNode.rowIndex;
-					}
-				},
-
-				/**
-				 * creates single row
-				 * @param {Number} i, optional, row index
-				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
-				 * @methodOf jS.controlFactory
-				 * @name addRow
-				 */
-				addRow:function (i, isBefore) {
-					jS.controlFactory.addCells(i, isBefore, 1, 'row');
-					jS.trigger('sheetAddRow', [i, isBefore, 1]);
-				},
-
-				/**
-				 * creates single column
-				 * @param {Number} i, optional, column index
-				 * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
-				 * @methodOf jS.controlFactory
-				 * @name addColumn
-				 */
-				addColumn:function (i, isBefore) {
-					jS.controlFactory.addCells(i, isBefore, 1, 'col');
-					jS.trigger('sheetAddColumn', [i, isBefore, 1]);
-				},
-
-				/**
-				 * Creates all the bars to the left of the spreadsheet, if they exist, they are first removed
-				 * @param {jQuery|HTMLElement} table Table of spreadsheet
-				 * @methodOf jS.controlFactory
-				 * @name barLeft
-				 */
-				barLeft:function (table) {
-					var tr = table.tbody.children,
-						i = tr.length - 1;
-
-					//table / tbody / tr
-					if (i > -1) {
-						do {
-							tr[i].insertBefore(doc.createElement('td'), tr[i].children[0]);
-						} while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
-					}
-				},
-
-				/**
-				 * Creates all the bars to the top of the spreadsheet on colgroup col elements, if they exist, they are first removed
-				 * @param {HTMLElement} table representing spreadsheet
-				 * @methodOf jS.controlFactory
-				 * @name barTop
-				 */
-				barTop:function (table) {
-					var colgroup = table.colgroup,
-						cols = colgroup.children,
-						i,
-						trFirst = table.tbody.children[0],
-
-						colCorner = doc.createElement('col'), //left column & corner
-						tdCorner = doc.createElement('td'),
-
-						barTopParent = doc.createElement('tr');
-
-					//If the col elements outnumber the td's, get rid of the extra as it messes with the ui
-					while (cols.length > trFirst.children.length) {
-						colgroup.removeChild(cols[cols.length -1]);
-					}
-
-					colCorner.width = s.colMargin + 'px';
-					colCorner.style.width = colCorner.width;
-					colgroup.insertBefore(colCorner, colgroup.children[0]); //end col corner
-
-					barTopParent.appendChild(tdCorner);
-
-					barTopParent.className = jS.cl.barTopParent;
-					table.tbody.insertBefore(barTopParent, table.tbody.children[0]);
-					table.barTopParent = barTopParent;
-					table.corner = tdCorner;
-					jS.controls.barTopParent[jS.i] = $(barTopParent);
-
-					i = trFirst.children.length - 1;
-
-					do {
-						var td = doc.createElement('td');
-						if (!cols[i]) {
-							cols[i] = doc.createElement('col');
-							colgroup.insertBefore(cols[i], colCorner.nextSibling);
-
-						}
-
-						cols[i].bar = td;
-						td.col = cols[i];
-						barTopParent.insertBefore(td, tdCorner.nextSibling);
-					} while (i-- > 0);
-
-					table.barTop = jS.controls.barTopParent[jS.i].children();
-
-					return barTopParent;
-				},
-
-				/**
-				 * Creates the draggable objects for freezing cells
-				 * @type {Object}
-				 * @memberOf jS.controlFactory
-				 * @name barHandleFreeze
-				 * @namespace
-				 */
-				barHandleFreeze:{
-
-					/**
-					 * @param {jQuery|HTMLElement} pane
-					 * @returns {Boolean}
-					 * @methodOf jS.controlFactory.barHandleFreeze
-					 * @name top
-					 */
-					top:function (pane) {
-						if (jS.isBusy()) return false;
-						var frozenAt = jS.frozenAt(),
-							scrolledTo = jS.scrolledTo();
-						if (!(scrolledTo.end.col <= frozenAt.col + 1)) return false;
-
-						jS.obj.barHelper().remove();
-
-						var bar = jS.obj.barTop(frozenAt.col + 1),
-							pos = bar.position(),
-							highlighter,
-							offset = $(pane).offset(),
-							handle = doc.createElement('div'),
-							$handle = pane.freezeHandleTop = $(handle)
-								.appendTo(pane)
-								.addClass(jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
-								.height(bar.height())
-								.css('left', (pos.left - handle.clientWidth) + 'px')
-								.attr('title', jS.msg.dragToFreezeCol),
-							tds = pane.table.barTop;
-
-
-						jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
-						jS.controls.bar.x.handleFreeze[jS.i] = $handle;
-
-						jS.draggable($handle, {
-							axis:'x',
-							start:function () {
-								jS.setBusy(true);
-
-								highlighter = $(doc.createElement('div'))
-									.appendTo(pane)
-									.css('position', 'absolute')
-									.addClass('ui-state-highlight ' + jS.cl.barHelper)
-									.height(pane.table.corner.clientHeight)
-									.fadeTo(0,0.33);
-							},
-							drag:function() {
-								var target = jS.nearest($handle, tds).prev();
-								if (target.length && target.position) {
-									highlighter.width(target.position().left + target.width());
-								}
-							},
-							stop:function (e, ui) {
-								highlighter.remove();
-								jS.setBusy(false);
-								jS.setDirty(true);
-								var target = jS.nearest($handle, tds);
-								jS.obj.barHelper().remove();
-								jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
-								jS.evt.scroll.start('x', pane);
-							},
-							containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - win.scrollBarSize.width), offset.top]
-						});
-					},
-
-					/**
-					 *
-					 * @param {jQuery|HTMLElement} pane
-					 * @returns {Boolean}
-					 * @methodOf jS.controlFactory.barHandleFreeze
-					 * @name left
-					 */
-					left:function (pane) {
-						if (jS.isBusy()) return false;
-						var frozenAt = jS.frozenAt(),
-							scrolledTo = jS.scrolledTo();
-						if (!(scrolledTo.end.row <= (frozenAt.row + 1))) return false;
-
-						jS.obj.barHelper().remove();
-
-						var bar = $(pane.table.tbody.children[frozenAt.row + 1].children[0]),
-							pos = bar.position(),
-							highlighter,
-							offset = $(pane).offset(),
-							handle = doc.createElement('div'),
-							$handle = pane.freezeHandleLeft = $(handle)
-								.appendTo(pane)
-								.addClass(jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
-								.width(bar.width())
-								.css('top', (pos.top - handle.clientHeight) + 'px')
-								.attr('title', jS.msg.dragToFreezeRow),
-								trs = $(pane.table.tbody.children);
-
-						jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
-						jS.controls.bar.y.handleFreeze[jS.i] = $handle;
-
-						jS.draggable($handle, {
-							axis:'y',
-							start:function () {
-								jS.setBusy(true);
-
-								highlighter = $(doc.createElement('div'))
-									.appendTo(pane)
-									.css('position', 'absolute')
-									.addClass('ui-state-highlight ' + jS.cl.barHelper)
-									.width(handle.clientWidth)
-									.fadeTo(0,0.33);
-							},
-							drag:function() {
-								var target = jS.nearest($handle, trs).prev();
-								if (target.length && target.position) {
-									highlighter.height(target.position().top + target.height());
-								}
-							},
-							stop:function (e, ui) {
-								highlighter.remove();
-								jS.setBusy(false);
-								jS.setDirty(true);
-								var target = jS.nearest($handle, trs);
-								jS.obj.barHelper().remove();
-								jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
-								jS.evt.scroll.start('y', pane);
-							},
-							containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - win.scrollBarSize.height)]
-						});
-					},
-
-					/**
-					 * @methodOf jS.controlFactory.barHandleFreeze
-					 * @name corner
-					 */
-					corner:function () {
-					}
-				},
-
-				/**
-				 *
-				 * Creates menus for contextual menus and top bar button
-				 * @param bar
-				 * @param menuItems
-				 * @returns {jQuery|HTMLElement}
-				 * @memberOf jS.controlFactory
-				 * @name menu
-				 */
-				menu:function (bar, menuItems) {
-					var menu, buttons = $([]);
-
-					switch (bar) {
-						case "top":
-							menu = $(doc.createElement('div'))
-								.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
-							jS.controls.bar.x.menu[jS.i] = menu;
-							break;
-						case "left":
-							menu = $(doc.createElement('div'))
-								.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
-							jS.controls.bar.y.menu[jS.i] = menu;
-							break;
-						case "cell":
-							menu = $(doc.createElement('div'))
-								.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
-							jS.controls.tdMenu[jS.i] = menu;
-							break;
-					}
-
-					jS.controls.menus[jS.i] = jS.obj.menus().add(menu);
-
-					menu
-						.mouseleave(function () {
-							menu.hide();
-						})
-						.bind('contextmenu', function() {return false;})
-						.appendTo($body)
-						.hide()
-						.disableSelectionSpecial();
-
-					for (var msg in menuItems) {
-						if (menuItems[msg]) {
-							if ($.isFunction(menuItems[msg])) {
-								buttons = buttons.add(
-									$(doc.createElement('div'))
-										.text(msg)
-										.data('msg', msg)
-										.click(function () {
-											menuItems[$(this).data('msg')].apply(this, [jS]);
-											menu.hide();
-											return false;
-										})
-										.appendTo(menu)
-										.hover(function() {
-											buttons.removeClass('ui-state-highlight');
-											$(this).addClass('ui-state-highlight');
-										}, function() {
-											$(this).removeClass('ui-state-highlight');
-										})
-									);
-
-							} else if (menuItems[msg] == 'line') {
-								$(doc.createElement('hr')).appendTo(menu);
-							}
-						}
-					}
-
-					return menu;
-				},
-
-				/**
-				 * Creates items within menus using jQuery.sheet.instance.msg
-				 * @memberOf jS.controlFactory
-				 * @namespace
-				 * @name barMenu
-				 */
-				barMenu:{
-
-					/**
-					 * @param {Object} e jQuery event
-					 * @param {Number} i column
-					 * @param {jQuery|HTMLElement} target
-					 * @returns {*}
-					 * @methodOf jS.controlFactory.barMenu
-					 * @name top
-					 */
-					top:function (e, i, target) {
-						if (jS.isBusy()) return false;
-						var menu = jS.obj.barMenuTop().hide();
-
-						if (!menu.length) {
-							menu = jS.controlFactory.menu('top', s.contextmenuTop);
-						}
-
-						jS.obj.menus().hide();
-
-						if (!target) {
-							menu
-								.css('left', (e.pageX - 5) + 'px')
-								.css('top', (e.pageY - 5) + 'px')
-								.show();
-							return menu;
-						}
-
-						var barMenuParentTop = jS.obj.barMenuParentTop().hide();
-
-						if (!barMenuParentTop.length) {
-
-							barMenuParentTop = $(doc.createElement('div'))
-								.addClass(jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barTopMenuButton)
-								.append(
-									$(doc.createElement('span'))
-										.addClass('ui-icon ui-icon-triangle-1-s')
-								)
-								.mousedown(function (e) {
-									barMenuParentTop.parent()
-										.mousedown()
-										.mouseup();
-
-									var offset = barMenuParentTop.offset();
-
-									menu
-										.css('left', (e.pageX - 5) + 'px')
-										.css('top', (e.pageY - 5) + 'px')
-										.show();
-								})
-								.blur(function () {
-									if (menu) menu.hide();
-								})
-								.bind('destroy', function () {
-									barMenuParentTop.remove();
-									jS.controls.bar.x.menuParent[jS.i] = null;
-								});
-
-							jS.controls.bar.x.menuParent[jS.i] = barMenuParentTop;
-						}
-
-						barMenuParentTop
-							.prependTo(target)
-							.show();
-					},
-
-					/**
-					 *
-					 * @param e
-					 * @param i
-					 * @returns {Boolean}
-					 * @methodOf jS.controlFactory.barMenu
-					 * @name left
-					 */
-					left:function (e, i) {
-						if (jS.isBusy()) return false;
-						jS.obj.barMenuLeft().hide();
-
-						if (i) jS.obj.barHandleFreezeLeft().remove();
-						var menu;
-
-						menu = jS.obj.barMenuLeft();
-
-						if (!menu.length) {
-							menu = jS.controlFactory.menu('left', s.contextmenuLeft);
-						}
-
-						jS.obj.menus().hide();
-
-						menu
-							.css('left', (e.pageX - 5) + 'px')
-							.css('top', (e.pageY - 5) + 'px')
-							.show();
-
-						return true;
-					},
-
-					/**
-					 * @methodOf jS.controlFactory.barMenu
-					 * @name corner
-					 */
-					corner:function () {
-					}
-				},
-
-
-				/**
-				 * Creates contextual menus for cells (a right click menu)
-				 * @param {Object} e jQuery event
-				 * @returns {Boolean}
-				 * @methodOf jS.controlFactory
-				 * @name tdMenu
-				 */
-				tdMenu:function (e) {
-					if (jS.isBusy()) return false;
-					jS.obj.tdMenu().hide();
-
-					var menu = jS.obj.tdMenu();
-
-					if (!menu.length) {
-						menu = jS.controlFactory.menu('cell', s.contextmenuCell);
-					}
-
-					jS.obj.menus().hide();
-
-					menu
-						.css('left', (e.pageX - 5) + 'px')
-						.css('top', (e.pageY - 5) + 'px')
-						.show();
-				},
-
-
-				/**
-				 * Creates the control/container for everything above the spreadsheet, removes them if they already exist
-				 * @methodOf jS.controlFactory
-				 * @name header
-				 */
-				header:function () {
-					jS.obj.header().remove();
-					jS.obj.tabContainer().remove();
-
-					var header = doc.createElement('div'),
-						firstRow = doc.createElement('table'),
-						firstRowTr = doc.createElement('tr'),
-						secondRow,
-						secondRowTr,
-						title = doc.createElement('td'),
-						label,
-						menuLeft,
-						menuRight,
-						formula,
-						formulaParent;
-
-					header.appendChild(firstRow);
-					firstRow.appendChild(firstRowTr);
-					header.className = jS.cl.header + ' ' + jS.cl.uiControl;
-
-					jS.controls.header = $(header);
-
-					if (s.title) {
-						if ($.isFunction(s.title)) {
-							s.title = jS.title(jS, I);
-						}
-
-						title.className = jS.cl.title;
-						jS.controls.title = $(title).html(s.title)
-					} else {
-						$(title).hide();
-					}
-					firstRowTr.appendChild(title);
-
-					//Sheet Menu Control
-					function makeMenu(menu) {
-						if ($.isFunction(menu)) {
-							menu = $(menu(jS));
-						} else {
-							menu = $(menu);
-						}
-
-						if (menu.is('ul')) {
-							menu
-								.find("ul").hide()
-								.addClass(jS.cl.uiMenuUl);
-
-							menu
-								.find("li")
-								.addClass(jS.cl.uiMenuLi)
-								.hover(function () {
-									$(this).find('ul:first')
-										.hide()
-										.show();
-								}, function () {
-									$(this).find('ul:first')
-										.hide();
-								});
-						}
-						return menu;
-					}
-
-					if (jS.isSheetEditable()) {
-						if (s.menuLeft) {
-							menuLeft = doc.createElement('td');
-							menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
-							firstRowTr.insertBefore(menuLeft, title);
-
-							jS.controls.menuLeft[jS.i] = $(menuLeft)
-								.append(makeMenu(s.menuLeft));
-
-							jS.controls.menuLeft[jS.i].find('img').load(function () {
-								jS.sheetSyncSize();
-							});
-						}
-
-						if (s.menuRight) {
-							menuRight = doc.createElement('td');
-							menuRight.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
-							firstRowTr.appendChild(menuRight);
-
-							jS.controls.menuRight[jS.i] = $(menuRight)
-								.append(makeMenu(s.menuRight));
-
-							jS.controls.menuRight[jS.i].find('img').load(function () {
-								jS.sheetSyncSize();
-							});
-						}
-
-						label = doc.createElement('td');
-						label.className = jS.cl.label;
-						jS.controls.label = $(label);
-
-						//Edit box menu
-						formula = doc.createElement('textarea');
-						formula.className = jS.cl.formula;
-						formula.onkeydown = jS.evt.formula.keydown;
-						formula.onkeyup = function () {
-							jS.obj.inPlaceEdit().val(this.value);
-						};
-						formula.onchange = function () {
-							jS.obj.inPlaceEdit().val(this.value);
-						};
-						formula.onpaste = jS.evt.pasteOverCells;
-						formula.onfocus = function () {
-							jS.setNav(false);
-						};
-						formula.onfocusout = function () {
-							jS.setNav(true);
-						};
-						formula.onblur = function () {
-							jS.setNav(true);
-						};
-						jS.controls.formula = $(formula);
-
-						// resizable formula area - a bit hard to grab the handle but is there!
-						var formulaResize = doc.createElement('span');
-						formulaResize.appendChild(formula);
-
-						secondRow = doc.createElement('table');
-						secondRowTr = doc.createElement('tr');
-						secondRow.appendChild(secondRowTr);
-
-						header.appendChild(secondRow);
-
-
-						formulaParent = doc.createElement('td');
-						formulaParent.className = jS.cl.formulaParent;
-						formulaParent.appendChild(formulaResize);
-						secondRowTr.appendChild(label);
-						secondRowTr.appendChild(formulaParent);
-
-						jS.resizableSheet($(formulaResize), {
-							minHeight:jS.controls.formula.height(),
-							maxHeight:78,
-							handles:'s',
-							resize:function (e, ui) {
-								jS.controls.formula.height(ui.size.height);
-							},
-							stop: function() {
-								jS.sheetSyncSize();
-							}
-						});
-
-						$.sheet.instance.each(function () {
-							this.nav = false;
-						});
-
-						jS.setNav(true);
-
-						$doc.keydown(jS.evt.doc.keydown);
-					}
-
-					return header;
-				},
-
-				/**
-				 * Creates the user interface for spreadsheets
-				 * @methodOf jS.controlFactory
-				 * @name ui
-				 */
-				ui:function () {
-					var ui = doc.createElement('div');
-					ui.setAttribute('class', jS.cl.ui);
-					jS.controls.ui = $(ui);
-					return ui;
-				},
-
-
-				/**
-				 * Creates the tab interface for spreadsheets
-				 * @methodOf jS.controlFactory
-				 * @name tabContainer
-				 */
-				tabContainer:function () {
-					var tabContainer = jS.controls.tabContainer = $(doc.createElement('span'))
-						.addClass(jS.cl.tabContainer)
-						.mousedown(function (e) {
-							var i = e.target.i;
-							if (i >= 0) {
-								jS.trigger('sheetSwitch', [i]);
-							}
-							return false;
-						})
-						.dblclick(function (e) {
-							var i = e.target.i;
-							if (i >= 0) {
-								jS.trigger('sheetRename', [i]);
-							}
-							return false;
-						});
-
-
-					if (jS.isSheetEditable()) {
-						var addSheet = doc.createElement('span');
-						addSheet.setAttribute('class', jS.cl.tab + ' ' + jS.cl.uiTab + ' ui-corner-bottom');
-						addSheet.setAttribute('title', jS.msg.addSheet);
-						addSheet.innerHTML = '&nbsp;+&nbsp;';
-						addSheet.onmousedown = function () {
-							jS.addSheet();
-
-							return false;
-						};
-						addSheet.i = -1;
-
-						tabContainer = tabContainer.add(addSheet);
-
-						if ($.fn.sortable) {
-							var startPosition;
-
-							tabContainer.sortable({
-								placeholder:'ui-state-highlight',
-								axis:'x',
-								forceHelperSize:true,
-								forcePlaceholderSize:true,
-								opacity:0.6,
-								start:function (e, ui) {
-									startPosition = ui.item.index();
-									jS.trigger('sheetTabSortStart', [e, ui]);
-								},
-								update:function (e, ui) {
-									jS.trigger('sheetTabSortUpdate', [e, ui, startPosition]);
-								}
-							});
-						}
-					} else {
-						tabContainer.append(doc.createElement('span'));
-					}
-
-					return tabContainer;
-				},
-
-				/**
-				 * Creates the scrolling system used by each spreadsheet
-				 * @param enclosure
-				 * @param pane
-				 * @param sheet
-				 * @methodOf jS.controlFactory
-				 * @name scrollUI
-				 */
-				scrollUI:function (enclosure, pane, sheet) {
-					var scrollOuter = doc.createElement('div'),
-						scrollInner = doc.createElement('div'),
-						scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
-						scrollStyleY = pane.scrollStyleY = doc.createElement('style'),
-						$scrollOuter = $(scrollOuter),
-						$scrollInner = $(scrollInner),
-						$pane = $(pane);
-
-					pane.scrollUI = {
-						scrollOuter: scrollOuter,
-						scrollInner: scrollInner
-					};
-
-					scrollOuter.setAttribute('class', jS.cl.scroll);
-					scrollOuter.appendChild(scrollInner);
-
-					scrollOuter.onscroll = function() {
-						if (!jS.isBusy()) {
-							jS.evt.scroll.scrollTo({axis:'x', pixel:scrollOuter.scrollLeft}, 0);
-							jS.evt.scroll.scrollTo({axis:'y', pixel:scrollOuter.scrollTop}, 0);
-
-							jS.autoFillerGoToTd();
-							if (pane.inPlaceEdit) {
-								pane.inPlaceEdit.goToTd();
-							}
-						}
-					};
-
-					scrollOuter.onmousedown = function() {
-						jS.obj.barHelper().remove();
-					};
-
-					jS.controls.scroll[jS.i] = $(scrollOuter)
-						.disableSelectionSpecial();
-
-					jS.controls.scrolls = jS.obj.scrolls().add(scrollOuter);
-
-					scrollStyleX.updateStyle = function (indexes, style) {
-						indexes = indexes || [];
-
-						if (indexes.length != this.i || style) {
-							this.i = indexes.length || this.i;
-
-							style = style || self.nthCss('col', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().col + 1) +
-								self.nthCss('td', '#' + jS.id.table + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
-
-							this.css(style);
-
-							jS.scrolledTo();
-
-							if (indexes.length) {
-								jS.scrolledArea[jS.i].start.col = math.max(indexes.pop() || 1, 1);
-								jS.scrolledArea[jS.i].end.col = math.max(indexes.shift() || 1, 1);
-							}
-
-							jS.obj.barHelper().remove();
-						}
-					};
-
-					pane.appendChild(scrollStyleX);
-					pane.appendChild(scrollStyleY);
-
-					scrollStyleY.updateStyle = function (indexes, style) {
-						indexes = indexes || [];
-
-						if (indexes.length != this.i || style) {
-							this.i = indexes.length || this.i;
-
-							style = style || self.nthCss('tr', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().row + 1);
-
-							this.css(style);
-
-							jS.scrolledTo();
-
-							if (indexes.length) {
-								jS.scrolledArea[jS.i].start.row = math.max(indexes.pop() || 1, 1);
-								jS.scrolledArea[jS.i].end.row = math.max(indexes.shift() || 1, 1);
-							}
-
-							jS.obj.barHelper().remove();
-						}
-					};
-
-					jS.controlFactory.styleUpdater(scrollStyleX);
-					jS.controlFactory.styleUpdater(scrollStyleY);
-
-					jS.controls.bar.x.scroll[jS.i] = scrollStyleX;
-					jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
-
-					var xStyle,
-						yStyle,
-						sheetWidth,
-						sheetHeight,
-						enclosureWidth,
-						enclosureHeight,
-						firstRow = sheet.tbody.children[0];
-
-					pane.resizeScroll = function () {
-						xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.styleString());
-						yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.styleString());
-
-						scrollStyleX.updateStyle(null, ' ');
-						scrollStyleY.updateStyle(null, ' ');
-
-						sheetWidth = (firstRow.clientWidth || sheet.clientWidth) + 'px';
-						sheetHeight = sheet.clientHeight + 'px';
-						enclosureWidth = enclosure.clientWidth + 'px';
-						enclosureHeight = enclosure.clientHeight + 'px';
-
-						$scrollInner
-							.css('width', sheetWidth)
-							.css('height', sheetWidth);
-
-						$scrollOuter
-							.css('width', enclosureWidth)
-							.css('height' + enclosureHeight);
-
-						jS.evt.scroll.start('x', pane, sheet, scrollStyleX);
-						jS.evt.scroll.start('y', pane, sheet, scrollStyleY);
-
-						scrollStyleX.updateStyle(null, xStyle);
-						scrollStyleY.updateStyle(null, yStyle);
-
-						if (pane.inPlaceEdit) {
-							pane.inPlaceEdit.goToTd();
-						}
-					};
-
-					/*
-					* Mousewheel rewrites itself the first time it is triggered in order to perform faster*/
-					var chooseMouseWheel = function (e) {
-						e = e || win.event;
-						var mousewheel;
-						if ("mousewheel" == e.type) {
-							var div = function (a, b) {
-									return 0 != a % b ? a : a / b;
-								},
-								scrollNoXY = 1;
-							if (e.wheelDeltaX !== u) {
-								mousewheel = function(e) {
-									e = e || win.event;
-									scrollOuter.scrollTop += div(-e.wheelDeltaY, scrollNoXY);
-									scrollOuter.scrollLeft += div(-e.wheelDeltaX, scrollNoXY);
-									return false;
-								};
-							} else {
-								mousewheel = function(e) {
-									e = e || win.event;
-									scrollOuter.scrollTop += div(-e.wheelDelta, scrollNoXY);
-									return false;
-								};
-							}
-						} else {
-							mousewheel = function(e) {
-								if (this.detail = (e.detail || e.deltaX || e.deltaY)) {
-									(9 < this.detail ? this.detail = 3 : -9 > this.detail && (this.detail = -3));
-									var top = 0, left = 0;
-									switch (this.detail) {
-										case 1:
-										case -1:
-											left = this.detail * 50;
-											break;
-										case 3:
-										case -3:
-											top = this.detail * 15;
-											break;
-									}
-
-									scrollOuter.scrollTop += top;
-									scrollOuter.scrollLeft += left;
-								}
-								return false;
-							};
-						}
-						$pane.mousewheel(mousewheel);
-						return false;
-					}
-
-					$pane.mousewheel(chooseMouseWheel);
-
-					return scrollOuter;
-				},
-
-				styleUpdater: function (style){
-					if (style.styleSheet) {
-						style.css = function (css) {
-							if (!this.styleSheet.disabled) {
-								this.styleSheet.cssText = css;
-							}
-						};
-						style.touch = function () {};
-						style.styleString = function() {
-							if (!this.styleSheet.disabled) {
-								return this.styleSheet.cssText;
-							}
-							return '';
-						};
-					} else {
-						style.css = function (css) {
-							this.innerHTML = css;
-						};
-						style.touch = function () {
-							this.innerHTML = this.innerHTML + ' ';
-						};
-						style.styleString = function() {
-							return this.innerHTML;
-						};
-					}
-				},
-
-				hide:function (enclosure, pane, sheet) {
-					pane = pane || jS.obj.pane();
-
-					var toggleHideStyleX = doc.createElement('style'),
-						toggleHideStyleY = doc.createElement('style'),
-						hiddenRows,
-						hiddenColumns;
-
-					toggleHideStyleX.updateStyle = function (e) {
-						var style = self.nthCss('col', '#' + jS.id.table + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], 0) +
-							self.nthCss('td', '#' + jS.id.table + jS.i + ' tr', this, jS.toggleHide.hiddenColumns[jS.i], 0);
-
-						this.css(style);
-
-						jS.autoFillerGoToTd();
-					};
-
-					toggleHideStyleY.updateStyle = function (e) {
-						var style = self.nthCss('tr', '#' + jS.id.table + jS.i, this, jS.toggleHide.hiddenRows[jS.i], 0);
-
-						this.css(style);
-
-						jS.autoFillerGoToTd();
-					};
-
-					jS.controlFactory.styleUpdater(toggleHideStyleX);
-					jS.controlFactory.styleUpdater(toggleHideStyleY);
-
-					jS.controls.toggleHide.x[jS.i] = $(toggleHideStyleX);
-					jS.controls.toggleHide.y[jS.i] = $(toggleHideStyleY);
-
-					pane.appendChild(toggleHideStyleX);
-					pane.appendChild(toggleHideStyleY);
-
-					s.hiddenColumns[jS.i] = s.hiddenColumns[jS.i] || [];
-					s.hiddenRows[jS.i] = s.hiddenRows[jS.i] || [];
-
-					if (!s.hiddenColumns[jS.i].length || !s.hiddenRows[jS.i].length) {
-						hiddenRows = sheet.attributes['data-hiddenrows'] || {value:''};
-						hiddenColumns = sheet.attributes['data-hiddencolumns'] || {value:''};
-						s.hiddenRows[jS.i] = arrHelpers.toNumbers(hiddenRows.value.split(','));
-						s.hiddenColumns[jS.i] = arrHelpers.toNumbers(hiddenColumns.value.split(','));
-					}
-
-					if (jS.s.hiddenRows[jS.i]) {
-						for (var row in jS.s.hiddenRows[jS.i]) {
-							jS.toggleHide.row(jS.s.hiddenRows[jS.i][row]);
-						}
-					}
-
-					if (s.hiddenColumns[jS.i]) {
-						for (var col in s.hiddenColumns[jS.i]) {
-							jS.toggleHide.column(s.hiddenColumns[jS.i][col]);
-						}
-					}
-				},
-
-				/**
-				 * Creates the spreadsheet user interface
-				 * @param {HTMLElement} ui raw user interface
-				 * @param {HTMLElement} table raw table
-				 * @param {Number} i the new count for spreadsheets in this instance
-				 * @methodOf jS.controlFactory
-				 * @name sheetUI
-				 */
-				sheetUI:function (ui, table, i) {
-					jS.i = i;
-
-					jS.tuneTableForSheetUse(table);
-
-					jS.readOnly[i] = table.className.match('readonly');
-
-					var enclosure = jS.controlFactory.enclosure(table),
-						$enclosure = $(enclosure),
-						pane = enclosure.pane,
-						$pane = $(pane),
-						paneContextmenuEvent = function (e) {
-							e = e || win.event;
-							if (jS.isBusy()) {
-								return false;
-							}
-							if (jS.isBar(e.target)) {
-								var entity = e.target.entity,
-									i = jS.getBarIndex[entity](e.target);
-
-								if (i < 0) return false;
-
-								if (jS.evt.barInteraction.first == jS.evt.barInteraction.last) {
-									jS.controlFactory.barMenu[entity](e, i);
-								}
-							} else {
-								jS.controlFactory.tdMenu(e);
-							}
-							return false;
-						};
-
-					ui.appendChild(enclosure);
-
-					jS.controlFactory.barTop(table);
-					jS.controlFactory.barLeft(table);
-
-					pane.appendChild(table);
-
-					if (jS.isSheetEditable()) {
-						var autoFiller = jS.controlFactory.autoFiller();
-						if (autoFiller) {
-							pane.appendChild(autoFiller);
-						}
-					}
-
-					jS.sheetTab(true);
-
-					if (jS.isSheetEditable()) {
-						var formula = jS.obj.formula(),
-							mouseDownEntity = "";
-
-						$pane.mousedown(function (e) {
-							jS.setNav(true);
-							if (jS.isBusy()) {
-								return false;
-							}
-
-							if (jS.isCell(e.target)) {
-								if (e.button == 2) {
-									paneContextmenuEvent.apply(this, [e]);
-									jS.evt.cellOnMouseDown(e);
-									return true;
-								}
-								jS.evt.cellOnMouseDown(e);
-								return false;
-							}
-
-							if (jS.isBar(e.target)) { //possibly a bar
-								if (e.button == 2) {
-									paneContextmenuEvent.apply(this, [e]);
-								}
-								mouseDownEntity = e.target.entity;
-								jS.evt.barInteraction.select(e.target);
-								return false;
-							}
-						});
-
-						pane.onmouseup = function() {
-							mouseDownEntity = "";
-						};
-
-						pane.onmouseover = function (e) {
-							e = e || win.event;
-							e.target = e.target || e.srcElement;
-							//This manages bar resize, bar menu, and bar selection
-							if (jS.isBusy()) {
-								return false;
-							}
-
-							if (!jS.isBar(e.target)) {
-								return false;
-							}
-							var bar = $(e.target),
-								entity = e.target.entity,
-								i = jS.getBarIndex[entity](e.target);
-
-							if (i < 0) {
-								return false;
-							}
-
-							if (jS.evt.barInteraction.selecting && entity == mouseDownEntity) {
-								jS.evt.barInteraction.last = i;
-
-								jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
-							} else {
-								jS.resizeBar[entity](bar, i, pane, table);
-
-								if (jS.isSheetEditable()) {
-									jS.controlFactory.barHandleFreeze[entity](pane);
-
-									if (entity == "top") {
-										jS.controlFactory.barMenu[entity](e, i, bar);
-									}
-								}
-							}
-						};
-
-						pane.ondblclick = jS.evt.cellOnDblClick;
-
-						$pane
-							.bind('contextmenu', paneContextmenuEvent)
-							.disableSelectionSpecial()
-							.bind('cellEdit', jS.evt.cellEdit);
-					}
-
-					jS.themeRoller.start(table);
-
-					jS.createSpreadsheet(table, i);
-
-					jS.checkMinSize(table);
-
-					jS.controlFactory.tab();
-
-					jS.controlFactory.hide(enclosure, pane, table);
-
-					jS.setChanged(true);
-				},
-
-				/**
-				 * The viewing console for spreadsheet
-				 * @returns {*|jQuery|HTMLElement}
-				 * @methodOf jS.controlFactory
-				 * @name enclosure
-				 */
-				enclosure:function (table) {
-					var pane = doc.createElement('div'),
-						enclosure = doc.createElement('div');
-
-					enclosure.scollUI = jS.controlFactory.scrollUI(enclosure, pane, table);
-					enclosure.appendChild(enclosure.scollUI);
-
-					pane.setAttribute('class', jS.cl.pane + ' ' + jS.cl.uiPane);
-					enclosure.appendChild(pane);
-					enclosure.setAttribute('class', jS.cl.enclosure);
-
-					enclosure.pane = pane;
-					enclosure.table = table;
-
-					pane.table = table;
-					pane.enclosure = enclosure;
-
-					table.pane = pane;
-					table.enclosure = enclosure;
-
-					jS.controls.pane[jS.i] = pane;
-					jS.controls.panes = jS.obj.panes().add(pane);
-					jS.controls.enclosure[jS.i] = $(enclosure);
-					jS.controls.enclosures = jS.obj.enclosures().add(enclosure);
-
-					return enclosure;
-				},
-
-				/**
-				 * Adds a tab for navigation to a spreadsheet
-				 * @returns {Node|jQuery}
-				 * @methodOf jS.controlFactory
-				 * @name tab
-				 */
-				tab:function () {
-					var tab = doc.createElement('span'),
-						$tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
-
-					tab.setAttribute('class', jS.cl.tab);
-					tab.innerHTML = jS.sheetTab(true);
-
-					tab.i = jS.i;
-					tab.setAttribute('class',jS.cl.uiTab + ' ui-corner-bottom');
-					jS.controls.tabs = jS.obj.tabs().add($tab);
-
-					return tab;
-				},
-
-				/**
-				 * Creates a teaxtarea for a user to put a value in that floats on top of the current selected cell
-				 * @param {jQuery|HTMLElement} td the td to be edited
-				 * @param {Boolean} noSelect
-				 * @methodOf jS.controlFactory
-				 * @name inPlaceEdit
-				 */
-				inPlaceEdit:function (td, noSelect) {
-					td = td || jS.obj.tdActive();
-
-					if (!td.length) {
-						td = $(jS.rowTds(null, 1)[1]);
-						jS.cellEdit(td);
-					}
-
-					if (!td.length) return;
-
-					jS.obj.inPlaceEdit().trigger('destroy');
-					var formula = jS.obj.formula(),
-						val = formula.val(),
-						textarea,
-						$textarea,
-						pane = jS.obj.pane();
-
-					if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
-
-					textarea = doc.createElement('textarea');
-					pane.inPlaceEdit = textarea;
-					$textarea = $(textarea);
-					textarea.i = jS.i;
-					textarea.value = formula[0].value;
-					textarea.className = jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit;
-					textarea.td = td[0];
-					textarea.goToTd = function() {
-						this.offset = td.offset();
-						if (!this.offset.left && !this.offset.right) {
-							$textarea.hide();
-						} else {
-							this.setAttribute('style',
-								'left:' + (this.offset.left - 1) + 'px;' +
-								'top:' + (this.offset.top - 1) + 'px;' +
-								'width:' + this.td.clientWidth + 'px;' +
-								'height:' + this.td.clientHeight + 'px;' +
-								'min-width:' + this.td.clientWidth + 'px;' +
-								'min-height:' + this.td.clientHeight + 'px;');
-						}
-					};
-					textarea.goToTd();
-					textarea.onkeydown = jS.evt.inPlaceEdit.keydown;
-					textarea.onkeyup = function() { formula[0].value = textarea.value; };
-					textarea.onchange = function() { formula[0].value = textarea.value; };
-					textarea.onfocus = function () { jS.setNav(false); };
-					textarea.onfocusout = function () { jS.setNav(true); };
-					textarea.onblur = function () { jS.setNav(true); };
-					$body.append(textarea);
-
-
-					jS.controls.inPlaceEdit[jS.i] = $textarea
-						.bind('paste', jS.evt.pasteOverCells)
-						.focus()
-						.bind('destroy', function () {
-							pane.inPlaceEdit = null;
-							jS.cellLast.isEdit = (textarea.value != val);
-							$textarea.remove();
-							jS.controls.inPlaceEdit[textarea.i] = false;
-						});
-
-					if (!noSelect) {
-						$textarea.select();
-					}
-
-					//Make the textarea resizable automatically
-					if ($.fn.elastic) {
-						$textarea.elastic();
-					}
-				},
-
-				/**
-				 * Created the autoFiller object
-				 * @returns {*|jQuery|null}
-				 * @methodOf jS.controlFactory
-				 * @name autoFiller
-				 */
-				autoFiller:function () {
-					if (!s.autoFiller) return null;
-
-					var autoFiller = doc.createElement('div'),
-						handle = doc.createElement('div'),
-						cover = doc.createElement('div');
-
-					autoFiller.className = jS.cl.autoFiller + ' ' + jS.cl.uiAutoFiller;
-					handle.className = jS.cl.autoFillerHandle;;
-					cover.className = jS.cl.autoFillerCover;
-
-					autoFiller.onmousedown = function () {
-						var td = jS.obj.tdActive();
-						if (td) {
-							var loc = jS.getTdLocation(td);
-							jS.cellSetActive(td, loc, true, jS.autoFillerNotGroup, function () {
-								var highlighted = jS.highlighted(),
-									hLoc = jS.getTdLocation(highlighted.first());
-								jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
-								jS.autoFillerGoToTd(highlighted.last());
-								jS.autoFillerNotGroup = false;
-							});
-						}
-					};
-
-					jS.controls.autoFiller[jS.i] = $(autoFiller);
-					return autoFiller;
-				}
-			},
-
-			/**
-			 * Allows grouping of cells
-			 * @memberOf jS
-			 * @name autoFillerNotGroup
-			 */
-			autoFillerNotGroup:true,
-
-
-			/**
-			 * Sends tab delimited string into cells, usually a paste from external spreadsheet application
-			 * @param oldVal what formula should be when this is done working with all the values
-			 * @returns {Boolean}
-			 * @methodOf jS
-			 * @name updateCellsAfterPasteToFormula
-			 */
-			updateCellsAfterPasteToFormula:function (oldVal) {
-				var newValCount = 0,
-					formula = jS.obj.formula(),
-					last = new Date();
-
-				oldVal = oldVal || formula.val();
-
-				var loc = {row:jS.cellLast.row, col:jS.cellLast.col},
-					val = formula.val(), //once ctrl+v is hit formula now has the data we need
-					firstValue = val;
-
-				if (loc.row == 0 && loc.col == 0) return false; //at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
-
-				var row = tsv.parse(':::::' + val);
-
-				//Single cell value
-				if (!$.isArray(row)) {
-					formula.val(row);
-					jS.fillUpOrDown(false, row);
-					return true;
-				}
-
-				//values that need put into multi cells
-				for (var i = 0; i < row.length; i++) {
-					jS.cellLast.isEdit = true;
-					var col = row[i];
-					for (var j = 0; j < col.length; j++) {
-						newValCount++;
-						var td = jS.getTd(jS.i, i + loc.row, j + loc.col);
-
-						td.row = loc.row;
-						td.col = loc.col;
-
-						if (td.length) {
-							if (!jS.spreadsheets[jS.i] || !jS.spreadsheets[jS.i][i + loc.row] || !jS.spreadsheets[jS.i][i + loc.row][j + loc.col]) continue;
-							var cell = jS.spreadsheets[jS.i][i + loc.row][j + loc.col];
-							if (cell) {
-								s.parent.one('sheetPreCalculation', function () {
-									if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
-											cell.formula = col[j].substring(1);
-											cell.value = '';
-											td.data('formula', col[j]);
-									} else {
-											cell.formula = '';
-											cell.value = col[j];
-											td.removeData('formula');
-									}
-								});
-								jS.calcDependencies.apply(cell);
-
-								if (i == 0 && j == 0) { //we have to finish the current edit
-									firstValue = col[j];
-								}
-							}
-						}
-					}
-				}
-
-				if (val != firstValue) {
-					formula.val(firstValue);
-				}
-
-				jS.fillUpOrDown(false, firstValue);
-
-				jS.evt.cellEditDone(true);
-			},
-
-			/**
-			 * Event handlers for instance
-			 * @memberOf jS
-			 * @name evt
-			 * @namespace
-			 */
-			evt:{
-
-				inPlaceEdit:{
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.inPlaceEdit
-					 * @name enter
-					 */
-					enter:function (e) {
-						if (e.shiftKey) {
-							return true;
-						}
-						return jS.evt.cellSetActiveFromKeyCode(e, true);
-					},
-
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.inPlaceEdit
-					 * @name tab
-					 */
-					tab:function (e) {
-						if (e.shiftKey) {
-							return true;
-						}
-						return jS.evt.cellSetActiveFromKeyCode(e, true);
-					},
-					/**
-					 * Edits the textarea that appears over cells for in place edit
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.inPlaceEdit
-					 * @name keydown
-					 */
-					keydown:function (e) {
-						e = e || win.event;
-						jS.trigger('sheetFormulaKeydown', [true]);
-
-						switch (e.keyCode) {
-							case key.ENTER:
-								return jS.evt.inPlaceEdit.enter(e);
-								break;
-							case key.TAB:
-								return jS.evt.inPlaceEdit.tab(e);
-								break;
-							case key.ESCAPE:
-								jS.evt.cellEditAbandon();
-								return false;
-								break;
-						}
-					}
-				},
-
-				formula:{
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.formula
-					 * @name keydown
-					 */
-					keydown:function (e) {
-						e = e || win.event;
-						if (jS.readOnly[jS.i]) return false;
-						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
-
-						jS.trigger('sheetFormulaKeydown', [false]);
-
-						switch (e.keyCode) {
-							case key.C:
-								if (e.ctrlKey) {
-									return jS.evt.doc.copy(e);
-								} else {
-									jS.obj.tdActive().dblclick();
-									return true;
-								}
-							case key.X:
-								if (e.ctrlKey) {
-									return jS.evt.doc.cut(e);
-								} else {
-									jS.obj.tdActive().dblclick();
-									return true;
-								}
-							case key.Y:
-								if (e.ctrlKey) {
-									jS.evt.doc.redo(e);
-									return false;
-								} else {
-									jS.obj.tdActive().trigger('cellEdit');
-									return true;
-								}
-								break;
-							case key.Z:
-								if (e.ctrlKey) {
-									jS.evt.doc.undo(e);
-									return false;
-								} else {
-									jS.obj.tdActive().trigger('cellEdit');
-									return true;
-								}
-								break;
-							case key.ESCAPE:
-								jS.evt.cellEditAbandon();
-								break;
-							case key.ENTER:
-								jS.evt.cellSetActiveFromKeyCode(e, true);
-								return false;
-								break;
-							default:
-								jS.cellLast.isEdit = true;
-						}
-					},
-
-					/**
-					 * Helper for events
-					 * @param {Boolean} ifTrue
-					 * @param e {Object} jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.keydownHandler
-					 * @name formulaKeydownIf
-					 */
-					If:function (ifTrue, e) {
-						if (ifTrue) {
-							jS.obj.tdActive().dblclick();
-							return true;
-						}
-						return false;
-					}
-				},
-
-				/**
-				 * Key down handlers
-				 * @memberOf jS.evt
-				 * @name docKeydownHandler
-				 * @namespace
-				 */
-				doc:{
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.doc
-					 * @name enter
-					 */
-					enter:function (e) {
-						if (!jS.cellLast.isEdit && !e.ctrlKey) {
-							jS.obj.tdActive().dblclick();
-						}
-						return false;
-					},
-
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.doc
-					 * @name tab
-					 */
-					tab:function (e) {
-						jS.evt.cellSetActiveFromKeyCode(e);
-					},
-
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.doc
-					 * @name findCell
-					 */
-					findCell:function (e) {
-						if (e.ctrlKey) {
-							jS.cellFind();
-							return false;
-						}
-						return true;
-					},
-
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.doc
-					 * @name redo
-					 */
-					redo:function (e) {
-						if (e.ctrlKey && !jS.cellLast.isEdit) {
-							jS.undo.manager.redo();
-							return false;
-						}
-						return true;
-					},
-
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.doc
-					 * @name undo
-					 */
-					undo:function (e) {
-						if (e.ctrlKey && !jS.cellLast.isEdit) {
-							jS.undo.manager.undo();
-							return false;
-						}
-						return true;
-					},
-
-					/**
-					 * Copy what is in the highlighted tds
-					 * @param e
-					 * @param clearValue
-					 * @return {Boolean}
-					 */
-					copy:function (e, clearValue) {
-						var tds = jS.highlighted(true),
-							formula = jS.obj.formula(),
-							oldValue = formula.val(),
-							cellsTsv = jS.tdsToTsv(tds, clearValue);
-
-						formula
-							.val(cellsTsv)
-							.focus()
-							.select();
-
-						$doc
-							.one('keyup', function () {
-								if (clearValue) {
-									formula.val('');
-								} else {
-									formula.val(oldValue);
-								}
-							});
-
-						return true;
-					},
-
-					cut:function (e) {
-						return this.copy(e, true);
-					},
-
-					/**
-					 * Manages the page up and down buttons
-					 * @param {Boolean} reverse Go up or down
-					 * @returns {Boolean}
-					 * @methodOf jS.evt.doc
-					 * @name pageUpDown
-					 */
-					pageUpDown:function (reverse) {
-						var size = jS.sheetSize(),
-							pane = jS.obj.pane(),
-							paneHeight = pane.clientHeight,
-							prevRowsHeights = 0,
-							thisRowHeight = 0,
-							td;
-
-						if (reverse) { //go up
-							for (var i = jS.cellLast.row; i > 0 && prevRowsHeights < paneHeight; i--) {
-								td = jS.getTd(jS.i, i, 1);
-								if (!td.data('hidden') && td.is(':hidden')) td.show();
-								prevRowsHeights += td.parent().height();
-							}
-						} else { //go down
-							for (var i = jS.cellLast.row; i < size.rows && prevRowsHeights < paneHeight; i++) {
-								td = jS.getTd(jS.i, i, 1);
-								prevRowsHeights += td.parent().height();
-							}
-						}
-						jS.cellEdit(td);
-
-						return false;
-					},
-
-					/**
-					 *
-					 * @param {Object} e jQuery event
-					 * @returns {*}
-					 * @methodOf jS.evt.doc
-					 * @name keydown
-					 */
-					keydown:function (e) {
-						e = e || win.event;
-						if (jS.readOnly[jS.i]) return false;
-						if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
-
-						if (jS.nav) {
-							switch (e.keyCode) {
-								case key.DELETE:
-									jS.tdsToTsv(null, true);
-									jS.obj.formula().val('');
-									break;
-								case key.TAB:
-									jS.evt.doc.tab(e);
-									break;
-								case key.ENTER:
-									jS.evt.cellSetActiveFromKeyCode(e);
-									break;
-								case key.LEFT:
-								case key.UP:
-								case key.RIGHT:
-								case key.DOWN:
-									(e.shiftKey ? jS.evt.cellSetHighlightFromKeyCode(e) : jS.evt.cellSetActiveFromKeyCode(e));
-									break;
-								case key.PAGE_UP:
-									jS.evt.doc.pageUpDown(true);
-									break;
-								case key.PAGE_DOWN:
-									jS.evt.doc.pageUpDown();
-									break;
-								case key.HOME:
-								case key.END:
-									jS.evt.cellSetActiveFromKeyCode(e);
-									break;
-								case key.V:
-									if (e.ctrlKey) {
-										return jS.evt.formula.If(!jS.evt.pasteOverCells(e), e);
-									} else {
-										jS.obj.tdActive().trigger('cellEdit');
-										return true;
-									}
-									break;
-								case key.Y:
-									if (e.ctrlKey) {
-										jS.evt.doc.redo(e);
-										return false;
-									} else {
-										jS.obj.tdActive().trigger('cellEdit');
-										return true;
-									}
-									break;
-								case key.Z:
-									if (e.ctrlKey) {
-										jS.evt.doc.undo(e);
-										return false;
-									} else {
-										jS.obj.tdActive().trigger('cellEdit');
-										return true;
-									}
-									break;
-								case key.ESCAPE:
-									jS.evt.cellEditAbandon();
-									break;
-								case key.F:
-									if (e.ctrlKey) {
-										return jS.evt.formula.If(jS.evt.doc.findCell(e), e);
-									} else {
-										jS.obj.tdActive().trigger('cellEdit');
-										return true;
-									}
-									break;
-								case key.CAPS_LOCK:
-								case key.SHIFT:
-								case key.ALT:
-									break;
-								case key.CONTROL: //we need to filter these to keep cell state
-									jS.obj.formula().focus().select();
-									return true;
-									break;
-								default:
-									jS.obj.tdActive().trigger('cellEdit');
-									return true;
-									break;
-							}
-							return false;
-						}
-					}
-				},
-
-				/**
-				 * Used for pasting from other spreadsheets
-				 * @param {Object} e jQuery event
-				 * @returns {Boolean}
-				 * @methodOf jS.evt
-				 * @name pasteOverCells
-				 */
-				pasteOverCells:function (e) {
-					e = e || win.event;
-					if (e.ctrlKey || e.type == "paste") {
-						var fnAfter = function () {
-							jS.updateCellsAfterPasteToFormula();
-						};
-
-						var doc = $doc
-							.one('keyup', function () {
-								fnAfter();
-								fnAfter = function () {
-								};
-								doc.mouseup();
-							})
-							.one('mouseup', function () {
-								fnAfter();
-								fnAfter = function () {
-								};
-								doc.keyup();
-							});
-
-						jS.setDirty(true);
-						jS.setChanged(true);
-						return true;
-					}
-				},
-
-				/**
-				 * Updates a cell after edit afterward event "sheetCellEdited" is called w/ params (td, row, col, spreadsheetIndex, sheetIndex)
-				 * @param {Boolean} force if set to true forces a calculation of the selected sheet
-				 * @methodOf jS.evt
-				 * @name cellEditDone
-				 */
-				cellEditDone:function (force) {
-					jS.obj.inPlaceEdit().trigger('destroy');
-					if (jS.cellLast.isEdit || force) {
-						var formula = jS.obj.formula(),
-							td = jS.obj.tdActive();
-
-						if (jS.isFormulaEditable(td)) {
-							//Lets ensure that the cell being edited is actually active
-							if (td && jS.cellLast.row > 0 && jS.cellLast.col > 0) {
-
-								//This should return either a val from textbox or formula, but if fails it tries once more from formula.
-								var v = formula.val(),
-									cell = td[0].jSCell;
-
-								if (!cell.edited) {
-									cell.edited = true;
-									jS.controls.cellsEdited[jS.i] = jS.obj.cellsEdited().add(cell);
-								}
-
-								s.parent.one('sheetPreCalculation', function () {
-									if (v.charAt(0) == '=') {
-										td.data('formula', v);
-										cell.value = v;
-										cell.formula = v;
-									} else {
-										td.removeData('formula');
-										cell.value = v;
-										cell.formula = '';
-									}
-								});
-								jS.calcDependencies.apply(cell);
-
-								//formula.focus().select();
-								jS.cellLast.isEdit = false;
-
-								//perform final function call
-								jS.trigger('sheetCellEdited', [cell]);
-							}
-						}
-					}
-				},
-
-				/**
-				 * Abandons a cell edit
-				 * @param {Boolean} skipCalc if set to true will skip sheet calculation;
-				 * @methodOf jS.evt
-				 * @name cellEditAbandon
-				 */
-				cellEditAbandon:function (skipCalc) {
-					jS.obj.inPlaceEdit().trigger('destroy');
-					jS.themeRoller.bar.clearActive();
-					jS.themeRoller.cell.clearHighlighted(null, true);
-
-					if (!skipCalc) {
-						jS.calc();
-					}
-
-					jS.cellLast.td = $([]);
-					jS.cellLast.row = 0;
-					jS.cellLast.col = 0;
-					jS.rowLast = 0;
-					jS.colLast = 0;
-					jS.highlightedLast.start = {row:0,col:0};
-					jS.highlightedLast.end = {row:0,col:0};
-
-					jS.labelUpdate('', true);
-					jS.obj.formula()
-						.val('')
-						.blur();
-
-					jS.autoFillerHide();
-
-					return false;
-				},
-
-				/**
-				 * Sets active cell from a pixel location
-				 * @param {Number} left pixels left
-				 * @param {Number} top pixels top
-				 * @returns {Boolean}
-				 * @methodOf jS.evt
-				 * @name cellSetFocusFromXY
-				 */
-				cellSetFocusFromXY:function (left, top) {
-					var td = jS.getTdFromXY(left, top);
-					if (td.type == 'cell') {
-						td = $(td);
-						jS.cellEdit(td);
-						return false;
-					}
-					return true;
-				},
-
-				/**
-				 * Highlights a cell from a key code
-				 * @param {Object} e jQuery event
-				 * @returns {Boolean}
-				 * @methodOf jS.evt
-				 * @name cellSetHighlightFromKeyCode
-				 */
-				cellSetHighlightFromKeyCode:function (e) {
-					var grid = jS.highlightedLastOrdered(),
-						size = jS.sheetSize(),
-						td = jS.obj.tdActive(),
-						loc = jS.getTdLocation(td),
-						start = grid.start,
-						end = grid.end;
-
-					switch (e.keyCode) {
-						case key.UP:
-							if (grid.start.row < loc.row) {
-								start.row = grid.start.row;
-								start.row--;
-								start.row = math.max(start.row, 1);
-								break;
-							}
-
-							end.row = grid.end.row;
-							end.row--;
-							end.row = math.max(end.row, 1);
-
-							break;
-						case key.DOWN:
-							if (grid.start.row <= start.row) {
-								start.row = grid.start.row;
-								start.row++;
-								start.row = math.min(start.row, size.rows);
-								break;
-							}
-
-							end.row = grid.end.row;
-							end.row++;
-							end.row = math.min(end.row, size.rows);
-
-							break;
-						case key.LEFT:
-							if (grid.start.col < loc.col) {
-								start.col = grid.start.col;
-								start.col--;
-								start.col = math.max(start.col, 1);
-								break;
-							}
-
-							end.col = grid.end.col;
-							end.col--;
-							end.col = math.max(end.col, 1);
-
-							break;
-						case key.RIGHT:
-							if (grid.start.col < loc.col) {
-								start.col = grid.start.col;
-								start.col++;
-								start.col = math.min(start.col, size.cols);
-								break;
-							}
-
-							end.col = grid.end.col;
-							end.col++;
-							end.col = math.min(end.col, size.cols);
-
-							break;
-					}
-
-					//highlight the cells
-					jS.highlightedLast.start = start;
-					jS.highlightedLast.end = end;
-
-					jS.cycleCellArea(function (o) {
-						jS.themeRoller.cell.setHighlighted(o.td);
-					}, start, end);
-
-					return false;
-				},
-
-
-				/**
-				 * Activates a cell from a key code
-				 * @param {Object} e jQuery event
-				 * @param {Boolean} skipMove optional
-				 * @returns {Boolean}
-				 * @methodOf jS.evt
-				 * @name cellSetActiveFromKeyCode
-				 */
-				cellSetActiveFromKeyCode:function (e, skipMove) {
-					var loc = {
-							row: jS.cellLast.row,
-							col: jS.cellLast.col
-						},
-						overrideIsEdit = false,
-						highlighted,
-						doNotClearHighlighted = false;
-
-					switch (e.keyCode) {
-						case key.UP:
-							loc.row--;
-							break;
-						case key.DOWN:
-							loc.row++;
-							break;
-						case key.LEFT:
-							loc.col--;
-							break;
-						case key.RIGHT:
-							loc.col++;
-							break;
-						case key.ENTER:
-							loc = jS.evt.incrementAndStayInGrid(jS.highlightedLastOrdered(), loc, 'row', 'col', e.shiftKey);
-							overrideIsEdit = true;
-							highlighted = jS.highlighted();
-							if (highlighted.length > 1) {
-								doNotClearHighlighted = true;
-							} else {
-								if (!skipMove) {
-									loc.row += (e.shiftKey ? -1 : 1);
-								}
-								if (s.autoAddCells && loc.row > jS.sheetSize().rows) {
-									jS.controlFactory.addRow();
-								}
-							}
-							break;
-						case key.TAB:
-							loc = jS.evt.incrementAndStayInGrid(jS.highlightedLastOrdered(), loc, 'col', 'row', e.shiftKey);
-							overrideIsEdit = true;
-							highlighted = jS.highlighted();
-							if (highlighted.length > 1) {
-								doNotClearHighlighted = true;
-							} else {
-								if (!skipMove) {
-									loc.col += (e.shiftKey ? -1 : 1);
-								}
-								if (s.autoAddCells && loc.col > jS.sheetSize().cols) {
-									jS.controlFactory.addColumn();
-								}
-							}
-							break;
-						case key.HOME:
-							loc.col = 1;
-							break;
-						case key.END:
-							loc.col = jS.obj.tdActive().parent().children('td').length - 1;
-							break;
-					}
-
-					//we check here and make sure all values are above 0, so that we get a selected cell
-					loc.col = loc.col || 1;
-					loc.row = loc.row || 1;
-
-					//to get the td could possibly make keystrokes slow, we prevent it here so the user doesn't even know we are listening ;)
-					if (!jS.cellLast.isEdit || overrideIsEdit) {
-						//get the td that we want to go to
-						var td = jS.getTd(jS.i, loc.row, loc.col);
-
-						//if the td exists, lets go to it
-						if (td) {
-							jS.cellEdit(td, null, doNotClearHighlighted);
-							return false;
-						}
-					}
-					//default, can be overridden above
-					return true;
-				},
-
-				/**
-				 * Calculate position for either horizontal movement or vertical movement within a grid, both forward and reverse
-				 * @param {Object} grid
-				 * @param {Object} loc
-				 * @param {String} locA
-				 * @param {String} locB
-				 * @param {Boolean} reverse
-				 * @returns {Object} loc
-				 * @methodOf jS.evt
-				 * @name incrementAndStayInGrid
-				 */
-				incrementAndStayInGrid: function (grid, loc, locA, locB, reverse) {
-					if (reverse) {
-						loc[locA]--;
-						if (loc[locA] < grid.start[locA]) {
-							loc[locA] = grid.end[locA];
-							loc[locB]--;
-						}
-						if (loc[locB] < grid.start[locB]) {
-							loc[locB] = grid.end[locB];
-						}
-					} else {
-						loc[locA]++;
-						if (loc[locA] > grid.end[locA]) {
-							loc[locA] = grid.start[locA];
-							loc[locB]++;
-						}
-						if (loc[locB] > grid.end[locB]) {
-							loc[locB] = grid.start[locB];
-						}
-					}
-
-					return loc;
-				},
-
-				/**
-				 * Cell on mouse down
-				 * @param {Object} e jQuery event
-				 * @methodOf jS.evt
-				 * @name cellOnMouseDown
-				 */
-				cellOnMouseDown:function (e) {
-
-
-					jS.obj.formula().blur();
-					if (e.shiftKey) {
-						jS.getTdRange(e, jS.obj.formula().val());
-					} else {
-						jS.cellEdit($(e.target), true);
-					}
-				},
-
-				/**
-				 * Cell on double click
-				 * @param {Object} e jQuery event
-				 * @methodOf jS.evt
-				 * @name cellOnDblClick
-				 */
-				cellOnDblClick:function (e) {
-					if (jS.isBusy()) return false;
-
-					jS.controlFactory.inPlaceEdit(null, true);
-					//jS.log('click, in place edit activated');
-				},
-
-				cellEdit: function(e) {
-					if (jS.isBusy()) return false;
-
-					jS.controlFactory.inPlaceEdit();
-				},
-
-				/**
-				 * Handles bar events, used for highlighting and activating
-				 * @memberOf jS.evt
-				 * @name barInteraction
-				 * @namespace
-				 */
-				barInteraction:{
-
-					/**
-					 * The first bar that received the event (mousedown)
-					 * @memberOf jS.evt.barInteraction
-					 * @name first
-					 */
-					first:0,
-
-					/**
-					 * The last bar that received the event (mousedown)
-					 * @memberOf jS.evt.barInteraction
-					 * @name last
-					 */
-					last:0,
-
-					/**
-					 * Tracks if we are in select mode
-					 * @memberOf jS.evt.barInteraction
-					 * @name selecting
-					 */
-					selecting:false,
-
-					/**
-					 * Manages the bar selection
-					 * @param {Object} o target
-					 * @returns {*}
-					 * @methodOf jS.evt.barInteraction
-					 * @name select
-					 */
-					select:function (o) {
-						if (!o) return;
-						if (!o.type == 'bar') return;
-						var entity = o.entity, //returns "top" or "left";
-							i = jS.getBarIndex[entity](o);
-
-						if (i < 0) return false;
-
-						jS[entity + 'Last'] = i; //keep track of last column for inserting new columns
-						jS.evt.barInteraction.last = jS.evt.barInteraction.first = i;
-
-						jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
-						jS.evt.barInteraction.first = jS.evt.barInteraction.last = jS[entity + 'Last'] = i;
-
-						jS.evt.barInteraction.selecting = true;
-						$doc
-							.one('mouseup', function () {
-								jS.evt.barInteraction.selecting = false;
-							});
-
-						return false;
-					}
-				},
-
-				/**
-				 * Manages scrolling
-				 * @memberOf jS.evt
-				 * @name scroll
-				 * @namespace
-				 */
-				scroll:{
-
-					/**
-					 * axis cache, x & y
-					 * @memberOf jS.evt.scroll
-					 * @name axis
-					 */
-					axis:{x:{}, y:{}},
-
-					/**
-					 * tracks the current spreadsheet size
-					 * @memberOf jS.evt.scroll
-					 * @name size
-					 */
-					size:{},
-
-					/**
-					 * tracks last select cell
-					 * @memberOf jS.evt.scroll
-					 * @name td
-					 */
-					td:{},
-
-					/**
-					 * prepairs everything needed for a scroll, needs activated every time spreadsheet changes in size
-					 * @param {String} axisName x or y
-					 * @param {jQuery|HTMLElement} pane pane object
-					 * @methodOf jS.evt.scroll
-					 * @name start
-					 */
-					start:function (axisName, pane) {
-						jS.autoFillerHide();
-
-						pane = pane || jS.obj.pane();
-						var me = jS.evt.scroll,
-							scrollUI = pane.scrollUI,
-							outer = scrollUI.scrollOuter,
-							axis = me.axis[axisName];
-
-						me.size = jS.sheetSize(pane.table);
-						me.td = jS.obj.tdActive();
-
-						axis.v = [];
-						axis.name = axisName;
-
-						switch (axisName || 'x') {
-							case 'x':
-								axis.max = me.size.cols;
-								axis.min = 0;
-								axis.size = me.size.cols;
-								pane.scrollStyleX.updateStyle();
-								axis.scrollStyle = pane.scrollStyleX;
-								axis.area = outer.scrollWidth - outer.clientWidth;
-								axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
-								axis.scrollUpdate = function () {
-									outer.scrollLeft = (axis.value) * (axis.area / axis.size);
-								};
-								axis.gridSize = 100 / axis.size;
-								break;
-							case 'y':
-								axis.max = me.size.rows;
-								axis.min = 0;
-								axis.size = me.size.rows;
-								pane.scrollStyleY.updateStyle();
-								axis.scrollStyle = pane.scrollStyleY;
-								axis.area = outer.scrollHeight - outer.clientHeight;
-								axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
-								axis.scrollUpdate = function () {
-									outer.scrollTop = (axis.value) * (axis.area / axis.size);
-								};
-								axis.gridSize = 100 / axis.size;
-								break;
-						}
-
-						var i = axis.max;
-						do {
-							var position = new Number(axis.gridSize * i);
-							position.index = i + 1;
-							axis.v.unshift(position);
-						} while(i--);
-					},
-
-					/**
-					 * Scrolls to a position within the spreadsheet
-					 * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
-					 * @methodOf jS.evt.scroll
-					 * @name scrollTo
-					 */
-					scrollTo:function (pos) {
-						pos = pos || {};
-						pos.axis = pos.axis || 'x';
-						pos.value = pos.value || 0;
-						pos.pixel = pos.pixel || 0;
-
-						if (!jS.evt.scroll.axis) {
-							jS.evt.scroll.start(pos.axis);
-						}
-						var me = jS.evt.scroll.axis[pos.axis];
-
-						if (!pos.value) {
-							pos.value = arrHelpers.closest(me.v, math.abs(pos.pixel / me.area) * 100, me.min).index;
-						}
-
-						pos.max = pos.max || me.max;
-
-						var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
-							indexes = [];
-
-						if (i >= 0) {
-							do {
-								indexes.push(i + me.min);
-							} while(i-- > 0);
-						}
-						if (indexes.length) {
-							if (me.scrollStyle) me.scrollStyle.updateStyle(indexes);
-						} else {
-							if (me.scrollStyle) me.scrollStyle.updateStyle();
-						}
-
-						me.value = pos.value;
-					},
-
-					/**
-					 * Called after scroll is done
-					 * @methodOf jS.evt.scroll
-					 * @name stop
-					 */
-					stop:function () {
-						if (this.axis.x.scrollUpdate) this.axis.x.scrollUpdate();
-						if (this.axis.y.scrollUpdate) this.axis.y.scrollUpdate();
-
-						if (jS.evt.scroll.td) {
-							jS.evt.scroll.td = null;
-							jS.autoFillerGoToTd();
-						}
-					}
-				}
-			},
-
-			/**
-			 *
-			 * @param {Number} start index to start from
-			 * @methodOf jS
-			 * @name refreshColumnLabels
-			 */
-			refreshColumnLabels:function (start) {
-				start = start || 0;
-
-				jS.obj.barMenuParentTop().trigger('destroy');
-
-				var tds = jS.controls.bar.x.td[jS.i];
-
-				if (!tds) return;
-
-				for (var i = start; i < tds.length; i++) {
-					if (i) {//greater than 1 (corner)
-						tds[i].text(jSE.columnLabelString(tds[i][0].cellIndex));
-					}
-				}
-			},
-
-
-			/**
-			 *
-			 * @param {Number} start index to start from
-			 * @methodOf jS
-			 * @name refreshRowLabels
-			 */
-			refreshRowLabels:function (start) {
-				start = start || 0;
-
-				var tds = jS.controls.bar.y.td[jS.i];
-
-				if (!tds) return;
-
-				for (var i = start; i < tds.length; i++) {
-					if (i) {
-						$(tds[i]).text(tds[i][0].parentNode.rowIndex);
-					}
-				}
-			},
-
-			/**
-			 * Detects if an object is a td within a spreadsheet's table
-			 * @param {jQuery|HTMLElement} o target
-			 * @returns {Boolean}
-			 * @methodOf jS
-			 * @name isCell
-			 */
-			isCell:function (o) {
-				if (o && o.tagName && o.tagName == 'TD' && o.type && o.type == 'cell') {
-					return true;
-				}
-				return false;
-			},
-
-			/**
-			 * Detects if an object is a bar td within a spreadsheet's table
-			 * @param {jQuery|HTMLElement} o target
-			 * @returns {Boolean}
-			 * @methodOf jS
-			 * @name isBar
-			 */
-			isBar:function (o) {
-				if (o && o.tagName && o.tagName == 'TD' && o.type && o.type == 'bar') {
-					return true;
-				}
-				return false;
-			},
-
-			/**
-			 * Tracks read state of spreadsheet
-			 * @memberOf jS
-			 * @name readOnly
-			 */
-			readOnly:[],
-
-			/**
-			 * Detects read state of a spreadsheet
-			 * @param {Number} i index of spreadsheet within instance
-			 * @returns {Boolean}
-			 * @methodOf jS
-			 * @name isSheetEditable
-			 */
-			isSheetEditable:function (i) {
-				i = i || jS.i;
-				return (
-					s.editable == true && !jS.readOnly[i]
-					);
-			},
-
-			/**
-			 * Detects read state of formula of an object
-			 * @param {jQuery|HTMLElement} o target
-			 * @returns {Boolean}
-			 * @methodOf jS
-			 * @name isFormulaEditable
-			 */
-			isFormulaEditable:function (o) {
-				if (s.lockFormulas) {
-					if (o.data('formula') !== u) {
-						return false;
-					}
-				}
-				return true;
-			},
-
-			/**
-			 * Toggles full screen mode
-			 * @methodOf jS
-			 * @name toggleFullScreen
-			 */
-			toggleFullScreen:function () {
-				if (!jS) return;
-				jS.evt.cellEditDone();
-				var fullScreen = jS.obj.fullScreen(),
-					pane = jS.obj.pane();
-				if (fullScreen.is(':visible')) {
-					$win.unbind('jSResize');
-					$body.removeClass('bodyNoScroll');
-					s.parent = fullScreen[0].origParent;
-
-					s.parent.prepend(fullScreen.children());
-
-					fullScreen.remove();
-
-					jS.sheetSyncSize();
-					pane.resizeScroll();
-					jS.trigger('sheetFullScreen', [false]);
-				} else { //here we make a full screen
-					$body.addClass('bodyNoScroll');
-
-					var parent = $(s.parent),
-						fullScreen = doc.createElement('div'),
-						events = $._data(s.parent[0], 'events');
-
-					fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + ' ' + jS.cl.parent;
-
-					fullScreen.origParent = parent;
-					s.parent = jS.controls.fullScreen = $(fullScreen)
-						.append(parent.children())
-						.appendTo($body);
-
-					$win
-						.bind('resize', function() {
-							$win.trigger('jSResize');
-						})
-						.bind('jSResize', function () {
-							this.w = $win.width();
-							this.h = $win.height();
-							s.parent
-								.width(this.w)
-								.height(this.h);
-
-							jS.sheetSyncSize();
-							pane.resizeScroll();
-						})
-						.trigger('jSResize');
-
-
-					parent.trigger('sheetFullScreen', [true]);
-
-					for (var event in events) {
-						for (var i = 0; i < events[event].length; i++) {
-							s.parent.bind(event, events[event][i].handler);
-						}
-					}
-				}
-			},
-
-			/**
-			 * Assists in rename of spreadsheet
-			 * @methodOf jS
-			 * @name renameSheet
-			 */
-			renameSheet:function (i) {
-				if (isNaN(i)) return false;
-
-				if (i > -1)
-					jS.sheetTab();
-			},
-
-			/**
-			 * Switches spreadsheet
-			 * @param {Number} i index of spreadsheet within instance
-			 * @methodOf jS
-			 * @name switchSheet
-			 */
-			switchSheet:function (i) {
-				if (isNaN(i)) return false;
-
-				if (i == -1) {
-					jS.addSheet();
-				} else if (i != jS.i) {
-					jS.setActiveSheet(i);
-					jS.calc(i);
-				}
-			},
-
-			/**
-			 * Makes table object usable by sheet
-			 * @param {jQuery|HTMLElement} table
-			 * @returns {*}
-			 * @methodOf jS
-			 * @name tuneTableForSheetUse
-			 */
-			tuneTableForSheetUse:function (table) {
-				var $table = $(table);
-				jS.controls.table[jS.i] = $table
-					.addClass(jS.cl.table)
-					.addClass(jS.cl.uiTable)
-					.attr('id', jS.id.table + jS.i)
-					.attr('border', '1px')
-					.attr('cellpadding', '0')
-					.attr('cellspacing', '0');
-
-				jS.formatTable(table);
-				jS.sheetDecorateRemove(false, $table);
-
-				jS.controls.tables = jS.obj.tables().add(table);
-
-				//override frozenAt settings with table's data-frozenatrow and data-frozenatcol
-				var frozenAtRow = $table.attr('data-frozenatrow') * 1,
-					frozenAtCol = $table.attr('data-frozenatcol') * 1;
-
-				if (!jS.s.frozenAt[jS.i]) jS.s.frozenAt[jS.i] = {row:0, col:0};
-				if (frozenAtRow) jS.s.frozenAt[jS.i].row = frozenAtRow;
-				if (frozenAtCol) jS.s.frozenAt[jS.i].col = frozenAtCol;
-			},
-
-			/**
-			 * Cycles through all the td's and turns table into spreadsheet
-			 * @param {HTMLElement} table spreadsheet
-			 * @param {Number} i spreadsheet index within instance
-			 * @methodOf jS
-			 * @name createSpreadsheet
-			 */
-			createSpreadsheet:function (table, i) {
-				table.spreadsheet = jS.spreadsheets[i] = []; //reset the sheet's spreadsheet
-
-				var rows = jS.rows(table),
-					row = rows.length - 1,
-					col;
-				if (row < 0) return;
-				do {
-					col = rows[row].children.length - 1;
-					if (col < 0) return;
-					do {
-						var td = rows[row].children[col];
-						if (row > 0 && col > 0) {
-							jS.createCell(i, row, col);
-						} else {
-							if (col == 0 && row > 0) { //barleft
-								td.type = 'bar';
-								td.entity = 'left';
-								td.innerHTML = row;
-								td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.cl.uiBar;
-								td.setAttribute('style', 'height:' + td.nextSibling.style.height); //This element is generated and needs to track the height of the item just before it
-							}
-
-							if (row == 0 && col > 0) { //bartop
-								td.type = 'bar';
-								td.entity = 'top';
-								td.innerHTML = jSE.columnLabelString(col);
-								td.className = jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.cl.uiBar;
-							}
-
-							if (row == 0 && col == 0) { //corner
-								td.type = 'bar';
-								td.entity = 'corner';
-								td.className = jS.cl.uiBar + ' ' + ' ' + jS.cl.barCorner;
-								jS.controls.bar.corner[jS.i] = td;
-							}
-						}
-					} while (col--);
-				} while (row--);
-			},
-
-			/**
-			 * Toggles cells from being hidden, not yet used needs a bit of work
-			 * @memberOf jS
-			 * @name toggleHide
-			 */
-			toggleHide:{
-				hiddenRows:[],
-				row:function (i) {
-					i = i || jS.rowLast;
-					if (!i) return;
-
-					var row = jS.rows()[i],
-						$row = $(row),
-						style = [];
-
-					if (!this.hiddenRows[jS.i]) this.hiddenRows[jS.i] = [];
-
-					if ($row.length && $.inArray(i + 1, this.hiddenRows[jS.i]) < 0) {
-						this.hiddenRows[jS.i].push(i + 1);
-					} else {
-						this.hiddenRows[jS.i].splice(this.hiddenRows[jS.i].indexOf(i + 1), 1);
-					}
-
-					jS.obj.toggleHideStyleY()[0].updateStyle();
-				},
-				rowShowAll:function () {
-					$.each(this.hiddenRows[jS.i] || [], function (j) {
-						$(this).removeData('hidden');
-					});
-					jS.obj.toggleHideStyleY().html('');
-					this.hiddenRows[jS.i] = [];
-				},
-
-				hiddenColumns:[],
-				columnIndexOffset:[],
-				column:function (i) {
-					i = i || jS.colLast;
-					if (!i) return;
-
-					var col = jS.cols()[i],
-						$col = $(col),
-						style = [];
-
-					if (!this.hiddenColumns[jS.i]) this.hiddenColumns[jS.i] = [];
-
-					if ($col.length && $.inArray(i + 1, this.hiddenColumns[jS.i]) < 0) {
-						this.hiddenColumns[jS.i].push(i + 1);
-					} else {
-						this.hiddenColumns[jS.i].splice(this.hiddenColumns[jS.i].indexOf(i + 1), 1);
-					}
-
-					jS.obj.toggleHideStyleX()[0].updateStyle();
-				},
-				columnShowAll:function () {
-					jS.obj.toggleHideStyleX().html('');
-					this.hiddenColumns[jS.i] = [];
-				}
-			},
-
-			merged:[],
-
-			/**
-			 * Merges cells together
-			 * @param {Object} tds
-			 * @methodOf jS
-			 * @name merge
-			 */
-			merge:function (tds) {
-				tds = tds || jS.highlighted();
-				if (!tds.length) {
-					return;
-				}
-				var cellsValue = [],
-					tdFirstLoc = jS.getTdLocation(tds[0]),
-					tdLastLoc = jS.getTdLocation(tds[tds.length - 1]),
-					colI = 0,
-					rowI = 0,
-					firstCell = tds[0].jSCell,
-					last = new Date();
-
-				if (tdFirstLoc.row) {
-					jS.setDirty(true);
-					jS.setChanged(true);
-
-					//create a group to be merged into 1
-					if (!jS.merged[jS.i + '_' + tdFirstLoc.row + '_' + tdFirstLoc.col]) jS.merged[jS.i + '_' + tdFirstLoc.row + '_' + tdFirstLoc.col] = [];
-					var merged = jS.merged[jS.i + '_' + tdFirstLoc.row + '_' + tdFirstLoc.col];
-
-					for (var row = tdFirstLoc.row; row <= tdLastLoc.row; row++) {
-						if (row) {
-							rowI++;
-						}
-						for (var col = tdFirstLoc.col; col <= tdLastLoc.col; col++) {
-							if (row == tdFirstLoc.row) {
-								colI++;
-							}
-							var td = jS.getTd(jS.i, row, col),
-								cell = jS.spreadsheets[jS.i][row][col],
-								cellLeft = jS.spreadsheets[jS.i][row][tdFirstLoc.col - 1] || jS.spreadsheets[jS.i][row][tdFirstLoc.col],
-								cellRight = jS.spreadsheets[jS.i][row][tdLastLoc.col + 1] || jS.spreadsheets[jS.i][row][tdLastLoc.col],
-								cellUp = jS.spreadsheets[jS.i][tdLastLoc.row - 1][tdLastLoc.col] || jS.spreadsheets[jS.i][tdLastLoc.row][tdLastLoc.col],
-								cellDown = jS.spreadsheets[jS.i][tdLastLoc.row + 1][tdLastLoc.col] || jS.spreadsheets[jS.i][tdLastLoc.row][tdLastLoc.col];
-
-							merged.push(cell);
-
-							cellsValue.push(cell.formula ? "(" + cell.formula.substring(1) + ")" : cell.value);
-
-							s.parent.one('sheetPreCalculation', function () {
-								if (col != tdFirstLoc.col || row != tdFirstLoc.row) {
-									cell.formula = null;
-									cell.value = '';
-									cell.html = '';
-									cell.defer = firstCell;
-									cell.right = cellRight;
-									cell.down = cellDown;
-									cell.left = cellLeft;
-									cell.up = cellUp;
-
-									td
-										.removeAttr('data-formula')
-										.html('')
-										.hide();
-								}
-							});
-
-							jS.calcDependencies.apply(cell);
-						}
-					}
-
-
-					firstCell.value = cellsValue.join(' ');
-					firstCell.formula = (firstCell.formula ? cellsValue.join(' ') : '');
-
-					tds.first()
-						.show()
-						.attr('rowSpan', rowI)
-						.attr('colSpan', colI);
-
-					jS.calcDependencies.apply(firstCell);
-					jS.evt.cellEditDone();
-					jS.autoFillerGoToTd();
-				}
-			},
-
-			/**
-			 * Unmerges cells together
-			 * @param {Object} td
-			 * @methodOf jS
-			 * @name unmerge
-			 */
-			unmerge:function (td) {
-				td = td || jS.highlighted()[0];
-				if (!td) {
-					return;
-				}
-				var loc = jS.getTdLocation(td),
-					last = new Date();
-
-				var rowMax = math.max(td.getAttribute('rowSpan') * 1, 1);
-				var colMax = math.max(td.getAttribute('colSpan') * 1, 1);
-
-				for (var row = loc.row; row <= loc.row + rowMax; row++) {
-					for (var col = loc.col; col <= loc.col + colMax; col++) {
-						var td = $(jS.getTd(jS.i, row, col))
-								.show()
-								.removeAttr('colSpan')
-								.removeAttr('rowSpan'),
-							cell = td[0].jSCell;
-
-						cell.up = cell.down = cell.left = cell.right = cell.defer = null;
-
-						jS.calcDependencies.apply(cell, [last]);
-					}
-				}
-				jS.autoFillerGoToTd();
-			},
-
-			/**
-			 * Fills values down or up to highlighted cells from active cell;
-			 * @param {Boolean} goUp default is down, when set to true value are filled from bottom, up;
-			 * @param {String} v the value to set cells to, if not set, formula will be used;
-			 * @param {Object} cells
-			 * @methodOf jS
-			 * @name fillUpOrDown
-			 */
-			fillUpOrDown:function (goUp, v, cells) {
-				jS.evt.cellEditDone();
-				cells = cells || jS.highlighted(true);
-
-				if (cells.length < 1) {
-					return;
-				}
-
-				var activeTd = jS.obj.tdActive(),
-					last = new Date();
-
-				if (cells.length < 1) {
-					return;
-				}
-
-				var startLoc = jS.getTdLocation(cells[0].td),
-					endLoc = jS.getTdLocation(cells[cells.length - 1].td),
-					relativeLoc = jS.getTdLocation(activeTd),
-					offset = {
-						row:0,
-						col:0
-					},
-					newV = v || activeTd[0].jSCell.value,
-					isNumber = false,
-					i = cells.length - 1,
-					fn = function() {};
-
-				v = v || activeTd[0].jSCell.value;
-
-				if (i >= 0) {
-				if (v.charAt && v.charAt(0) == '=') {
-					if (i >= 0) {
-						do {
-							if (!goUp) {
-								offset.row = relativeLoc.row - endLoc.row;
-								offset.col = relativeLoc.col - endLoc.col;
-							} else {
-								offset.row = relativeLoc.row - startLoc.row;
-								offset.col = relativeLoc.col - startLoc.col;
-							}
-
-							newV = jS.reparseFormula(v, offset);
-
-							s.parent.one('sheetPreCalculation', function () {
-								cells[i].formula = newV;
-								cells[i].value = '';
-								cells[i].td.data('formula', newV);
-							});
-
-							jS.calcDependencies.apply(cells[i], [last]);
-						} while (i--);
-						return true;
-					}
-				} else {
-					if ((isNumber = !isNaN(newV)) || newV.length > 0) {
-						if (isNumber && newV != '') {
-							newV *= 1;
-
-							if (!goUp) {
-								newV += cells.length - 1;
-							}
-							fn = function() {
-								newV--;
-							};
-						}
-					}
-
-					do {
-						s.parent.one('sheetPreCalculation', function () {
-							cells[i].formula = '';
-							cells[i].value = newV;
-							cells[i].td.removeData('formula');
-						});
-
-						jS.calcDependencies.apply(cells[i], [last]);
-
-						fn();
-					} while (i--);
-				}
-				}
-
-				return false;
-			},
-
-			tdsToTsv:function (cells, clearValue, fnEach) {
-				cells = cells || jS.highlighted(true);
-				if (cells.type) {
-					cells = [cells];
-				}
-				fnEach = fnEach || function (loc, cell) {
-					if (clearValue) {
-						s.parent.one('sheetPreCalculation', function () {
-							cell.formula = '';
-							cell.value = '';
-						});
-						jS.calcDependencies.apply(cell, [last]);
-					}
-				};
-				var cellValues = [],
-					firstLoc,
-					lastLoc,
-					minLoc = {},
-					last = new Date(),
-					i = cells.length - 1,
-					row,
-					col;
-
-				if (i >= 0) {
-					firstLoc = jS.getTdLocation(cells[0].td);
-					lastLoc = jS.getTdLocation(cells[cells.length - 1].td);
-					minLoc.row = math.min(firstLoc.row, lastLoc.row);
-					minLoc.col = math.min(firstLoc.col, lastLoc.col);
-					do {
-						var loc = jS.getTdLocation(cells[i].td),
-							value = (cells[i].formula ? '=' + cells[i].formula : cells[i].value);
-
-						row = math.abs(loc.row - minLoc.row);
-						col = math.abs(loc.col - minLoc.col);
-
-						if (!cellValues[row]) cellValues[row] = [];
-
-						if ((value += '').match(/\n/)) {
-							value = '"' + value + '"';
-						}
-
-						cellValues[row][col] = (value || '');
-
-						fnEach.apply(cells[i].td, [loc, cells[i]]);
-					} while (i-- > 0);
-
-
-					i = cellValues.length - 1;
-					do {
-						cellValues[i] = cellValues[i].join('\t');
-					} while (i-- > 0);
-
-					return cellValues.join('\n');
-				}
-				return '';
-			},
-
-			/**
-			 * Makes cell formulas increment within a range
-			 * @param {Object} loc {row: int, col: int}
-			 * @param {Object} offset {row: int,col: int} offsets increment
-			 * @param {Boolean} isBefore inserted before location
-			 * @methodOf jS
-			 * @name offsetFormulas
-			 */
-			offsetFormulas:function (loc, offset, isBefore) {
-				var size = jS.sheetSize(),
-				//shifted range is the range of cells that are moved
-					shiftedRange = {
-						first:loc,
-						last:{
-							row:size.rows,
-							col:size.cols
-						}
-					},
-				//effected range is the entire spreadsheet
-					affectedRange = {
-						first:{
-							row:1,
-							col:1
-						},
-						last:{
-							row:size.rows,
-							col:size.cols
-						}
-					},
-					last = new Date(),
-					cellStack = [];
-
-
-
-				jS.cycleCells(function () {
-					var cell = this;
-					if (this.formula && typeof this.formula == 'string' && jS.isFormulaEditable(this.td)) {
-						this.formula = jS.reparseFormula(this.formula, offset, loc, isBefore);
-
-						this.td.data('formula', '=' + this.formula);
-					}
-
-					cellStack.push(function() {
-						jS.calcDependencies.apply(cell, [last, true]);
-					});
-
-				}, affectedRange.first, affectedRange.last);
-
-				while (cellStack.length) {
-					cellStack.pop()();
-				}
-
-				jS.evt.cellEditDone();
-			},
-
-			/**
-			 * Reparses a formula
-			 * @param formula
-			 * @param {Object} offset {row: int,col: int} offsets increment
-			 * @param {Object} loc
-			 * @param {Boolean} isBefore
-			 * @returns {String}
-			 * @methodOf jS
-			 * @name reparseFormula
-			 */
-			reparseFormula:function (formula, offset, loc, isBefore) {
-				return formula.replace(jSE.regEx.cell, function (ignored, col, row, pos) {
-					if (col == "SHEET") return ignored;
-					offset = offset || {loc: 0, row: 0};
-
-					var oldLoc = {
-							row:row * 1,
-							col:jSE.columnLabelIndex(col)
-						},
-						moveCol,
-						moveRow,
-						override = {col: col, row: row};
-
-					if (loc) {
-						if (oldLoc.col == loc.col || col == '#REF!') {
-							override.col = '#REF!';
-							override.use = true;
-						}
-						if (oldLoc.row == loc.row || row == '#REF!') {
-							override.row = '#REF!';
-							override.use = true;
-						}
-						if (override.use) {
-							return override.col + override.row;
-						}
-						if (isBefore) {
-							if (oldLoc.col > loc.col) {
-								moveCol = true;
-							}
-							if (oldLoc.row > loc.row) {
-								moveRow = true;
-							}
-						} else {
-							if (oldLoc.col > loc.col) {
-								moveCol = true;
-							}
-							if (oldLoc.row > loc.row) {
-								moveRow = true;
-							}
-						}
-
-						if (moveCol || moveRow) {
-							if (moveCol) oldLoc.col += offset.col;
-							if (moveRow) oldLoc.row += offset.row;
-
-							return jS.makeFormula(oldLoc);
-						}
-					} else {
-						return jS.makeFormula(oldLoc, offset);
-					}
-
-					return ignored;
-				});
-			},
-
-			/**
-			 * Reconstructs a formula
-			 * @param {Object} loc {row: i, col: i}
-			 * @param {Object} offset {row: i, col: i}
-			 * @returns {String}
-			 * @methodOf jS
-			 * @name makeForumla
-			 */
-			makeFormula:function (loc, offset) {
-				offset = $.extend({row:0, col:0}, offset);
-
-				//set offsets
-				loc.col += offset.col;
-				loc.row += offset.row;
-
-				//0 based now
-				if (loc.col < 0) loc.col = 0;
-				if (loc.row < 0) loc.row = 0;
-
-				return jSE.parseCellName(loc.col, loc.row);
-			},
-
-			/**
-			 * Cylces through a certain group of td objects in a spreadsheet table and applies a function to them
-			 * @param {Function} fn the function to apply to a cell
-			 * @param {Object} firstLoc {row: 0, col: 0} the cell to start at
-			 * @param {Object} lastLoc {row: 0, col: 0} the cell to end at
-			 * @param {Number} i spreadsheet index within instance
-			 * @methodOf jS
-			 * @name cycleCells
-			 */
-			cycleCells:function (fn, firstLoc, lastLoc, i) {
-				i = i || jS.i;
-				firstLoc = firstLoc || {row:1, col:1};
-
-				if (!lastLoc) {
-					var size = jS.sheetSize();
-					lastLoc = {row:size.rows, col:size.cols};
-				}
-
-				var row = lastLoc.row, col;
-				if (row < firstLoc.row) return;
-				do {
-					col = lastLoc.col;
-					do {
-						fn.apply(jS.spreadsheets[i][row][col], [i, row, col]);
-					} while (col-- > firstLoc.col);
-				} while (row-- > firstLoc.row);
-			},
-
-			/**
-			 * Cylces through all td objects in a spreadsheet table and applies a function to them
-			 * @param fn
-			 * @methodOf jS
-			 * @name cycleCellsAll
-			 */
-			cycleCellsAll:function (fn) {
-				var jSI = jS.i, i,size,endLoc;
-				for (i = 0; i <= jS.sheetCount; i++) {
-					jS.i = i;
-					size = jS.sheetSize();
-					endLoc = {row:size.rows, col:size.cols};
-					jS.cycleCells(fn, {row:0, col:0}, endLoc, i);
-				}
-				jS.i = jSI;
-			},
-
-			/**
-			 * Cycles through a certain group of td objects in a spreadsheet table and applies a function to them, firstLoc can be bigger then lastLoc, this is more dynamic
-			 * @param {Function} fn the function to apply to a cell
-			 * @param {Object} firstLoc {row: 0, col: 0} the cell to start at
-			 * @param {Object} lastLoc {row: 0, col: 0} the cell to end at
-			 * @param {Boolean} ordered
-			 * @methodOf jS
-			 * @name cycleCellArea
-			 */
-			cycleCellArea:function (fn, firstLoc, lastLoc, ordered) {
-				var grid = {start:{}, end: {}},
-					row,
-					col,
-					cell,
-					i = jS.i,
-					o = {cell: $([]), td: $([])};
-
-
-				if (ordered) {
-					grid.start = firstLoc;
-					grid.end = lastLoc;
-				} else {
-					grid.start.row = math.max(math.min(firstLoc.row, lastLoc.row), 1);
-					grid.start.col = math.max(math.min(firstLoc.col, lastLoc.col), 1);
-					grid.end.row = math.max(firstLoc.row, lastLoc.row, 1);
-					grid.end.col = math.max(firstLoc.col, lastLoc.col, 1);
-				}
-
-				row = grid.end.row;
-
-				do {
-					col = grid.end.col;
-					do {
-						cell = jS.spreadsheets[i][row][col];
-						o.cell = o.cell.add(cell);
-						o.td = o.td.add(cell.td);
-					} while (col-- > grid.start.col);
-				} while (row-- > grid.start.row);
-
-				if (fn) fn(o);
-			},
-
-
-			/**
-			 * Adds tbody, colgroup, heights and widths to different parts of a spreadsheet
-			 * @param {HTMLElement} table table object
-			 * @methodOf jS
-			 * @name formatTable
-			 */
-			formatTable:function (table) {
-				var w = s.newColumnWidth,
-					h = s.colMargin,
-					children = table.children,
-					i = children.length - 1,
-					j,
-					col,
-					tbody,
-					colgroup,
-					firstTr;
-
-				if (i > -1) {
-					do {
-						switch (children[i].nodeName) {
-							case 'TBODY':
-								hasTbody = true;
-								tbody = children[i];
-								break;
-							case 'COLGROUP':
-								hasColgroup = true;
-								colgroup = children[i];
-								break;
-						}
-					} while (i--);
-
-					if (!tbody) {
-						tbody = doc.createElement('tbody');
-						$(children).wrap(tbody);
-					}
-
-					if (!colgroup || colgroup.children.length < 1) {
-						colgroup = doc.createElement('colgroup');
-
-						table.insertBefore(colgroup, tbody);
-
-						firstTr = tbody.children[0];
-
-						for (i = 0, j = firstTr.children.length; i < j; i++) {
-							col = doc.createElement('col');
-							colgroup.appendChild(col);
-							col.style.width = w + 'px';
-							col.width = w + 'px';
-						}
-						for (i = 0, j = tbody.children.length; i < j; i++) {
-							tbody.children[i].height = h + 'px';
-							tbody.children[i].style.height = h + 'px';
-						}
-					}
-				}
-
-				table.tbody = tbody;
-				table.colgroup = colgroup;
-				table.removeAttribute('width');
-				table.style.width = '';
-			},
-
-			/**
-			 * Ensure sheet minimums have been met, if not add columns and rows
-			 * @param {jQuery|HTMLElement} o table object
-			 * @methodOf jS
-			 * @name checkMinSize
-			 */
-			checkMinSize:function (o) {
-				var size = jS.sheetSize(o),
-					addRows = s.minSize.rows || 0,
-					addCols = s.minSize.cols || 0,
-					frozenAt = jS.frozenAt();
-
-				addRows = (frozenAt.row > addRows ? frozenAt.row + 1 : addRows);
-				addCols = (frozenAt.col > addCols ? frozenAt.col + 1 : addCols);
-
-				if (size.cols < addCols) {
-					jS.controlFactory.addColumnMulti(null, addCols - size.cols);
-				}
-
-				if (size.rows < addRows) {
-					jS.controlFactory.addRowMulti(null, addRows - size.rows);
-				}
-			},
-
-			/**
-			 * jQuery ui Themeroller integration
-			 * @memberOf jS
-			 * @name themeRoller
-			 * @namespace
-			 */
-			themeRoller:{
-
-				/**
-				 * Starts themeroller integration
-				 * @param {jQuery|HTMLElement} sheet spreadsheet table
-				 * @methodOf jS.themeRoller
-				 * @name start
-				 */
-				start:function (sheet) {
-					jS.obj.header().addClass(jS.cl.uiControl);
-					jS.obj.label().addClass(jS.cl.uiControl);
-					jS.obj.formula().addClass(jS.cl.uiControlTextBox);
-				},
-
-				/**
-				 * Themeroller cell interactions
-				 * @memberOf jS.themeRoller
-				 * @name cell
-				 * @namespace
-				 */
-				cell:{
-
-					/**
-					 * Highlights object
-					 * @param {jQuery|HTMLElement} obj td object
-					 * @methodOf jS.themeRoller.cell
-					 * @name setHighlighted
-					 */
-					setHighlighted:function (obj, addToHighlighted) {
-						var i,
-							_obj = jS.highlightedLast.obj,
-							x = jS.obj.scrollStyleX();
-
-						if (_obj && _obj.length && !addToHighlighted) {
-							i = _obj.length - 1;
-							do {
-								_obj[i].isHighlighted = false;
-							} while (i-- > 0);
-						}
-
-						if (obj && obj.length > 0) {
-							i = obj.length - 1;
-							do {
-								if (!obj[i].isHighlighted) {
-									obj[i].isHighlighted = true;
-									if (!obj[i].className.match(jS.cl.uiTdHighlighted)) {
-										obj[i].className += ' ' + jS.cl.uiTdHighlighted;
-									}
-								}
-							} while (i-- > 0);
-						}
-
-						if (addToHighlighted) {
-							jS.highlightedLast.obj = jS.highlightedLast.obj.add(obj);
-						} else {
-							jS.themeRoller.cell.clearHighlighted(_obj);
-
-							if (obj) jS.highlightedLast.obj = obj;
-						}
-
-						x.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
-					},
-
-					/**
-					 * Detects if there is a cell highlighted
-					 * @returns {Boolean}
-					 * @methodOf jS.themeRoller.cell
-					 * @name isHighlighted
-					 */
-					isHighlighted:function () {
-						return (jS.highlightedLast.obj.length ? true : false);
-					},
-
-					/**
-					 * Clears highlighted cells
-					 * @param {Object} locLast
-					 * @methodOf jS.themeRoller.cell
-					 * @name clearHighlighted
-					 */
-					clearHighlighted:function (obj, force) {
-						if (jS.themeRoller.cell.isHighlighted()) {
-							obj = obj || jS.highlightedLast.obj;
-
-							if (obj && obj.length) {
-								i = obj.length - 1;
-								do {
-									if (!obj[i].isHighlighted || force) {
-										obj[i].className = obj[i].className.replace(jS.cl.uiTdHighlighted, '');
-										obj[i].isHighlighted = false;
-									}
-								} while (i-- > 0);
-							}
-						}
-
-						jS.highlightedLast.obj = $([]);
-
-					}
-				},
-
-				/**
-				 * Themeroller bar interactions
-				 * @memberOf jS.themeRoller
-				 * @name bar
-				 * @namespace
-				 */
-				bar:{
-
-					/**
-					 * Adds initial style to bar
-					 * @param {jQuery|HTMLElement} o bar object
-					 * @methodOf jS.themeRoller.bar
-					 * @name style
-					 */
-					style:function (o) {
-						$(o).addClass(jS.cl.uiBar);
-					},
-
-					/**
-					 * Sets a bar to be active
-					 * @param {String} direction left or top
-					 * @param {HTMLElement} td index of bar
-					 * @methodOf jS.themeRoller.bar
-					 * @name setActive
-					 */
-					setActive:function (direction, td) {
-						switch (direction) {
-							case 'top':
-								jS.highlightedLast.barTop
-									.removeClass(jS.cl.uiBarHighlight);
-								jS.highlightedLast.barTop = $(td).addClass(jS.cl.uiBarHighlight);
-								break;
-							case 'left':
-								jS.highlightedLast.barLeft
-									.removeClass(jS.cl.uiBarHighlight);
-								jS.highlightedLast.barLeft = $(td).addClass(jS.cl.uiBarHighlight);
-								break;
-						}
-					},
-
-					/**
-					 * Clears bars from being active
-					 * @methodOf jS.themeRoller.bar
-					 * @name clearActive
-					 */
-					clearActive:function () {
-						jS.highlightedLast.barLeft
-							.removeClass(jS.cl.uiBarHighlight);
-						jS.highlightedLast.barLeft = $([]);
-
-						jS.highlightedLast.barTop
-							.removeClass(jS.cl.uiBarHighlight);
-						jS.highlightedLast.barTop = $([]);
-					}
-				},
-
-				/**
-				 * Themeroller tab interactions
-				 * @memberOf jS.themeRoller
-				 * @name tab
-				 * @namespace
-				 */
-				tab:{
-
-					/**
-					 * Sets a tab to be active
-					 * @param {jQuery|HTMLElement} o tab object
-					 * @methodOf jS.themeRoller.tab
-					 * @name setActive
-					 */
-					setActive:function (o) {
-						this.clearActive();
-						jS.obj.tab().addClass(jS.cl.uiTabActive);
-					},
-
-					/**
-					 * Clears a tab from being active
-					 * @methodOf jS.themeRoller.tab
-					 * @name clearActive
-					 */
-					clearActive:function () {
-						jS.obj.tabContainer().find('span.' + jS.cl.uiTabActive)
-							.removeClass(jS.cl.uiTabActive);
-					}
-				}
-			},
-
-			/**
-			 * jQuery ui resizeable integration
-			 * @param {jQuery|HTMLElement} o To set resizable
-			 * @param {Object} settings the settings used with jQuery ui resizable
-			 * @methodOf jS
-			 * @name resizable
-			 */
-			resizable:function (o, settings) {
-				if (!o.data('resizable')) {
-					o.resizable(settings);
-				}
-			},
-
-			frozenAt:function () {
-				var frozenAt;
-				if (!(frozenAt = jS.s.frozenAt[jS.i])) frozenAt = {row:0, col:0};
-
-				frozenAt.row = math.max(frozenAt.row, 0);
-				frozenAt.col = math.max(frozenAt.col, 0);
-
-				return frozenAt;
-			},
-
-			scrolledTo:function () {
-				if (!jS.scrolledArea[jS.i]) {
-					var frozenAt = jS.frozenAt();
-					jS.scrolledArea[jS.i] = {
-						start: {
-							row:math.max(frozenAt.row, 1),
-							col: math.max(frozenAt.col, 1)
-						},
-						end: {
-							row:math.max(frozenAt.row, 1),
-							col:math.max(frozenAt.col, 1)
-						}
-					};
-				}
-				return jS.scrolledArea[jS.i];
-			},
-
-			/**
-			 * instance busy state
-			 * @memberOf jS
-			 * @name busy
-			 */
-			busy:[],
-
-
-			/**
-			 * Set the spreadsheet busy status
-			 * @param {Boolean} busy
-			 * @memberOf jS
-			 * @name setBusy
-			 */
-			setBusy:function (busy) {
-				if (busy) {
-					jS.busy.push(busy);
-				} else {
-					jS.busy.pop();
-				}
-			},
-
-			isBusy:function () {
-				return (jS.busy.length > 0);
-			},
-
-			/**
-			 * jQuery ui draggable integration
-			 * @param {jQuery|HTMLElement} o To set resizable
-			 * @param {Object} settings the settings used with jQuery ui resizable
-			 * @methodOf jS
-			 * @name draggable
-			 */
-			draggable:function (o, settings) {
-				if (!o.data('jSdraggable')) {
-					o
-						.data('jSdraggable', true)
-						.draggable(settings);
-				}
-			},
-
-			/**
-			 * jQuery nearest integration
-			 * @param o
-			 * @param settings
-			 * @methodOf jS
-			 * @name nearest
-			 */
-			nearest:function (o, settings) {
-				return $(o).nearest(settings);
-			},
-
-			/**
-			 * Bar resizing
-			 * @memberOf jS
-			 * @name resizeBar
-			 * @namespace
-			 */
-			resizeBar:{
-
-				/**
-				 * Provides the top bar with ability to resize
-				 * @param {jQuery|HTMLElement} bar td bar object
-				 * @param {Number} i index of bar
-				 * @param {jQuery|HTMLElement} pane spreadsheet pane
-				 * @param {jQuery|HTMLElement} sheet spreadsheet table
-				 * @methodOf jS.resizeBar
-				 * @name top
-				 */
-				top:function (bar, i, pane, sheet) {
-					jS.obj.barTopControls().remove();
-					var barController = $(doc.createElement('div'))
-						.addClass(jS.cl.barController + ' ui-state-highlight')
-						.width(bar.width())
-						.height(0)
-						.prependTo(bar);
-
-					jS.controls.bar.x.controls[jS.i] = jS.obj.barTopControls().add(barController);
-
-					jS.resizableCells(barController, {
-						handles:'e',
-						start:function (e, ui) {
-							jS.autoFillerHide();
-							jS.setBusy(true);
-							this.col = $(jS.col(sheet, i));
-							if (pane.freezeHandleTop) {
-								pane.freezeHandleTop.remove();
-							}
-						},
-						resize:function (e, ui) {
-							this.col
-								.width(ui.size.width)
-								.attr('width', ui.size.width + 'px')
-								.css('width', ui.size.width + 'px');
-
-							if (pane.inPlaceEdit) {
-								pane.inPlaceEdit.goToTd();
-							}
-						},
-						stop:function (e, ui) {
-							jS.setBusy(false);
-							pane.resizeScroll();
-							jS.followMe();
-							jS.setDirty(true);
-						},
-						minWidth: 32
-					});
-
-					barController.children()
-						.height(bar.height())
-						.css('position', 'absolute');
-				},
-
-				/**
-				 * Provides the left bar with ability to resize
-				 * @param {jQuery|HTMLElement} bar td bar object
-				 * @param {Number} i index of bar
-				 * @param {jQuery|HTMLElement} pane spreadsheet pane
-				 * @param {jQuery|HTMLElement} sheet spreadsheet table
-				 * @methodOf jS.resizeBar
-				 * @name left
-				 */
-				left:function (bar, i, pane, sheet) {
-					jS.obj.barLeftControls().remove();
-					var offset = bar.offset(),
-						barController = $(doc.createElement('div'))
-							.addClass(jS.cl.barController + ' ui-state-highlight')
-							.prependTo(bar)
-							.offset({
-								top:offset.top,
-								left:offset.left
-							});
-
-					jS.controls.bar.y.controls[jS.i] = jS.obj.barLeftControls().add(barController);
-
-					var child = $(doc.createElement('div'))
-							.addClass('jSBarControllerChild')
-							.height(bar.height())
-							.prependTo(barController);
-
-					jS.resizableCells(child, {
-						handles:'s',
-						start:function () {
-							jS.autoFillerHide();
-							jS.setBusy(true);
-							if (pane.freezeHandleLeft) {
-								pane.freezeHandleLeft.remove();
-							}
-						},
-						resize:function (e, ui) {
-							bar
-								.css('height', ui.size.height + 'px')
-								.attr('height', ui.size.height);
-
-							bar.next()
-								.css('height', ui.size.height + 'px')
-								.attr('height', ui.size.height);
-
-							if (pane.inPlaceEdit) {
-								pane.inPlaceEdit.goToTd();
-							}
-						},
-						stop:function (e, ui) {
-							jS.setBusy(false);
-							pane.resizeScroll();
-							jS.followMe();
-							jS.setDirty(true);
-						},
-						minHeight: 15
-					});
-
-					barController.children().children()
-						.width(bar.width())
-						.css('position', 'absolute');
-				},
-
-				/**
-				 * Provides the corner bar, just a place holder, needed for auto events
-				 * @methodOf jS.resizeBar
-				 * @name corner
-				 */
-				corner:function () {
-				}
-			},
-
-			/**
-			 * Removes sheet decorations
-			 * @param {Boolean} makeClone creates a clone rather than the actual object
-			 * @param {jQuery|HTMLElement} sheets spreadsheet table object to remove decorations from
-			 * @returns {jQuery|HTMLElement}
-			 * @methodOf jS
-			 * @name sheetDecorateRemove
-			 */
-			sheetDecorateRemove:function (makeClone, sheets) {
-				sheets = sheets || jS.obj.tables();
-				sheets = (makeClone ? sheets.clone() : sheets);
-
-				//Get rid of highlighted cells and active cells
-				sheets.find('td.' + jS.cl.uiTdActive)
-					.removeClass(jS.cl.uiTdActive);
-
-				sheets.find('td.' + jS.cl.uiTdHighlighted)
-					.removeClass(jS.cl.uiTdHighlighted);
-				return sheets;
-			},
-
-			/**
-			 * Removed bars from spreadsheet table
-			 * @param {jQuery|HTMLElement} sheet spreadsheet table object to remove bars from
-			 * @returns {jQuery|HTMLElement}
-			 * @methodOf jS
-			 * @name sheetBarsRemove
-			 */
-			sheetBarsRemove:function (sheet) {
-				sheet = $(sheet ? sheet : jS.obj.tables());
-				sheet.find('tr.' + jS.cl.barTopParent).remove();
-				sheet.find('td.' + jS.cl.barLeft).remove();
-				return sheet;
-			},
-
-			/**
-			 * Updates the label so that the user knows where they are currently positioned
-			 * @param {String|Object} v Value to update to, if object {col, row}
-			 * @param {Boolean} setDirect
-			 * @methodOf jS
-			 * @name labelUpdate
-			 */
-			labelUpdate:function (v, setDirect) {
-				if (!setDirect) {
-					v = jSE.parseCellName(v.col, v.row);
-					if (v) jS.obj.label().text(v);
-				} else {
-					jS.obj.label().text(v);
-				}
-			},
-
-			/**
-			 * Starts td to be edited
-			 * @param {jQuery|HTMLElement} td
-			 * @param {Boolean} isDrag should be determined by if the user is dragging their mouse around setting cells
-			 * @param {Boolean} doNotClearHighlighted
-			 */
-			cellEdit:function (td, isDrag, doNotClearHighlighted) {
-				if (jS.cellLast.td.length < 1) {
-					//doNotClearHighlighted = false;
-				}
-
-				jS.autoFillerNotGroup = true; //make autoFiller directional again.
-				//This finished up the edit of the last cell
-				jS.evt.cellEditDone();
-
-				if (!td.length) return;
-
-				var loc = jS.getTdLocation(td),
-					cell = td[0].jSCell,
-					v;
-
-				if (!cell) return;
-
-				jS.trigger('sheetCellEdit', [cell]);
-
-				if (!td.is(jS.cellLast.td)) {
-					jS.followMe(td);
-				} else {
-					jS.autoFillerGoToTd(td);
-				}
-
-				//Show where we are to the user
-				jS.labelUpdate(loc);
-
-				if (cell.formula) {
-					v = '=' + cell.formula;
-				} else {
-					v = cell.value;
-				}
-
-				var formula = jS.obj.formula()
-					.val(v)
-					.blur();
-
-				jS.cellSetActive(td, loc, isDrag, null, null, doNotClearHighlighted);
-			},
-
-			/**
-			 * sets cell active to sheet, and highlights it for the user, shouldn't be called directly, should use cellEdit
-			 * @param {jQuery|HTMLElement} td
-			 * @param {Object} loc {col, row}
-			 * @param {Boolean} isDrag should be determined by if the user is dragging their mouse around setting cells
-			 * @param {Boolean} directional makes highlighting directional, only left/right or only up/down
-			 * @param {Function} fnDone called after the cells are set active
-			 * @param {Boolean} doNotClearHighlighted
-			 * @memberOf jS
-			 * @name cellSetActive
-			 */
-			cellSetActive:function (td, loc, isDrag, directional, fnDone, doNotClearHighlighted) {
-				if (loc.col != u) {
-					jS.cellLast.td = td; //save the current cell/td
-
-					jS.cellLast.row = jS.rowLast = loc.row;
-					jS.cellLast.col = jS.colLast = loc.col;
-
-					if (!doNotClearHighlighted) {
-						jS.themeRoller.cell.setHighlighted(td); //themeroll the cell and bars
-						jS.highlightedLast.start = loc;
-						jS.highlightedLast.end = loc;
-					}
-
-					if (!td.length) return;
-
-					jS.themeRoller.bar.setActive('left', td[0].barLeft);
-					jS.themeRoller.bar.setActive('top', td[0].barTop);
-
-					var selectModel,
-						clearHighlightedModel;
-
-					switch (s.cellSelectModel) {
-						case 'excel':
-						case 'gdrive':
-							selectModel = function () {};
-							clearHighlightedModel = function() {};//jS.themeRoller.cell.clearHighlighted;
-							break;
-						case 'oo':
-							selectModel = function (target) {;
-								if (jS.isCell(target)) {
-									jS.cellEdit($(target));
-								}
-							};
-							clearHighlightedModel = function () {};
-							break;
-					}
-
-					if (isDrag) {
-						var locTrack = {},
-							pane = jS.obj.pane();
-
-						locTrack.last = loc;//we keep track of the most recent location because we don't want tons of recursion here
-
-						pane.onmousemove = function (e) {
-							e = e || win.event;
-							e.target = e.target || e.srcElement;
-							if (jS.isBusy()) return false;
-
-							var locEnd = jS.highlightedLast.end = jS.getTdLocation(e.target),
-								ok = true;
-
-							if (locEnd.col < 1 || locEnd.row < 1) return false; //bar
-
-							if (directional) {
-								ok = false;
-								if (loc.col == locEnd.col || loc.row == locEnd.row) {
-									ok = true;
-								}
-							}
-
-							if ((locTrack.last.col != locEnd.col || locTrack.last.row != locEnd.row) && ok) { //this prevents this method from firing too much
-								//select active cell if needed
-								selectModel(e.target);
-
-								//highlight the cells
-								jS.cycleCellArea(function (o) {
-									jS.themeRoller.cell.setHighlighted(o.td);
-								}, loc, locEnd);
-							}
-
-							locTrack.last = locEnd;
-						};
-
-						doc.onmouseup = function() {
-							pane.onmousemove = null;
-							pane.onmousemove = null;
-							pane.onmouseup = null;
-							doc.onmouseup = null;
-
-							if (fnDone) {
-								fnDone();
-							}
-						};
-					}
-				}
-			},
-
-			/**
-			 * the most recent used column
-			 * @memberOf jS
-			 * @name colLast
-			 */
-			colLast:0,
-
-			/**
-			 * the most recent used row
-			 * @memberOf jS
-			 * @name rowLast
-			 */
-			rowLast:0,
-
-			/**
-			 * the most recent used cell, {td, row, col, isEdit}
-			 * @memberOf jS
-			 * @type {Object}
-			 * @name cellLast
-			 */
-			cellLast:{
-				td:$([]), //this is a dud td, so that we don't get errors
-				row:0,
-				col:0,
-				isEdit:false
-			},
-
-			/**
-			 * the most recent highlighted cells {td, rowStart, colStart, rowEnd, colEnd}
-			 * @memberOf jS
-			 * @type {Object}
-			 * @name highlightedLast
-			 */
-			highlightedLast:{
-				obj:$([]),
-				start: {row: 0, col: 0},
-				end: {row: 0, col: 0},
-				barLeft: $([]),
-				barTop: $([])
-			},
-			highlightedLastOrdered: function() {
-				var grid = this.highlightedLast,
-					_grid = {start:{}, end:{}};
-
-				_grid.start.row = Math.min(grid.start.row, grid.end.row);
-				_grid.start.col = Math.min(grid.start.col, grid.end.col);
-				_grid.end.row = Math.max(grid.start.row, grid.end.row);
-				_grid.end.col = Math.max(grid.start.col, grid.end.col);
-
-				return _grid;
-			},
-			editedLast: [],
-
-			/**
-			 * sets a cells class for styling
-			 * @param {String} setClass class(es) to set cells to
-			 * @param {String} removeClass class(es) to remove from cell if the setClass would conflict with
-			 * @param {Object} tds
-			 * @returns {Boolean}
-			 * @methodOf jS
-			 * @name cellStyleToggle
-			 */
-			cellStyleToggle:function (setClass, removeClass, tds) {
-				tds = tds || jS.highlighted();
-				if (tds.length < 1) {
-					return false;
-				}
-				jS.setDirty(true);
-				//Lets check to remove any style classes
-				var td,
-					$td,
-					i = tds.length - 1,
-					cells = jS.obj.cellsEdited(),
-					cellsEdited = jS.controls.cellsEdited[jS.i],
-					hasClass;
-
-				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
-
-				if (i >= 0) {
-					hasClass = tds[0].className.match(setClass); //go by first element in set
-					do {
-						td = tds[i];
-						$td = $(td);
-
-						if (removeClass) {//If there is a class that conflicts with this one, we remove it first
-							$td.removeClass(removeClass);
-						}
-
-						//Now lets add some style
-						if (hasClass) {
-							$td.removeClass(setClass);
-						} else {
-							$td.addClass(setClass);
-						}
-
-						if (!td.jSCell.edited) {
-							td.jSCell.edited = true;
-							cellsEdited = cells.add(td.jSCell);
-						}
-
-					} while (i--);
-
-					return true;
-				}
-
-				return false;
-			},
-
-			cellTypeToggle:function(type, cells) {
-				cells = cells || jS.highlighted(true);
-
-				if (cells.length < 1) {
-					return;
-				}
-
-				var i = cells.length - 1,
-					remove = cells[i].type == type;
-
-				if (i >= 0) {
-					do {
-						if (remove) {
-							cells[i].type = null;
-						} else {
-							cells[i].type = type;
-						}
-						jS.updateCellDependencies.apply(cells[i]);
-					} while(i--);
-				}
-			},
-
-			/**
-			 * Resizes fonts in a cell by 1 pixel
-			 * @param {String} direction "up" or "down"
-			 * @param {Object} tds
-			 * @methodOf jS
-			 * @name fontReSize
-			 */
-			fontReSize:function (direction, tds) {
-				tds = tds || jS.highlighted();
-				if (tds.length < 1) {
-					return;
-				}
-
-				var resize = 0;
-				switch (direction) {
-					case 'up':
-						resize = 1;
-						break;
-					case 'down':
-						resize = -1;
-						break;
-				}
-
-				//Lets check to remove any style classes
-				var td,
-					$td,
-					i = tds.length - 1,
-					size,
-					cells = jS.obj.cellsEdited(),
-					cellsEdited = jS.controls.cellsEdited[jS.i];
-
-				//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
-
-				if (i >= 0) {
-					do {
-						td = tds[i];
-						$td = $(td);
-						size = ($td.css("font-size") + '').replace("px", "") * 1;
-						$td.css("font-size", ((size || 10) + resize) + "px");
-
-						if (!td.jSCell.edited) {
-							td.jSCell.edited = true;
-							cellsEdited = cells.add(td.jSCell);
-						}
-					} while(i--);
-					return true;
-				}
-				return false;
-
-			},
-
-			/**
-			 * Current number of cells being parsed
-			 * @type {Number}
-			 * @memberOf jS
-			 * @name callStack
-			 */
-			callStack:0,
-
-			/**
-			 * Ignites calculation with cell, is recursively called if cell uses value from another cell
-			 * @param {Number} sheetIndex sheet index within instance
-			 * @param {Number} rowIndex row index
-			 * @param {Number} colIndex col index
-			 * @returns {*} cell value after calculated
-			 * @name updateCellValue
-			 * @methodOf jS
-			 */
-			updateCellValue:function (sheetIndex, rowIndex, colIndex) {
-				var sheet, row, cell, fn;
-				if (!this.type || !this.type == 'cell') {
-					//first detect if the cell exists if not return nothing
-					if (!(sheet = jS.spreadsheets[sheetIndex])) return s.error({error:jS.msg.notFoundSheet});
-					if (!(row = sheet[rowIndex])) return s.error({error:jS.msg.notFoundRow});
-					if (!(cell = row[colIndex])) return s.error({error:jS.msg.notFoundColumn});
-				} else {
-					cell = this;
-					sheetIndex = this.sheet;
-					rowIndex = this.row;
-					colIndex = this.col;
-				}
-
-				cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
-
-				if (cell.result) { //unset the last result if it is set
-					delete cell.result;
-				}
-
-				switch (cell.state[cell.state.length - 1]) {
-					case 'updating':
-						return s.error({error:jS.msg.loopDetected});
-					case 'updatingDependencies':
-						return (cell.valueOverride != u ? cell.valueOverride : cell.value);
-				}
-
-				if (cell.defer) {//merging creates a defer property, which points the cell to another location to get the other value
-					return jS.updateCellValue.apply(cell.defer);
-				}
-
-				cell.state.push('updating');
-				cell.html = [];
-				cell.fnCount = 0;
-				cell.result = null;
-
-				if (cell.calcLast != jS.calcLast || cell.calcDependenciesLast != jS.calcDependenciesLast) {
-					cell.valueOverride = null;
-					cell.calcLast = jS.calcLast;
-					cell.calcDependenciesLast = jS.calcDependenciesLast;
-					cell.needsUpdated = true;
-
-					cell.calcCount++;
-					if (cell.formula) {
-						try {
-							if (cell.formula.charAt(0) == '=') {
-								cell.formula = cell.formula.substring(1);
-							}
-
-							var formulaParser;
-							if (jS.callStack) { //we prevent parsers from overwriting each other
-								if (!cell.formulaParser) { //cut down on un-needed parser creation
-									cell.formulaParser = Formula(jS.cellHandler);
-								}
-								formulaParser = cell.formulaParser
-							} else {//use the sheet's parser if there aren't many calls in the callStack
-								formulaParser = jS.FormulaParser;
-							}
-
-							jS.callStack++;
-							formulaParser.setObj(cell);
-							cell.result = formulaParser.parse(cell.formula);
-						} catch (e) {
-							cell.result = e.toString();
-							jS.alertFormulaError(cell.value);
-						}
-						jS.callStack--;
-						jS.filterValue.apply(cell);
-					} else if (cell.type && s.cellTypeHandlers[cell.type]) {
-						s.cellTypeHandlers[cell.type].apply(cell);
-					} else {
-						if (cell.value != u && cell.value.charAt) {
-							fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
-							if (fn) {
-								fn.apply(cell, [cell.value]);
-							} else {
-								fn = jS.s.cellEndHandlers[cell.value.charAt(cell.value.length - 1)];
-								if (fn) {
-									fn.apply(cell, [cell.value]);
-								}
-							}
-						}
-						jS.filterValue.apply(cell);
-					}
-				}
-				cell.needsUpdated = false;
-				cell.state.pop();
-				return (cell.valueOverride != u ? cell.valueOverride : cell.value);
-			},
-
-			updateCellDependencies:function () {
-				if ((this.state || (this.state = [])).length) return;
-				this.state.push('updatingDependencies');
-				var dependencies = this.dependencies || []; //just in case it was never set
-				this.dependencies = [];
-				var i = dependencies.length - 1;
-
-				if (i > -1) {
-					do {
-						var dependantCell = dependencies[i],
-							dependantCellLoc = jS.getTdLocation(dependantCell.td);
-
-						dependantCell.calcDependenciesLast = 0;
-
-						jS.updateCellValue.apply(dependantCell);
-						if (dependantCellLoc.row > 0 && dependantCellLoc.col > 0) {
-							jS.updateCellDependencies.apply(dependantCell);
-						}
-					} while (i--);
-				}
-
-				this.state.pop();
-			},
-
-			/**
-			 * Fillters cell's value so correct entity is displayed, use apply on cell object
-			 * @returns {Object} cell
-			 * @methodOf jS
-			 * @name filterValue
-			 */
-			filterValue:function () {
-				//html may be null, so we check here
-				var html = (this.html && this.html.length ? this.html.join('') : '');
-
-				if (this.result != u) {
-					this.value = this.result;
-
-					this.td.html(html ? this.html : s.encode(this.value));
-				} else if (html) {
-					this.td.html(this.html);
-				} else {
-					if (this.value != "" || this.td[0].innerHTML != "") {
-						this.td[0].innerHTML = s.encode(this.value);
-					}
-				}
-			},
-
-			/**
-			 * Object handler for formulaParser
-			 * @name cellHandler
-			 * @memberOf jS
-			 * @namespace
-			 */
-			cellHandler:{
-
-				/**
-				 * Variable handler for formulaParser, arguments are the variable split by '.'.  Expose variables by using jQuery.sheet setting formulaVariables
-				 * @returns {*}
-				 * @methodOf jS.cellHandler
-				 * @name variable
-				 */
-				variable:function () {
-					if (arguments.length) {
-						var name = arguments[0],
-							attr = arguments[1],
-							formulaVariables = jS.s.formulaVariables,
-							formulaVariable;
-
-						switch (name.toLowerCase()) {
-							case 'true':
-								this.html.push('TRUE');
-								return true;
-							case 'false':
-								this.html.push('FALSE');
-								return false;
-						}
-
-						if (formulaVariable = formulaVariables[name] && !attr) {
-							return formulaVariable;
-						} else if (formulaVariable && attr) {
-							return formulaVariable[attr];
-						} else {
-							return '';
-						}
-					}
-				},
-
-				/**
-				 * time to fraction of day 1 / 0-24
-				 * @param {Time} time
-				 * @param {Boolean} isAMPM
-				 * @returns {*}
-				 * @methodOf jS.cellHandler
-				 * @name time
-				 */
-				time:function (time, isAMPM) {
-					return times.fromString(time, isAMPM);
-				},
-
-				/**
-				 * get a number from variable
-				 * @param {*} num
-				 * @returns {Number}
-				 * @methodOf jS.cellHandler
-				 * @name number
-				 */
-				number:function (num) {
-					switch (typeof num) {
-						case 'number':
-							return num;
-						case 'string':
-							if (!isNaN(num)) {
-								return num * 1;
-							}
-						case 'object':
-							if (num.getMonth) {
-								return dates.toCentury(num);
-							}
-					}
-					return 0;
-				},
-
-				performMath: function (mathType, num1, num2) {
-					var type1, type2, value, output = function(val) {return val;};
-					switch (type1 = (typeof num1)) {
-						case 'number':break;
-						case 'string':
-							if (!isNaN(num1)) {
-								num1 *= 1;
-							}
-							break;
-						case 'object':
-							if (num1.getMonth) {
-								num1 = dates.toCentury(num1);
-								output = dates.get;
-							}
-							break;
-						default:
-					}
-
-					switch (type2 = (typeof num2)) {
-						case 'number':break;
-						case 'string':
-							if (!isNaN(num2)) {
-								num2 *= 1;
-							}
-							break;
-						case 'object':
-							if (num2.getMonth) {
-								num2 = dates.toCentury(num2);
-							}
-							break;
-						default:
-					}
-
-					switch (mathType) {
-						case '+':
-							value = num1 + num2;
-							break;
-						case '-':
-							value = num1 - num2;
-							break;
-						case '/':
-							value = num1 / num2;
-							break;
-						case '*':
-							value = num1 * num2;
-							break;
-						case '^':
-							value = math.pow(num1, num2);
-							break;
-					}
-
-					return output(value);
-				},
-
-				/**
-				 * Concatenate a string
-				 * @returns {String}
-				 * @methodOf jS.cellHandler
-				 * @name concatenate
-				 */
-				concatenate:function () {
-					var loc = jS.getTdLocation(this.td);
-					return jFN.CONCATENATE.apply(this, arguments).value;
-				},
-
-				/**
-				 * Get cell value
-				 * @param {String} id example "A1"
-				 * @returns {*}
-				 * @methodOf jS.cellHandler
-				 * @name cellValue
-				 */
-				cellValue:function (id) { //Example: A1
-					var loc = jSE.parseLocation(id), cell;
-
-					cell = jS.cellHandler.createDependency.apply(this, [this.sheet, loc]);
-
-					jS.updateCellValue.apply(cell);
-					return (cell.valueOverride != u ? cell.valueOverride : cell.value);
-				},
-
-				/**
-				 * Creates a relationship between 2 cells, where the formula originates and the cell that is required to supply a value to
-				 * @param {Number} sheetIndex
-				 * @param {Object} loc {row, col}
-				 */
-				createDependency:function (sheetIndex, loc) {
-					var sheet, row, cell;
-					if (!(sheet = jS.spreadsheets[sheetIndex])) return;
-					if (!(row = sheet[loc.row])) return;
-					if (!(cell = row[loc.col])) return;
-
-					if (!cell.dependencies) cell.dependencies = [];
-					if ($.inArray(this, cell.dependencies) < 0) {
-						cell.dependencies.push(this);
-					}
-					return cell;
-				},
-
-				/**
-				 * Get cell values as an array
-				 * @param {String} start example "A1"
-				 * @param {String} end example "B1"
-				 * @returns {Array}
-				 * @methodOf jS.cellHandler
-				 * @name cellRangeValue
-				 */
-				cellRangeValue:function (start, end) {//Example: A1:B1
-					start = jSE.parseLocation(start);
-					end = jSE.parseLocation(end);
-					var result = [],
-						i = math.max(start.row, end.row),
-						iEnd = math.min(start.row, end.row),
-						j = math.max(start.col, end.col),
-						jStart = j,
-						jEnd = math.min(start.col, end.col),
-						cell;
-
-					if (i >= iEnd || j >= jEnd) {
-						do {
-							j = jStart;
-							do {
-								cell = jS.spreadsheets[this.sheet][i][j];
-								jS.cellHandler.createDependency.apply(this, [this.sheet, {row:i, col:j}]);
-								result.unshift(jS.updateCellValue.apply(cell));
-							} while(j-- > jEnd);
-						} while (i-- > iEnd);
-						return result;
-					}
-
-					return result;
-				},
-
-				/**
-				 * Get cell value
-				 * @param {String} id example "$A$1"
-				 * @returns {*}
-				 * @methodOf jS.cellHandler
-				 * @name fixedCellValue
-				 */
-				fixedCellValue:function (id) {
-					id = id.replace(/\$/g, '');
-					return jS.cellHandler.cellValue.apply(this, [id]);
-				},
-
-				/**
-				 * Get cell values as an array
-				 * @param {String} start example "$A$1"
-				 * @param {String} end example "$B$1"
-				 * @returns {Array}
-				 * @methodOf jS.cellHandler
-				 * @name fixedCellRangeValue
-				 */
-				fixedCellRangeValue:function (start, end) {
-					start = start.replace(/\$/g, '');
-					end = end.replace(/\$/g, '');
-					return jS.cellHandler.cellRangeValue.apply(this, [start, end]);
-				},
-
-				/**
-				 * Get cell value from a different sheet within an instance
-				 * @param {String} sheet example "SHEET1"
-				 * @param {String} id example "A1"
-				 * @returns {*}
-				 * @methodOf jS.cellHandler
-				 * @name remoteCellValue
-				 */
-				remoteCellValue:function (sheet, id) {//Example: SHEET1:A1
-					var loc = jSE.parseLocation(id);
-					sheet = jSE.parseSheetLocation(sheet);
-
-					jS.cellHandler.createDependency.apply(this, [sheet, loc]);
-
-					return jS.updateCellValue(sheet, loc.row, loc.col);
-				},
-
-				/**
-				 * Get cell values as an array from a different sheet within an instance
-				 * @param {String} sheet example "SHEET1"
-				 * @param {String} start example "A1"
-				 * @param {String} end example "B1"
-				 * @returns {Array}
-				 * @methodOf jS.cellHandler
-				 * @name remoteCellRangeValue
-				 */
-				remoteCellRangeValue:function (sheet, start, end) {//Example: SHEET1:A1:B2
-					sheet = jSE.parseSheetLocation(sheet);
-					start = jSE.parseLocation(start);
-					end = jSE.parseLocation(end);
-
-					var result = [];
-
-					for (var i = start.row; i <= end.row; i++) {
-						for (var j = start.col; j <= end.col; j++) {
-							result.push(jS.updateCellValue(sheet, i, j));
-						}
-					}
-
-					return [result];
-				},
-
-				/**
-				 * Calls a function either from jQuery.sheet.engine or defined in jQuery sheet setting formulaFunctions.  When calling a function the cell being called from is "this".
-				 * @param {String} fn function name (Will be converted to upper case)
-				 * @param {Array} args arguments needing to be sent to function
-				 * @returns {*}
-				 * @methodOf jS.cellHandler
-				 * @name callFunction
-				 */
-				callFunction:function (fn, args) {
-					fn = fn.toUpperCase();
-					args = args || [];
-
-					if ($.sheet.fn[fn]) {
-						this.fnCount++;
-						var values = [],
-							html = [],
-							i = args.length;
-
-						if (i) {
-							do {
-								if (args[i] != u) {
-									if (args[i].value || args[i].html) {
-										values.unshift(args[i].value);
-										html.unshift(args[i].html);
-									} else {
-										values.unshift(args[i]);
-										html.unshift(args[i]);
-									}
-								}
-							} while (i--);
-						}
-
-						var result = $.sheet.fn[fn].apply(this, values);
-						if (result != null) {
-							if (result.html != u) {
-								this.html.push(result.html);
-							} else {
-								this.html.push(null);
-							}
-							if (result.value != u) {
-								return result.value;
-							}
-						}
-						return result;
-					} else {
-						return s.error({error:"Function " + fn + " Not Found"});
-					}
-				}
-			},
-
-			/**
-			 * Cell lookup handlers
-			 * @name cellLookupHandlers
-			 * @memberOf jS
-			 * @namespace
-			 */
-			cellLookupHandlers:{
-
-				/**
-				 * @param {String} id example "$A$1"
-				 * @returns {Array} [sheet, startCell, endCell]
-				 * @methodOf jS.cellLookupHandlers
-				 * @name fixedCellValue
-				 */
-				fixedCellValue:function (id) {
-					return [jS.sheet, jSE.parseLocation(id), jSE.parseLocation(id)];
-				},
-
-				/**
-				 * @param {String} sheet example "SHEET1"
-				 * @param {String} start example "$A$1"
-				 * @param {String} end example "$B$1"
-				 * @returns {Array} [sheet, startCell, endCell]
-				 * @methodOf jS.cellLookupHandlers
-				 * @name fixedCellRangeValue
-				 */
-				fixedCellRangeValue:function (sheet, start, end) {
-					return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
-				},
-
-				/**
-				 * doesn't do anything right now
-				 * @param id
-				 * @methodOf jS.cellLookupHandlers
-				 * @name cellValue
-				 */
-				cellValue:function (id) {
-
-				},
-
-				/**
-				 * @param {String} sheet example "SHEET1"
-				 * @param {String} start example "A1"
-				 * @param {String} end example "B1"
-				 * @returns {Array} [sheet, startCell, endCell]
-				 * @methodOf jS.cellLookupHandlers
-				 * @name cellRangeValue
-				 */
-				cellRangeValue:function (sheet, start, end) {
-					return [jS.sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
-				},
-
-				/**
-				 * @param {String} sheet example "SHEET1"
-				 * @param {String} id example "A1"
-				 * @returns {Array} [sheet, startCell, endCell]
-				 * @methodOf jS.cellLookupHandlers
-				 * @name remoteCellValue
-				 */
-				remoteCellValue:function (sheet, id) {
-					return [jS.sheet, jSE.parseLocation(id), jSE.parseLocation(id)];
-				},
-
-				/**
-				 *
-				 * @param {String} sheet example "SHEET1"
-				 * @param {String} start example "A1"
-				 * @param {String} end example "B1"
-				 * @returns {Array} [sheet, startCell, endCell]
-				 * @methodOf jS.cellLookupHandlers
-				 * @name remoteCellRangeValue
-				 */
-				remoteCellRangeValue:function (sheet, start, end) {
-					return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
-				},
-
-				/**
-				 * @returns {*}
-				 * @methodOf jS.cellLookupHandlers
-				 * @name callFunction
-				 */
-				callFunction:function () {
-					if (arguments[0] == "VLOOKUP" || arguments[0] == "HLOOKUP" && arguments[1]) {
-						return arguments[1].reverse()[1];
-					}
-				}
-			},
-
-			/**
-			 * Looks up cell using jS.cellLookupHandlers
-			 * @returns {Array}
-			 * @methodOf jS
-			 * @name cellLookup
-			 */
-			cellLookup:function () {
-				var formulaParser = Formula($.extend(formulaParser.lexer.handler, jS.cellLookupHandlers));
-				formulaParser.setObj(this.obj);
-
-				var args = formulaParser.parse(this.obj.formula),
-					lookupTable = [];
-
-				for (var row = args[1].row; row <= args[2].row; row++) {
-					for (var col = args[1].col; col <= args[2].col; col++) {
-						lookupTable.push({
-							sheet:args[0],
-							row:row,
-							col:col
-						});
-					}
-				}
-
-				return lookupTable;
-			},
-
-			/**
-			 *
-			 * @param {String} msg
-			 * @methodOf jS
-			 * @name alertFormulaError
-			 */
-			alertFormulaError:function (msg) {
-				alert(
-					'cell:' + row + ' ;' + col + '\n' +
-					'value: "' + cell.formula + '"\n' +
-					'error: \n' + e
-				);
-			},
-
-			/**
-			 * Date of last calculation
-			 * @memberOf jS
-			 * @name calcLast
-			 */
-			calcLast:0,
-
-			/**
-			 * @memberOf jS
-			 * @name calcDependenciesLast
-			 */
-			calcDependenciesLast:0,
-
-			/**
-			 * Where jS.spreadsheets are calculated, and returned to their td counterpart
-			 * @param {Number} tableIndex table index
-			 * @methodOf jS
-			 * @name calc
-			 */
-			calc:function (tableIndex) {
-				tableIndex = tableIndex || jS.i;
-				if (jS.readOnly[tableIndex] || jS.isChanged() === false) return; //readonly is no calc at all
-
-				jS.log('Calculation Started');
-				jS.calcLast = new Date();
-				jSE.calc(tableIndex, jS.spreadsheetsToArray()[tableIndex], jS.updateCellValue);
-				jS.trigger('sheetCalculation', [
-					{which:'speadsheet'}
-				]);
-				jS.setChanged(false);
-				jS.log('Calculation Ended');
-			},
-
-			/**
-			 * Calculates just the dependencies of a single cell, and their dependencies recursivley
-			 * @param {Date} last
-			 * @param {Boolean} skipUndoable
-			 */
-			calcDependencies:function (last, skipUndoable) {
-				last = last || new Date();
-				jS.calcDependenciesLast = last;
-
-				if (!skipUndoable) {
-					jS.undo.createCells([this], null, function() {
-						jS.trigger('sheetPreCalculation', [
-							{which:'cell', cell:this}
-						]);
-
-						jS.setDirty(true);
-						jS.setChanged(true);
-						jS.updateCellValue.apply(this);
-						jS.updateCellDependencies.apply(this);
-						jS.trigger('sheetCalculation', [
-							{which:'cell', cell: this}
-						]);
-
-						return [this];
-					});
-				} else {
-					jS.trigger('sheetPreCalculation', [
-						{which:'cell', cell:this}
-					]);
-
-					jS.setDirty(true);
-					jS.setChanged(true);
-					jS.updateCellValue.apply(this);
-					jS.updateCellDependencies.apply(this);
-					jS.trigger('sheetCalculation', [
-						{which:'cell', cell: this}
-					]);
-				}
-			},
-
-			/**
-			 * adds a spreadsheet table
-			 * @param {Object} size, optional
-			 * @methodOf jS
-			 * @name addSheet
-			 */
-			addSheet:function (size) {
-				size = size || {rows: 25, cols: 10};
-				if (size) {
-					jS.evt.cellEditAbandon();
-					jS.setDirty(true);
-					jS.controlFactory.sheetUI(jS.obj.ui()[0], $.sheet.makeTable.fromSize(size), jS.sheetCount);
-
-					jS.setActiveSheet(jS.sheetCount);
-
-					jS.sheetCount++;
-
-					jS.sheetSyncSize();
-
-					jS.obj.pane().resizeScroll();
-
-					jS.trigger('sheetAdd', [jS.i]);
-				}
-			},
-
-			/**
-			 * deletes a spreadsheet table
-			 * @param {Number} i optional spreadsheet index within instance
-			 * @methodOf jS
-			 * @name deleteSheet
-			 */
-			deleteSheet:function (i) { /* removes the currently selected sheet */
-				var oldI = i || jS.i;
-
-				jS.obj.barHelper().remove();
-
-				jS.obj.enclosure().remove();
-				jS.obj.menus().remove();
-				jS.obj.tabContainer().children().eq(jS.i).remove();
-				jS.spreadsheets.splice(oldI, 1);
-				jS.controls.autoFiller.splice(oldI, 1);
-				jS.controls.bar.helper.splice(oldI, 1);
-				jS.controls.bar.corner.splice(oldI, 1);
-				jS.controls.bar.x.controls.splice(oldI, 1);
-				jS.controls.bar.x.handleFreeze.splice(oldI, 1);
-				jS.controls.bar.x.controls.splice(oldI, 1);
-				jS.controls.bar.x.menu.splice(oldI, 1);
-				if (jS.controls.bar.x.menuParent && jS.controls.bar.x.menuParent[oldI]) {
-					jS.controls.bar.x.menuParent.splice(oldI, 1);
-				}
-				jS.controls.bar.x.parent.splice(oldI, 1);
-				jS.controls.bar.x.scroll.splice(oldI, 1);
-				jS.controls.bar.x.td.splice(oldI, 1);
-				jS.controls.bar.y.controls.splice(oldI, 1);
-				jS.controls.bar.y.handleFreeze.splice(oldI, 1);
-				jS.controls.bar.y.controls.splice(oldI, 1);
-				jS.controls.bar.y.menu.splice(oldI, 1);
-				if (jS.controls.bar.y.menuParent && jS.controls.bar.y.menuParent[oldI]) {
-					jS.controls.bar.y.menuParent.splice(oldI, 1);
-				}
-				jS.controls.bar.y.parent.splice(oldI, 1);
-				jS.controls.bar.y.scroll.splice(oldI, 1);
-				jS.controls.bar.y.td.splice(oldI, 1);
-				jS.controls.barMenuLeft.splice(oldI, 1);
-				jS.controls.barMenuTop.splice(oldI, 1);
-				jS.controls.barLeft.splice(oldI, 1);
-				jS.controls.barTop.splice(oldI, 1);
-				jS.controls.barTopParent.splice(oldI, 1);
-				jS.controls.chart.splice(oldI, 1);
-				jS.controls.tdMenu.splice(oldI, 1);
-				jS.controls.enclosure.splice(oldI, 1);
-				jS.controls.fullScreen = null;
-				jS.controls.inPlaceEdit.splice(oldI, 1);
-				jS.controls.menus.splice(oldI, 1);
-				jS.controls.menuLeft.splice(oldI, 1);
-				jS.controls.menuRight.splice(oldI, 1);
-				jS.controls.pane.splice(oldI, 1);
-				jS.controls.scroll.splice(oldI, 1);
-				jS.controls.tables.splice(oldI, 1);
-				jS.controls.table.splice(oldI, 1);
-				jS.controls.tab.splice(oldI, 1);
-				jS.controls.toggleHide.x.splice(oldI, 1);
-				jS.controls.toggleHide.y.splice(oldI, 1);
-				jS.readOnly.splice(oldI, 1);
-				jS.i = 0;
-				jS.sheetCount--;
-				jS.sheetCount = math.max(jS.sheetCount, 0);
-
-				if (jS.sheetCount == 0) {
-					jS.addSheet();
-				}
-
-				jS.setActiveSheet(jS.i);
-				jS.setDirty(true);
-				jS.setChanged(true);
-
-				jS.trigger('sheetDelete', [oldI]);
-			},
-
-			/**
-			 * removes the currently selected row
-			 * @param {Number} row
-			 * @param {Boolean} skipCalc
-			 * @methodOf jS
-			 * @name deleteRow
-			 */
-			deleteRow:function (row, skipCalc) {
-				var i, start, end, qty, size = jS.sheetSize();
-
-				if (row) {
-					start = end = row;
-				} else {
-					start = math.min(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
-					end = math.max(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
-				}
-
-				qty = (end - start) + 1;
-
-				if (start < 1 || size.cols < 2 || qty >= size.rows) {
-					return;
-				}
-
-				i = end;
-
-				do {
-					//remove tr's first
-					jS.getTd(jS.i, i, 1).parent().remove();
-				} while (start < i--);
-
-				//now remove bar
-				jS.controls.bar.y.td[jS.i].splice(start, qty);
-
-				//now remove cells
-				jS.spreadsheets[jS.i].splice(start, qty);
-
-				jS.refreshRowLabels(start);
-
-				jS.setChanged(true);
-
-				jS.offsetFormulas({
-					row:start,
-					col:0
-				}, {
-					row:-qty,
-					col:0
-				});
-
-				jS.setDirty(true);
-
-				jS.evt.cellEditAbandon();
-
-				jS.obj.pane().resizeScroll();
-
-				jS.trigger('sheetDeleteRow', i);
-			},
-
-			/**
-			 * removes the columns associated with highlighted cells
-			 * @param {Number} col
-			 * @param {Boolean} skipCalc
-			 * @methodOf jS
-			 * @name deleteColumn
-			 */
-			deleteColumn:function (col, skipCalc) {
-				var i, start, end, qty, size = jS.sheetSize();
-
-				if (col) {
-					start = end = col;
-				} else {
-					start = math.min(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
-					end = math.max(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
-				}
-
-				qty = (end - start) + 1;
-
-				if (start < 1 || size.cols < 2 || qty >= size.cols) {
-					return;
-				}
-
-				i = end;
-
-				jS.obj.barHelper().remove();
-				do {
-					var table = jS.obj.table(),
-						col = jS.col(table[0], i),
-						bar = jS.obj.barTop(i).remove(),
-						tds = col.tds,
-						j = tds.length -1;
-
-					//remove tds first
-					do {
-						$(tds[j]).remove();
-					} while (j--);
-
-					//now remove bar
-					jS.obj.barTop(i).remove();
-
-					//now remove col
-					$(col).remove();
-				} while (start < i--);
-
-				//remove column
-				jS.controls.bar.x.td[jS.i].splice(start, qty);
-
-				//remove cells
-				j = jS.spreadsheets[jS.i].length - qty;
-				do {
-					jS.spreadsheets[jS.i][j].splice(start, qty);
-				} while (j-- > 1);
-
-				//refresh labels
-				jS.refreshColumnLabels(start);
-
-				jS.setChanged(true);
-
-				jS.offsetFormulas({
-					row:0,
-					col:start
-				}, {
-					row:0,
-					col:-qty
-				});
-
-				jS.setDirty(true);
-
-				jS.evt.cellEditAbandon();
-
-				jS.obj.pane().resizeScroll();
-
-				jS.trigger('sheetDeleteColumn', i);
-			},
-
-			/**
-			 * manages a tabs inner value
-			 * @param {Bool} get makes return the current value of the tab
-			 * @returns {jQuery|HTMLElement}
-			 * @methodOf jS
-			 * @name sheetTab
-			 */
-			sheetTab:function (get) {
-				var sheetTab = '';
-				if (get) {
-					sheetTab = jS.obj.table().attr('title');
-					sheetTab = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
-				} else if (jS.isSheetEditable() && s.editableNames) { //ensure that the sheet is editable, then let them change the sheet's name
-					var newTitle = prompt(jS.msg.newSheetTitle, jS.sheetTab(true));
-					if (!newTitle) { //The user didn't set the new tab name
-						sheetTab = jS.obj.table().attr('title');
-						newTitle = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
-					} else {
-						jS.setDirty(true);
-						jS.obj.table().attr('title', newTitle);
-						jS.obj.tab().html(newTitle);
-
-						sheetTab = newTitle;
-					}
-				}
-				return $(doc.createElement('div')).text(sheetTab).html();
-			},
-
-			/**
-			 * detects if a td is not visible
-			 * @param {jQuery|HTMLElement} td
-			 * @methodOf jS
-			 * @name tdNotVisible
-			 * @returns {Boolean|Object}
-			 */
-			tdNotVisible:function(td) {
-				var pane = jS.obj.pane(),
-					visibleFold = {
-						top:0,
-						bottom:pane.clientHeight,
-						left:0,
-						right:pane.clientWidth
-					},
-
-					tdWidth = td.width(),
-					tdHeight = td.height(),
-					tdLocation = {
-						top:td[0].offsetTop,
-						bottom:td[0].offsetTop + tdHeight,
-						left:td[0].offsetLeft,
-						right:td[0].offsetLeft + tdWidth
-					},
-					tdParent = td.parent();
-
-				if (!td[0].col) {
-					return false;
-				}
-
-				var xHidden = $(td[0].barTop).is(':hidden'),
-					yHidden = $(tdParent[0]).is(':hidden'),
-					hidden = {
-						up:yHidden,
-						down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
-						left:xHidden,
-						right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
-					};
-
-				if (hidden.up || hidden.down || hidden.left || hidden.right) {
-					return hidden;
-				}
-
-				return false;
-			},
-
-			/**
-			 * scrolls the sheet to the selected cell
-			 * @param {jQuery|HTMLElement} td
-			 * @methodOf jS
-			 * @name followMe
-			 */
-			followMe:function (td) {
-				td = td || jS.obj.tdActive();
-				if (!td.length) return;
-
-				var i = 0,
-					x = 0,
-					y = 0,
-					direction,
-					pane = jS.obj.pane();
-
-				pane.scrollStyleX.i = 0;
-				pane.scrollStyleY.i = 0;
-
-				jS.setBusy(true);
-
-				while ((direction = this.tdNotVisible(td)) && i < 25) {
-					var scrolledArea = jS.scrolledTo();
-
-					if (direction.left) {
-						x--;
-						jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
-					} else if (direction.right) {
-						x++;
-						jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
-					}
-
-					if (direction.up) {
-						y--;
-						jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
-					} else if (direction.down) {
-						y++;
-						jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
-					}
-
-					i++;
-				}
-
-
-				setTimeout(function () {
-					jS.setBusy(false);
-				}, 100);
-				jS.evt.scroll.stop();
-				jS.autoFillerGoToTd(td);
-			},
-
-			/**
-			 * moves autoFiller to a selected cell
-			 * @param {jQuery|HTMLElement} td
-			 * @param {Number} h optional, height of a td object
-			 * @param {Number} w optional, width of a td object
-			 * @methodOf jS
-			 * @name autoFillerGoToTd
-			 */
-			autoFillerGoToTd:function (td, h, w) {
-				if (!s.autoFiller) return;
-
-				td = td || jS.obj.tdActive();
-
-				if (td[0] && td[0].type == 'cell') { //ensure that it is a usable cell
-					h = h || td[0].clientHeight;
-					w = w || td[0].clientWidth;
-					if (!h || !w) {
-						jS.autoFillerHide();
-						return;
-					}
-
-					var tdPos = td.position();
-					jS.obj.autoFiller()
-						.show()
-						.css('top', ((tdPos.top + (h || td.height()) - 3) + 'px'))
-						.css('left', ((tdPos.left + (w || td.width()) - 3) + 'px'));
-				}
-			},
-
-			/**
-			 * hides the auto filler
-			 * @methodOf jS
-			 * @name autoFillerHide
-			 */
-			autoFillerHide:function () {
-				if (!s.autoFiller) return;
-
-				jS.obj.autoFiller().hide();
-			},
-
-			/**
-			 * sets active a spreadsheet inside of a sheet instance
-			 * @param {Number} i a sheet integer desired to show
-			 * @methodOf jS
-			 * @name setActiveSheet
-			 */
-			setActiveSheet:function (i) {
-				i = i || 0;
-
-				if (jS.cellLast.row > 0 || jS.cellLast.col > 0) {
-					jS.evt.cellEditDone();
-					jS.obj.formula().val('');
-				}
-
-				jS.obj.enclosures()
-					.hide();
-
-				jS.i = i;
-
-				jS.obj.enclosure()
-					.show();
-
-				jS.themeRoller.tab.setActive();
-
-				jS.readOnly[i] = jS.obj.table().hasClass('readonly');
-
-				jS.obj.pane().resizeScroll();
-			},
-
-			/**
-			 * opens a spreadsheet into the active sheet instance
-			 * @param tables
-			 * @returns {Boolean} if set to true, foces bars on left and top not be reloaded
-			 * @methodOf jS
-			 * @name openSheet
-			 */
-			openSheet:function (tables) {
-				if (jS.isDirty ? confirm(jS.msg.openSheet) : true) {
-					jS.setBusy(true);
-					var header = jS.controlFactory.header(),
-						ui = jS.controlFactory.ui(),
-						tabContainer = jS.controlFactory.tabContainer(),
-						i = tables.length - 1;
-
-					jS.sheetCount = tables.length - 1;
-
-					header.ui = ui;
-					header.tabContainer = tabContainer;
-
-					ui.header = header;
-					ui.tabContainer = tabContainer;
-
-					tabContainer.header = header;
-					tabContainer.ui = ui;
-
-					s.parent
-						.append(header)
-						.append(ui)
-						.append(tabContainer);
-
-					for (i = 0; i < tables.length; i++) {
-						jS.controlFactory.sheetUI(ui, tables[i], i);
-						jS.sheetCount++;
-						jS.calc(i);
-						jS.trigger('sheetOpened', [i]);
-					}
-
-					// resizable container div
-					jS.resizableSheet(s.parent, {
-						minWidth:s.parent.width() * 0.1,
-						minHeight:s.parent.height() * 0.1,
-						start:function () {
-							jS.setBusy(true);
-							jS.obj.enclosure().hide();
-							ui.tabContainer.hide();
-						},
-						stop:function () {
-							jS.obj.enclosure().show();
-							ui.tabContainer.show();
-							jS.setBusy(false);
-							jS.sheetSyncSize();
-							jS.obj.pane().resizeScroll();
-						}
-					});
-
-					jS.sheetSyncSize();
-
-					jS.setActiveSheet(0);
-
-					jS.setDirty(false);
-					jS.setBusy(false);
-
-					jS.trigger('sheetAllOpened');
-					return true;
-				} else {
-					return false;
-				}
-			},
-
-			/**
-			 * creates a new sheet from size from prompt
-			 * @methodOf jS
-			 * @name newSheet
-			 */
-			newSheet:function () {
-				s.parent
-					.html($.sheet.makeTable.fromSize())
-					.sheet(s);
-			},
-
-			/**
-			 * creates a new row and then applies an array's values to each of it's new values, not currently working
-			 * TODO: Needs refactored to use jS.spreadsheets
-			 * @param {Array} rowArray values to import
-			 * @methodOf jS
-			 * @name importRow
-			 */
-			importRow:function (rowArray) {
-				jS.controlFactory.addRow();
-
-				var error = "";
-				jS.obj.table().find('tr:last td').each(function (i) {
-					$(this).removeData('formula');
-					try {
-						//To test this, we need to first make sure it's a string, so converting is done by adding an empty character.
-						if ((rowArray[i] + '').charAt(0) == "=") {
-							$(this).data('formula', rowArray[i]);
-						} else {
-							$(this).html(rowArray[i]);
-						}
-					} catch (e) {
-						//We want to make sure that is something bad happens, we let the user know
-						error += e + ';\n';
-					}
-				});
-
-				if (error) {//Show them the errors
-					alert(error);
-				}
-
-				jS.calc();
-			},
-
-			/**
-			 * creates a new column and then applies an array's values to each of it's new values
-			 * TODO: needs refactored to use jS.spreadsheets
-			 * @param {Array} columnArray values to import
-			 * @methodOf jS
-			 * @name importColumn
-			 */
-			importColumn:function (columnArray) {
-				jS.controlFactory.addColumn();
-
-				var error = "";
-				jS.obj.table().find('tr').each(function (i) {
-					var o = $(this).find('td:last');
-					try {
-						//To test this, we need to first make sure it's a string, so converting is done by adding an empty character.
-						if ((columnArray[i] + '').charAt(0) == "=") {
-							o.data('formula', columnArray[i]);
-						} else {
-							o.html(columnArray[i]);
-						}
-					} catch (e) {
-						//We want to make sure that is something bad happens, we let the user know
-						error += e + ';\n';
-					}
-				});
-
-				if (error) {//Show them the errors
-					alert(error);
-				}
-
-				//Let's recalculate the sheet just in case
-				jS.calc();
-			},
-
-
-			/**
-			 * Sync's the called parent's controls so that they fit correctly within the parent
-			 * @function sheetSyncSize
-			 * @methodOf jS
-			 * @name sheetSyncSize
-			 */
-			sheetSyncSize:function () {
-				var h = s.parent[0].clientHeight;
-				if (!h) {
-					h = 400; //Height really needs to be set by the parent
-					s.parent.height(h);
-				} else if (h < 200) {
-					h = 200;
-					s.parent.height(h);
-				}
-
-				var w = s.parent[0].clientWidth;
-				h -= jS.obj.header().outerHeight();
-				h -= jS.obj.tabContainer().outerHeight() + jS.s.boxModelCorrection;
-
-				jS.obj.panes()
-					.height(h - win.scrollBarSize.height - s.boxModelCorrection)
-					.width(w - win.scrollBarSize.width);
-
-
-				jS.obj.enclosures()
-					.height(h)
-					.width(w);
-
-				jS.obj.scrolls()
-					.height(h)
-					.width(w);
-
-
-				jS.obj.ui()
-					.height(h)
-					.width(w);
-			},
-
-			/**
-			 * changes a cell's style and makes it undoable/redoable
-			 * @param style
-			 * @param value
-			 * @param cells
-			 */
-			cellChangeStyle:function (style, value, cells) {
-				cells = cells || jS.highlighted(true);
-				if (cells.length < 1) {
-					return;
-				}
-
-				jS.setDirty(this);
-				var i = cells.length - 1;
-
-				if ( i >= 0) {
-					jS.undo.createCells(cells, null, function() { //save state, make it undoable
-						do {
-							cells[i].td.css(style, value);
-						} while(i--);
-
-						jS.editedLast = cells;
-						return cells;
-					});
-					return true;
-				}
-
-				return false;
-			},
-
-			/**
-			 * Finds a cell in a sheet from a value
-			 * @param {String} v value to look for within a cell
-			 * @methodOf jS
-			 * @name cellFind
-			 */
-			cellFind:function (v) {
-				if (!v) {
-					v = prompt(jS.msg.cellFind);
-				}
-				var trs = jS.obj.table()
-					.children('tbody')
-					.children('tr');
-
-				if (v) {//We just do a simple uppercase/lowercase search.
-					var o = trs.children('td:contains("' + v + '")');
-
-					if (o.length < 1) {
-						o = trs.children('td:contains("' + v.toLowerCase() + '")');
-					}
-
-					if (o.length < 1) {
-						o = trs.children('td:contains("' + v.toUpperCase() + '")');
-					}
-
-					o = o.eq(0);
-					if (o.length > 0) {
-						jS.cellEdit(o);
-					} else {
-						alert(jS.msg.cellNoFind);
-					}
-				}
-			},
-
-			/**
-			 * Sets active bar
-			 * @param {String} type "col" || "row" || "all"
-			 * @param {Number} begin start highlighting from
-			 * @param {Number} end end highlighting to
-			 * @methodOf jS
-			 * @name cellSetActiveBar
-			 */
-			cellSetActiveBar:function (type, begin, end) {
-				var size = jS.sheetSize(),
-					first = math.min(begin, end),
-					last = math.max(begin, end),
-					start = {},
-					stop = {},
-					setActive = function (before) {
-						switch (s.cellSelectModel) {
-							case 'oo': //follow cursor behavior
-								this.row = (before ? start.row : stop.row);
-								this.col = (before ? start.col : stop.col);
-								this.td = jS.getTd(jS.i, this.row, this.col);
-								if (!this.td.is(jS.cellLast.td)) {
-									jS.cellEdit(this.td, null, true);
-								}
-								break;
-							default: //stay at initial cell
-								this.row = (before ? stop.row : start.row);
-								this.col = (before ? stop.col : start.col);
-								this.td = jS.getTd(jS.i, this.row, this.col);
-								if (!this.td.is(jS.cellLast.td[0])) {
-									jS.cellEdit(this.td, null, true);
-								}
-								break;
-						}
-					},
-					obj = $([]),
-					scrolledArea  = jS.scrolledTo(),
-					sheet = jS.obj.table(),
-					col,
-					row;
-
-				switch (type) {
-					case 'top':
-						start.row = scrolledArea.end.row;
-						start.col = first;
-						stop.row = scrolledArea.end.row;
-						stop.col = last;
-
-						jS.highlightedLast.start.row = 1;
-						jS.highlightedLast.start.col = first;
-						jS.highlightedLast.end.row = size.rows;
-						jS.highlightedLast.end.col = last;
-
-						col = last;
-
-						do {
-							obj = obj.add(jS.col(sheet[0], col));
-						} while(col-- > first);
-						break;
-					case 'left':
-						start.row = first;
-						start.col = scrolledArea.end.col;
-						stop.row = last;
-						stop.col = scrolledArea.end.col;
-
-						jS.highlightedLast.start.row = first;
-						jS.highlightedLast.start.col = 1;
-						jS.highlightedLast.end.row = last;
-						jS.highlightedLast.end.col = size.cols;
-
-						row = last;
-
-						do {
-							obj = obj.add(jS.getTd(jS.i, row, 1)[0].parentNode);
-						} while(row-- > first);
-						break;
-					case 'corner': //all
-						start.row = 1;
-						start.col = 1;
-						stop.col = size.cols;
-						stop.row = size.rows;
-
-						obj = obj.add(sheet);
-						break;
-				}
-
-				setActive(begin > end);
-
-				jS.themeRoller.cell.setHighlighted(obj);
-			},
-
-			/**
-			 * gets a range of selected cells, then returns it
-			 * @param {Object} e jQuery event, optional, when in use, is during mouse down
-			 * @param {String} v Value to preserve and return
-			 * @param newFn
-			 * @param notSetFormula
-			 * @returns {String}
-			 * @methodOf jS
-			 * @name getTdRange
-			 */
-			getTdRange:function (e, v, newFn, notSetFormula) {
-				jS.cellLast.isEdit = true;
-
-				var range = function (loc) {
-						if (loc.first.col > loc.last.col ||
-							loc.first.row > loc.last.row
-							) {
-							return {
-								first:jSE.parseCellName(loc.last.col, loc.last.row),
-								last:jSE.parseCellName(loc.first.col, loc.first.row)
-							};
-						} else {
-							return {
-								first:jSE.parseCellName(loc.first.col, loc.first.row),
-								last:jSE.parseCellName(loc.last.col, loc.last.row)
-							};
-						}
-					},
-					label = function (loc) {
-						var rangeLabel = range(loc),
-							v2 = v + '';
-						v2 = (v2.match(/=/) ? v2 : '=' + v2); //make sure we can use this value as a formula
-
-						if (newFn || v2.charAt(v2.length - 1) != '(') { //if a function is being sent, make sure it can be called by wrapping it in ()
-							v2 = v2 + (newFn ? newFn : '') + '(';
-						}
-
-						var formula,
-							lastChar = '';
-						if (rangeLabel.first != rangeLabel.last) {
-							formula = rangeLabel.first + ':' + rangeLabel.last;
-						} else {
-							formula = rangeLabel.first;
-						}
-
-						if (v2.charAt(v2.length - 1) == '(') {
-							lastChar = ')';
-						}
-
-						return v2 + formula + lastChar;
-					},
-					newVal = '',
-					loc,
-					sheet,
-					cells;
-
-				if (e) { //if from an event, we use mousemove method
-					loc = {
-						first:jS.getTdLocation([e.target])
-					};
-
-					sheet = jS.obj.table().mousemove(function (e) {
-						loc.last = jS.getTdLocation([e.target]);
-
-						newVal = label(loc);
-
-						if (!notSetFormula) {
-							jS.obj.formula().val(newVal);
-							jS.obj.inPlaceEdit().val(newVal);
-						}
-					});
-
-					$doc.one('mouseup', function () {
-						sheet.unbind('mousemove');
-						return newVal;
-					});
-				} else {
-					cells = jS.highlighted().not(jS.obj.tdActive());
-
-					if (cells.length) {
-						var loc = { //tr/td column and row index
-							first:jS.getTdLocation(cells.first()),
-							last:jS.getTdLocation(cells.last())
-						};
-
-						newVal = label(loc);
-
-						if (!notSetFormula) {
-							jS.obj.formula().val(newVal);
-							jS.obj.inPlaceEdit().val(newVal);
-						}
-
-						return newVal;
-					} else {
-						return '';
-					}
-				}
-			},
-
-			/**
-			 * Gets the td element within a spreadsheet instance
-			 * @param {Number} tableIndex table index
-			 * @param {Number} rowIndex row index
-			 * @param {Number} colIndex column index
-			 * @returns {Element}
-			 * @methodOf
-			 * @name getTd
-			 */
-			getTd:function (tableIndex, rowIndex, colIndex) {
-				var table = jS.obj.tables()[tableIndex], tbody, row, td;
-				if (
-					!table || !(tbody = table.children[1]) || !(row = tbody.children[rowIndex]) || !(td = row.children[colIndex])
-					) {
-					return $('<td />');
-				}
-				return $(td);
-			},
-
-			/**
-			 * Gets the td row and column index as an object {row, col}
-			 * @param td
-			 * @returns {Object}
-			 * @methodOf jS
-			 * @name getTdLocation
-			 */
-			getTdLocation:function (td) {
-				var result = {col:0, row:0};
-				td = td || '';
-				if (!td && !td[0]) return result;
-
-				td = td[0] || td;
-
-				if (td.cellIndex == u || td.parentNode == u || td.parentNode.rowIndex == u) return result;
-
-				return {
-					col:parseInt(td.cellIndex),
-					row:parseInt(td.parentNode.rowIndex)
-				};
-			},
-
-			/**
-			 * Get a td from a pixel location
-			 * @param {Number} left pixels from left
-			 * @param {Number} top pixels from top
-			 * @param {Boolean} isBar
-			 * @returns {Element|Boolean} Boolean if not found
-			 * @methodOf jS
-			 * @name getTdFromXY
-			 */
-			getTdFromXY:function (left, top, isBar) {
-				var pane = jS.obj.pane(),
-					paneOffset = pane.offset();
-
-				top += paneOffset.top;
-				left += paneOffset.left;
-
-				//here we double check that the coordinates are inside that of the pane, if so then we can continue
-				if (
-					(
-						top >= paneOffset.top &&
-							top <= paneOffset.top + pane.height()
-						)
-						&&
-						(
-							left >= paneOffset.left &&
-								left <= paneOffset.left + pane.width()
-							)
-					) {
-					var td = $.nearest({x:left, y:top}, jS.obj.table().children('tbody').children('tr').children('td'));
-
-					//I use this snippet to help me know where the point was positioned
-					/*var o = $('<div class="ui-widget-content" style="position: absolute;">TESTING TESTING</div>')
-					 .css('top', top + 'px')
-					 .css('left', left + 'px')
-					 .appendTo('body');*/
-
-					if (td.type == 'cell') {
-						return td;
-					}
-
-					if (isBar && td.type == 'bar') {
-						return td;
-					}
-
-					return false;
-				}
-				return false;
-			},
-
-			/**
-			 * Get the bar index from an Element
-			 * @memberOf jS
-			 * @namespace
-			 * @name getBarIndex
-			 */
-			getBarIndex:{
-
-				/**
-				 * get index from bar left element
-				 * TODO: Needs to use object's index to be faster
-				 * @param o
-				 * @returns {Number}
-				 * @methodOf jS.getBarIndex
-				 * @name left
-				 */
-				left:function (o) {
-					o = o || {};
-					if (!o.parentNode || isNaN(o.parentNode.rowIndex)) {
-						return -1;
-					} else {
-						return o.parentNode.rowIndex;
-					}
-				},
-
-				/**
-				 * get index from bar top element
-				 * TODO: Needs to use object's index to be faster
-				 * @param o
-				 * @returns {Number}
-				 * @methodOf hS.getBarIndex
-				 * @name top
-				 */
-				top:function (o) {
-					o = o || {};
-					if (isNaN(o.cellIndex)) {
-						return -1;
-					} else {
-						return o.cellIndex;
-					}
-				},
-				corner:function () {
-					return 0;
-				}
-			},
-
-			/**
-			 * Time manager for measuring execution speed
-			 * @namespace
-			 * @name time
-			 * @memberOf jS
-			 */
-			time:{
-				now:new Date(),
-				last:new Date(),
-				diff:function () {
-					return math.abs(math.ceil(this.last.getTime() - this.now.getTime()) / 1000).toFixed(5);
-				},
-				set:function () {
-					this.last = this.now;
-					this.now = new Date();
-				},
-				get:function () {
-					return this.now.getHours() + ':' + this.now.getMinutes() + ':' + this.now.getSeconds();
-				}
-			},
-
-			/**
-			 * The log prints: {Current Time}, {Seconds from last log};{msg}
-			 * @param msg
-			 * @memberOf jS
-			 * @name log
-			 */
-			log:function (msg) {  //
-				jS.time.set();
-				console.log(jS.time.get() + ', ' + jS.time.diff() + '; ' + msg);
-			},
-
-			/**
-			 * Changed tracker per sheet
-			 * @memberOf jS
-			 * @name changed
-			 */
-			changed:[],
-
-			/**
-			 * Changed = needs to be calculated
-			 * @methodOf jS
-			 * @name isChanged
-			 */
-			isChanged:function () {
-				return jS.changed[jS.i];
-			},
-
-			/**
-			 * Sets changed
-			 * @param {Boolean} changed changed state
-			 * @name setChanged
-			 * @methodOf jS
-			 */
-			setChanged:function (changed) {
-				jS.changed[jS.i] = changed;
-			},
-
-			/**
-			 * Dirty = changed needs saved
-			 * @memberOf jS
-			 */
-			isDirty:false,
-
-			/**
-			 * Dirty manager
-			 * @param dirty
-			 * @methodOf jS
-			 * @name setDirty
-			 */
-			setDirty:function (dirty) {
-				jS.dirty = dirty;
-			},
-
-			/**
-			 * @param v
-			 * @methodOf jS
-			 * @name appendToFormula
-			 */
-			appendToFormula:function (v) {
-				var formula = jS.obj.formula(),
-					fV = formula.val();
-
-				if (fV.charAt(0) != '=') {
-					fV = '=' + fV;
-				}
-
-				formula.val(fV + v);
-			},
-
-			/**
-			 *
-			 */
-			undo:{
-				manager:(window.UndoManager? new UndoManager:{}),
-				cells:[],
-				id:0,
-				createCells: function(cells, id, fn) {
-					if (id == u) {
-						jS.undo.id++;
-						id = jS.undo.id;
-					}
-
-					var before = new jSCellRange(cells).clone().cells,
-						after = (fn ? new jSCellRange(fn()).clone().cells : before);
-
-					before.id = id;
-					after.id = id;
-
-					jS.undo.manager.register(u, jS.undo.removeCells, [before, id], 'Remove Cells', u, jS.undo.createCells, [after, id], 'Create Cells');
-
-					if (id != jS.undo.id || !fn) {
-						jS.undo.draw(after);
-					}
-				},
-				removeCells: function(cells, id) {
-					var i = 0, index = -1;
-					if (cells.id === id) {
-						index = i;
-					}
-
-					if (index !== -1) {
-						//jS.undo.cells.splice(index, 1);
-					}
-					jS.undo.draw(cells);
-				},
-				draw: function(clones) {
-					var i;
-					for (i = 0; i < clones.length; i++) {
-						var clone = clones[i],
-							loc = jS.getTdLocation(clone.td),
-							cell = jS.spreadsheets[clone.sheet][loc.row][loc.col];
-
-						cell.value = clone.value;
-						cell.formula = clone.formula;
-						cell.td = clone.td;
-						cell.dependencies = clone.dependencies;
-						cell.needsUpdated = clone.needsUpdated;
-						cell.calcCount = clone.calcCount;
-						cell.sheet = clone.sheet;
-						cell.calcLast = clone.calcLast;
-						cell.html = clone.html;
-						cell.state = clone.state;
-						cell.jS = clone.jS;
-						cell.calcDependenciesLast = clone.calcDependenciesLast;
-						cell.td.attr('style', clone.style);
-						cell.td.attr('class', clone.cl);
-
-						jS.updateCellValue.apply(cell);
-					}
-				}
-			},
-
-			/**
-			 * get cols associated with a sheet/table within an instance
-			 * @param {jQuery|HTMLElement} o table
-			 * @returns {Element}
-			 * @name cols
-			 * @methodOf jS
-			 */
-			cols:function (o) {
-				o = o || jS.obj.table()[0];
-
-				//table / colgroup / col
-				if (!o) return [];
-				if (!o.colgroup) return [];
-				if (!o.colgroup.children) return [];
-
-				return o.colgroup.children
-			},
-
-			tables:function (o) {
-				o = o || jS.obj.tables();
-				o = o.clone();
-				o.find('.' + jS.cl.barTopParent).remove();
-				o.find('.' + jS.cl.barLeft).remove();
-				o.children('colgroup').children('col:first').remove();
-				o = jS.sheetDecorateRemove(false, o);
-				return o;
-			},
-
-			/**
-			 * get col associated with a sheet/table within an instance
-			 * @param {jQuery|HTMLElement} o table
-			 * @param {Number} i, Index of column
-			 * @returns {Element}
-			 * @methodOf jS
-			 * @name col
-			 */
-			col:function (o, i) {
-				o = o || jS.obj.table()[0];
-
-				var cols = jS.cols(o);
-
-				if (i === u) {
-					i = cols.length - 1;
-				}
-
-				return cols[i];
-			},
-
-			/**
-			 * get cells of a table row
-			 * @param {HTMLElement} table
-			 * @param {Index} row Index of row
-			 * @returns {Element}
-			 * @methodOf jS
-			 * @name rowTds
-			 */
-			rowTds:function (table, row) {
-				table = table || jS.obj.table();
-
-				var rows = jS.rows(table);
-
-				if (row == u) {
-					row = rows.length - 1;
-				}
-
-
-				if (!rows[row]) return {}; //tr
-				if (!rows[row].children) return {}; //td
-
-				return rows[row].children;
-			},
-
-			/**
-			 * Get rows of a sheet/table
-			 * @param {HTMLElement} table
-			 * @returns {Element}
-			 * @methodOf jS
-			 * @name rows
-			 */
-			rows:function (table) {
-				table = table || jS.obj.table()[0];
-				if (!table) return {}; //table
-				if (!table.tbody) return {}; //tbody
-				if (!table.tbody.children) return {}; //tr
-
-				return table.tbody.children;
-			},
-
-			/**
-			 * Get all the td objects that are currently highlighted
-			 * @returns {jQuery|HTMLElement|Array}
-			 */
-			highlighted:function(cells) {
-				var highlighted = jS.highlightedLast.obj || $([]),
-					obj = [],
-					tag,
-					i;
-
-				if (!(tag = highlighted) || !highlighted.length || !(tag = tag[0]) || !tag.tagName) {
-					return cells ? obj : $(obj);
-				}
-
-				switch (tag.tagName) {
-					case 'TD':
-						i = highlighted.length - 1;
-						do {
-							obj.unshift(cells ? highlighted[i].jSCell : highlighted[i]);
-						} while (i-- > 0);
-					case 'TR':
-						i = highlighted.length - 1;
-						do {
-							if (highlighted[i].tds) {
-								obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds);
-							}
-						} while(i-- > 0);
-						break;
-					case 'COL':
-						highlighted = highlighted.filter('col');
-						i = highlighted.length - 1;
-						do {
-							if (highlighted[i].tds) {
-								obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds)
-							}
-						} while(i-- > 0);
-						break;
-					case 'TABLE':
-						obj = (cells ? tag.jSCells : tag.tds);
-						break;
-				}
-
-				return cells ? obj : $(obj);
-			},
-
-			/**
-			 *
-			 * @param {jQuery|HTMLElement} o table
-			 * @returns {Object} {cols, rows}
-			 * @methodOf jS
-			 * @name sheetSize
-			 */
-			sheetSize:function (o) {
-				o = o || jS.obj.table()[0];
-				//table / tbody / tr / td
-
-				var lastRow = jS.rowTds(o),
-					loc = jS.getTdLocation(lastRow[lastRow.length - 1]);
-				return {
-					cols:loc.col,
-					rows:loc.row
-				};
-			},
-
-			/**
-			 * Toggles from editable to viewable and back
-			 * TODO: refactor, not working
-			 * @param replacementTables
-			 * @methodOf jS
-			 * @name toggleState
-			 */
-			toggleState:function (replacementTables) {
-				if (s.allowToggleState) {
-					var tables = replacementTables || jS.tables().detach();
-					if (s.editable) {
-						jS.evt.cellEditAbandon();
-						jS.trigger('sheetSave', [tables]);
-					}
-					jS.setDirty(false);
-					jS.setChanged(true);
-					s.editable = !s.editable;
-
-					jS.kill();
-
-					s.parent
-						.html(tables)
-						.sheet(s);
-					s = null;
-				}
-			},
-
-			/**
-			 * Turns a cell into a forumla variable so it can be accessed by a name
-			 * @param ref
-			 * @methodOf jS
-			 * @name setCellRef
-			 */
-			setCellRef:function (ref) {
-				var td = jS.obj.tdActive(),
-					loc = jS.getTdLocation(td),
-					cellRef = (ref ? ref : prompt(jS.msg.setCellRef));
-
-				if (cellRef) { //TODO: need to update value when cell is updated
-					jS.s.formulaVariables[cellRef] = jS.updateCellValue(jS.i, loc.row, loc.col);
-				}
-			}
-		};
+                /**
+                 * Current version of jQuery.sheet
+                 * @memberOf jS
+                 * @name version
+                 * @type {String}
+                 */
+                version:'3.x',
+
+                /**
+                 * The active sheet index within the a set of sheets
+                 * @memberOf jS
+                 * @name i
+                 * @type {Number}
+                 */
+                i:0,
+
+                /**
+                 * The instance index
+                 * @memberOf jS
+                 * @name I
+                 * @type {Number}
+                 */
+                I:I,
+
+                /**
+                 * The current count of sheet's within the instance
+                 * @memberOf jS
+                 * @name sheetCount
+                 * @type {Number}
+                 */
+                sheetCount:0,
+
+                /**
+                 * The current scrolled area, col.start, col.end, row.start, row.end
+                 * @memberOf jS
+                 * @named scrolledArea
+                 */
+                scrolledArea:[],
+
+                /**
+                 * The internal storage array of the spreadsheets for an instance, constructed as array 3 levels deep, spreadsheet, rows, cells, can easily be used for custom exporting/saving
+                 * @memberOf jS
+                 * @name spreadsheets
+                 * @type {Array}
+                 */
+                spreadsheets:[],
+
+                /**
+                 * Internal storage array of controls for an instance
+                 * @memberOf jS
+                 * @name controls
+                 */
+                controls:{
+                    autoFiller:[],
+                    bar:{
+                        helper:[],
+                        corner:[],
+                        x:{
+                            controls:[],
+                            handleFreeze:[],
+                            menu:[],
+                            menuParent:[],
+                            parent:[],
+                            scroll:[],
+                            td:[],
+                            tds:function () {
+                                var tds = $([]);
+                                for (var i in this.td[jS.i]) {
+                                    tds = tds.add(this.td[jS.i][i]);
+                                }
+                                return tds;
+                            }
+                        },
+                        y:{
+                            controls:[],
+                            handleFreeze:[],
+                            menu:[],
+                            parent:[],
+                            scroll:[],
+                            td:[],
+                            tds:function () {
+                                var tds = $([]);
+                                for (var i in this.td[jS.i]) {
+                                    tds = tds.add(this.td[jS.i][i]);
+                                }
+                                return tds;
+                            }
+                        }
+                    },
+                    barMenuLeft:[],
+                    barMenuTop:[],
+                    barLeft:[],
+                    barTop:[],
+                    barTopParent:[],
+                    chart:[],
+                    tdMenu:[],
+                    cellsEdited:[],
+                    enclosure:[],
+                    enclosures:null,
+                    formula:null,
+                    fullScreen:null,
+                    header:null,
+                    inPlaceEdit:[],
+                    inputs:[],
+                    label:null,
+                    menuLeft:[],
+                    menuRight:[],
+                    menus:[],
+                    pane:[],
+                    panes:null,
+                    scroll:[],
+                    scrolls:null,
+                    table:[],
+                    tabls:null,
+                    tab:[],
+                    tabContainer:null,
+                    tabs:null,
+                    title:null,
+                    toggleHide:{
+                        x:[],
+                        y:[]
+                    },
+                    ui:null
+                },
+
+                /**
+                 * Object selectors for interacting with a spreadsheet, dynamically id'd from both sheet index and instance index
+                 * @memberOf jS
+                 * @name obj
+                 * @type {Object}
+                 */
+                obj:{
+                    autoFiller:function () {
+                        return jS.controls.autoFiller[jS.i] || $([]);
+                    },
+                    barCorner:function () {
+                        return jS.controls.bar.corner[jS.i] || $([]);
+                    },
+                    barHelper:function () {
+                        return jS.controls.bar.helper[jS.i] || (jS.controls.bar.helper[jS.i] = $([]));
+                    },
+                    barLeft:function (i) {
+                        return (jS.controls.bar.y.td[jS.i] && jS.controls.bar.y.td[jS.i][i] ? jS.controls.bar.y.td[jS.i][i] : $([]));
+                    },
+                    barLeftControls:function () {
+                        return jS.controls.bar.y.controls[jS.i] || $([]);
+                    },
+                    barLefts:function () {
+                        return jS.controls.bar.y.tds();
+                    },
+                    barHandleFreezeLeft:function () {
+                        return jS.controls.bar.y.handleFreeze[jS.i] || $([]);
+                    },
+                    barMenuLeft:function () {
+                        return jS.controls.bar.y.menu[jS.i] || $([]);
+                    },
+                    barTop:function (i) {
+                        return (jS.controls.bar.x.td[jS.i] && jS.controls.bar.x.td[jS.i][i] ? jS.controls.bar.x.td[jS.i][i] : $([]));
+                    },
+                    barTopControls:function () {
+                        return jS.controls.bar.x.controls[jS.i] || $([]);
+                    },
+                    barTops:function () {
+                        return jS.controls.bar.x.tds();
+                    },
+                    barTopParent:function () {
+                        return jS.controls.bar.x.parent[jS.i] || $([]);
+                    },
+                    barHandleFreezeTop:function () {
+                        return jS.controls.bar.x.handleFreeze[jS.i] || $([]);
+                    },
+                    barMenuParentTop:function () {
+                        return jS.controls.bar.x.menuParent[jS.i] || $([]);
+                    },
+                    barMenuTop:function () {
+                        return jS.controls.bar.x.menu[jS.i] || $([]);
+                    },
+                    tdActive:function () {
+                        return jS.cellLast.td || $([]);
+                    },
+                    tdMenu:function () {
+                        return jS.controls.tdMenu[jS.i] || $([]);
+                    },
+                    cellsEdited: function () {
+                        return jS.controls.cellsEdited[jS.i] || $([]);
+                    },
+                    chart:function () {
+                        return jS.controls.chart[jS.i] || $([]);
+                    },
+                    enclosure:function () {
+                        return jS.controls.enclosure[jS.i] || $([]);
+                    },
+                    enclosures:function () {
+                        return jS.controls.enclosures || $([]);
+                    },
+                    formula:function () {
+                        return jS.controls.formula || $([]);
+                    },
+                    fullScreen:function () {
+                        return jS.controls.fullScreen || $([]);
+                    },
+                    header:function () {
+                        return jS.controls.header || $([]);
+                    },
+                    highlighted: function() {
+                        return jS.highlightedLast.obj || $([]);
+                    },
+                    menuRight:function () {
+                        return jS.controls.menuRight[jS.i] || $([]);
+                    },
+                    inPlaceEdit:function () {
+                        return jS.controls.inPlaceEdit[jS.i] || $([]);
+                    },
+                    inputs:function() {
+                        return jS.controls.inputs[jS.i] || $([]);
+                    },
+                    label:function () {
+                        return jS.controls.label || $([]);
+                    },
+                    menus:function() {
+                        return jS.controls.menus[jS.i] || $([]);
+                    },
+                    menuLeft:function () {
+                        return jS.controls.menuLeft[jS.i] || $([]);
+                    },
+                    pane:function () {
+                        return jS.controls.pane[jS.i] || {};
+                    },
+                    panes:function () {
+                        return jS.controls.panes || $([]);
+                    },
+                    parent:function () {
+                        return s.parent;
+                    },
+                    scrollStyleX:function () {
+                        return jS.controls.bar.x.scroll[jS.i] || {};
+                    },
+                    scrollStyleY:function () {
+                        return jS.controls.bar.y.scroll[jS.i] || $([]);
+                    },
+                    scrollStyles:function() {
+                        return $(this.scrollStyleX()).add(this.scrollStyleY());
+                    },
+                    scroll:function () {
+                        return jS.controls.scroll[jS.i] || $([]);
+                    },
+                    scrolls:function () {
+                        return jS.controls.scrolls || $([]);
+                    },
+                    table:function () {
+                        return jS.controls.table[jS.i] || $([]);
+                    },
+                    tables:function () {
+                        return jS.controls.tables || $([]);
+                    },
+                    tab:function () {
+                        return jS.controls.tab[jS.i] || $([]);
+                    },
+                    tabs:function () {
+                        return jS.controls.tabs || $([]);
+                    },
+                    tabContainer:function () {
+                        return jS.controls.tabContainer || $([]);
+                    },
+                    toggleHideStyleX:function () {
+                        return jS.controls.toggleHide.x[jS.i] || $([]);
+                    },
+                    toggleHideStyleY:function () {
+                        return jS.controls.toggleHide.y[jS.i] || $([]);
+                    },
+                    title:function () {
+                        return jS.controls.title || $([]);
+                    },
+                    ui:function () {
+                        return jS.controls.ui || $([]);
+                    }
+                },
+
+                /**
+                 * Internal id's of objects, dynamically id'd from both sheet index and instance index
+                 * @memberOf jS
+                 * @name id
+                 * @type {Object}
+                 */
+                id:{
+                    table:'jS_' + I + '_'
+                },
+
+                /**
+                 * Internal css classes of objects
+                 * @memberOf jS
+                 * @name cl
+                 * @type {Object}
+                 */
+                cl:{
+                    /*
+                     cl = class references
+                     */
+                    autoFiller:'jSAutoFiller',
+                    autoFillerHandle:'jSAutoFillerHandle',
+                    autoFillerCover:'jSAutoFillerCover',
+                    barCorner:'jSBarCorner',
+                    barController:'jSBarController',
+                    barHelper:'jSBarHelper',
+                    barLeft:'jSBarLeft',
+                    barHandleFreezeLeft:'jSBarHandleFreezeLeft',
+                    barTop:'jSBarTop',
+                    barTopMenuButton: 'jSBarTopMenuButton',
+                    barHandleFreezeTop:'jSBarHandleFreezeTop',
+                    barTopParent:'jSBarTopParent',
+                    chart:'jSChart',
+                    formula:'jSFormula',
+                    formulaParent:'jSFormulaParent',
+                    header:'jSHeader',
+                    fullScreen:'jSFullScreen',
+                    inPlaceEdit:'jSInPlaceEdit',
+                    menu:'jSMenu',
+                    menuFixed:'jSMenuFixed',
+                    parent:'jSParent',
+                    scroll:'jSScroll',
+                    table:'jS',
+                    label:'jSLoc',
+                    pane:'jSEditPane',
+                    tab:'jSTab',
+                    tabContainer:'jSTabContainer',
+                    tdMenu:'jSTdMenu',
+                    title:'jSTitle',
+                    enclosure:'jSEnclosure',
+                    ui:'jSUI',
+                    uiAutoFiller:'ui-state-active',
+                    uiBar:'ui-widget-header',
+                    uiBarHighlight:'ui-state-active',
+                    uiBarHandleFreezeLeft:'ui-state-default',
+                    uiBarHandleFreezeTop:'ui-state-default',
+                    uiBarMenuTop:'ui-state-default',
+                    uiTdActive:'ui-state-active',
+                    uiTdHighlighted:'ui-state-highlight',
+                    uiControl:'ui-widget-header ui-corner-top',
+                    uiControlTextBox:'ui-widget-content',
+                    uiFullScreen:'ui-widget-content ui-corner-all',
+                    uiInPlaceEdit:'ui-state-highlight',
+                    uiMenu:'ui-widget-header',
+                    uiMenuUl:'ui-widget-header',
+                    uiMenuLi:'ui-widget-header',
+                    uiPane: 'ui-widget-content',
+                    uiParent:'ui-widget-content ui-corner-all',
+                    uiTable:'ui-widget-content',
+                    uiTab:'ui-widget-header',
+                    uiTabActive:'ui-state-highlight'
+                },
+
+                /**
+                 * Messages for user interface
+                 * @memberOf jS
+                 * @name msg
+                 * @type {Object}
+                 */
+                msg:{
+                    addRowMulti:"How many rows would you like to add?",
+                    addColumnMulti:"How many columns would you like to add?",
+                    cellFind:"What are you looking for in this spreadsheet?",
+                    cellNoFind:"No results found.",
+                    dragToFreezeCol:"Drag to freeze column",
+                    dragToFreezeRow:"Drag to freeze row",
+                    addSheet:"Add a spreadsheet",
+                    openSheet:"Are you sure you want to open a different sheet?  All unsaved changes will be lost.",
+                    toggleHideRow:"No row selected.",
+                    toggleHideColumn:"No column selected.",
+                    loopDetected:"Loop Detected",
+                    newSheetTitle:"What would you like the sheet's title to be?",
+                    notFoundColumn:"Column not found",
+                    notFoundRow:"Row not found",
+                    notFoundSheet:"Sheet not found",
+                    setCellRef:"Enter the name you would like to reference the cell by.",
+                    sheetTitleDefault:"Spreadsheet {index}"
+                },
+
+                /**
+                 * Deletes a jQuery sheet instance
+                 * @methodOf jS
+                 * @name kill
+                 */
+                kill:function () {
+                    $doc.unbind('keydown');
+                    jS.obj.fullScreen().remove();
+                    jS.obj.inPlaceEdit().trigger('destroy');
+                    s.parent
+                        .trigger('sheetKill')
+                        .removeClass(jS.cl.uiParent)
+                        .html('')
+                        .removeData('sheetInstance');
+
+                    jS.obj.menus().remove();
+
+                    for (var i in $.sheet.events) {
+                        s.parent.unbind($.sheet.events[i]);
+                    }
+
+                    $.sheet.instance.splice(I, 1);
+                    jS = null;
+                },
+
+                /**
+                 * Event trigger for jQuery sheet, wraps jQuery's trigger event to always return jS
+                 * @param {String} eventType event type
+                 * @param {Array} extraParameters optional
+                 * @methodOf jS
+                 * @name trigger
+                 */
+                trigger:function (eventType, extraParameters) {
+                    //wrapper for $ trigger of parent, in case of further mods in the future
+                    extraParameters = extraParameters || [];
+                    s.parent.trigger(eventType, [jS].concat(extraParameters));
+                },
+
+                /**
+                 * Returns all spreadsheets within an instance as an array, builds it if it doesn't exist
+                 * @param forceRebuild
+                 * @returns {Array|spreadsheets}
+                 * @methodOf jS
+                 * @name spreadsheetsToArray
+                 */
+                spreadsheetsToArray:function (forceRebuild) {
+                    if (forceRebuild || jS.spreadsheets.length == 0) {
+                        jS.cycleCellsAll(function (sheet, row, col) {
+                            jS.createCell(sheet, row, col);
+                        });
+                    }
+                    return jS.spreadsheets;
+                },
+
+                /**
+                 * Returns singe spreadsheet from a set of spreadsheets within as instance, builds if it doesn't exist
+                 * @param {Boolean} forceRebuild Enforces the spreadsheet to be rebuilt
+                 * @param {Number} i Spreadsheet index
+                 * @methodOf jS
+                 * @name spreadsheetToArray
+                 */
+                spreadsheetToArray:function (forceRebuild, i) {
+                    i = (i ? i : jS.i);
+                    if (forceRebuild || !jS.spreadsheets[i]) {
+                        jS.cycleCells(function (sheet, row, col) {
+                            jS.createCell(sheet, row, col);
+                        });
+                    }
+                },
+
+                /**
+                 * Creates a single cell within
+                 * @param {Number} sheetIndex
+                 * @param {Number} rowIndex
+                 * @param {Number} colIndex
+                 * @param {Number} calcCount
+                 * @param {Date} calcLast
+                 * @param {Date} calcDependenciesLast
+                 * @returns {Object} jSCell
+                 * @methodOf jS
+                 * @name createCell
+                 */
+                createCell:function (sheetIndex, rowIndex, colIndex, calcCount, calcLast, calcDependenciesLast) {
+                    //first create cell
+                    var sheet, row, jSCell, table, colGroup, col, tBody, tr, td, $td, tdsX, tdsY;
+                    if (!(sheet = jS.spreadsheets[sheetIndex])) { //check if spreadsheet exists, if not, create it as an array
+                        sheet = jS.spreadsheets[sheetIndex] = [];
+                    }
+
+                    if (!(row = sheet[rowIndex])) { //check if row exists, if not, create it
+                        row = sheet[rowIndex] = [];
+                    }
+
+                    if (!(table = jS.controls.tables[sheetIndex])) {
+                        return {};
+                    }
+                    if (!(tBody = table.tbody)) {
+                        return {};
+                    }
+                    if (!(tr = tBody.children[rowIndex])) {
+                        return {};
+                    }
+                    if (!(td = tr.children[colIndex])) {
+                        return {};
+                    }
+
+                    $td = $(td);
+
+                    jSCell = row[colIndex] = td.jSCell = { //create cell
+                        td:$td,
+                        dependencies: [],
+                        formula:td.getAttribute('data-formula') || '',
+                        value:td.textContent || td.innerText || '',
+                        calcCount:calcCount || 0,
+                        calcLast:calcLast || -1,
+                        calcDependenciesLast:calcDependenciesLast || -1,
+                        html:[],
+                        sheet:sheetIndex,
+                        type: 'cell',
+                        jS: jS,
+                        state: [],
+                        needsUpdated: true
+                    };
+
+                    if (jSCell.formula && jSCell.formula.charAt(0) == '=') {
+                        jSCell.formula = jSCell.formula.substring(1);
+                    }
+
+
+                    //attach cells to col
+                    colGroup = table.colgroup;
+                    if (!(col = colGroup.children[colIndex]).jSCells) col.jSCells = [];
+                    col.jSCells.unshift(jSCell);
+
+                    //attach td to col
+                    if (!col.tds) col.tds = [];
+                    col.tds.unshift(td);
+
+                    //attach col to td
+                    td.col = col;
+                    td.type = 'cell';
+                    td.barLeft = tr.children[0];
+                    td.barTop = tBody.children[0].children[colIndex];
+
+                    //attach cells to tr
+                    if (!tr.jSCells) tr.jSCells = [];
+                    tr.jSCells.unshift(jSCell);
+
+                    //attach td's to tr
+                    if (!tr.tds) tr.tds = [];
+                    tr.tds.unshift(td);
+
+                    //attach cells to table
+                    if (!table.jSCells) table.jSCells = [];
+                    table.jSCells.unshift(jSCell);
+
+                    //attach td's to table
+                    if (!table.tds) table.tds = [];
+                    table.tds.unshift(td);
+
+                    //attach table to td
+                    td.table = table;
+
+                    //now create row
+                    if (!(tdsY = jS.controls.bar.y.td[sheetIndex])) {
+                        tdsY = jS.controls.bar.y.td[sheetIndex] = [];
+                    }
+                    if (!tdsY[rowIndex]) {
+                        tdsY[rowIndex] = $(tr.children[0]);
+                    }
+
+                    if (!(tdsX = jS.controls.bar.x.td[sheetIndex])) {
+                        tdsX = jS.controls.bar.x.td[sheetIndex] = [];
+                    }
+                    if (!tdsX[colIndex]) {
+                        tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
+                    }
+
+                    //return cell
+                    return jSCell;
+                },
+
+                /**
+                 * Tracks which spreadsheet is active to intercept keystrokes for navigation
+                 * @type {Boolean}
+                 * @memberOf jS
+                 * @name nav
+                 */
+                nav:false,
+
+                /**
+                 * Turns off all intercept keystroke navigation instances, with exception of supplied instance index
+                 * @param {Number} nav Instance index
+                 * @methodOf jS
+                 * @name setNav
+                 */
+                setNav:function (nav) {
+                    $.sheet.instance.each(function () {
+                        this.nav = false;
+                    });
+
+                    jS.nav = nav;
+                },
+
+                /**
+                 * Creates the different objects required by sheets
+                 * @memberOf jS
+                 * @name controlFactory
+                 * @type {Object}
+                 * @namespace
+                 */
+                controlFactory:{
+                    /**
+                     * Creates multi rows
+                     * @param {Number} i, optional, row index
+                     * @param {Number} qty the number of cells you'd like to add, if not specified, a dialog will ask
+                     * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
+                     * @param {Boolean} skipFormulaReparse re-parses formulas if needed
+                     * @methodOf jS.controlFactory
+                     * @name addRowMulti
+                     */
+                    addRowMulti:function (i, qty, isBefore, skipFormulaReparse) {
+                        if (!qty) {
+                            qty = prompt(jS.msg.addRowMulti);
+                        }
+                        if (qty) {
+                            if (!isNaN(qty)) {
+                                jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'row', skipFormulaReparse);
+                                jS.trigger('sheetAddRow', [i, isBefore, qty]);
+                            }
+                        }
+                    },
+
+                    /**
+                     * Creates multi columns
+                     * @param {Number} i, optional, column index
+                     * @param {Number} qty the number of cells you'd like to add, if not specified, a dialog will ask
+                     * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
+                     * @param {Boolean} skipFormulaReparse re-parses formulas if needed
+                     * @methodOf jS.controlFactory
+                     * @name addColumnMulti
+                     */
+                    addColumnMulti:function (i, qty, isBefore, skipFormulaReparse) {
+                        if (!qty) {
+                            qty = prompt(jS.msg.addColumnMulti);
+                        }
+                        if (qty) {
+                            if (!isNaN(qty)) {
+                                jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'col', skipFormulaReparse);
+                                jS.trigger('sheetAddColumn', [i, isBefore, qty]);
+                            }
+                        }
+                    },
+
+                    /**
+                     * Creates cells for sheet and the bars that go along with them
+                     * @param {Number} i optional, index where cells should be added, if null, cells go to end
+                     * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end;
+                     * @param {Number} qty how many rows/columsn to add
+                     * @param {String} type "row" or "col", default "col"
+                     * @param {Boolean} skipFormulaReparse re-parses formulas if needed
+                     * @methodOf jS.controlFactory
+                     * @name addCells
+                     */
+                    addCells:function (i, isBefore, qty, type, skipFormulaReparse) {
+                        //hide the autoFiller, it can get confused
+                        jS.autoFillerHide();
+
+                        jS.setDirty(true);
+                        jS.setChanged(true);
+                        jS.obj.barHelper().remove();
+
+                        var $sheet = jS.obj.table(),
+                            sheet = $sheet[0],
+                            sheetSize = jS.sheetSize(sheet),
+                            isLast = false,
+                            activeCell = jS.obj.tdActive(),
+                            o;
+
+                        qty = qty || 1;
+                        type = type || 'col';
+
+                        if (i == u) {
+                            i = (type == 'row' ? sheetSize.rows : sheetSize.cols);
+                            isLast = true;
+                        }
+
+                        switch (type) {
+                            case "row":
+                                o = {
+                                    el:function () {
+                                        //table / tbody / tr / td
+                                        var tds = jS.rowTds(sheet, i);
+                                        if (!tds || !tds[0]) return [];
+                                        return [tds[0].parentNode];
+                                    },
+                                    size:function () {
+                                        if (!o.Size) {
+                                            var tr = o.el()[0];
+                                            o.Size = tr.children.length - 1;
+                                        }
+                                        return o.Size;
+                                    },
+                                    loc:function () {
+                                        var tr = o.el();
+                                        return jS.getTdLocation(tr[0].children);
+                                    },
+                                    trs: [],
+                                    newObj:function () {
+                                        var j = o.size(),
+                                            tr = doc.createElement('tr');
+
+                                        tr.setAttribute('style', 'height: ' + s.colMargin + 'px;');
+                                        for (var i = 0; i <= j; i++) {
+                                            var td = doc.createElement('td');
+                                            if (i == 0) {
+                                                td.setAttribute('class', jS.cl.barLeft + ' ' + jS.cl.uiBar);
+                                                td.entity = 'left';
+                                                td.type = 'bar';
+                                            }
+                                            tr.appendChild(td);
+                                        }
+
+                                        o.trs.push(tr);
+
+                                        return tr;
+                                    },
+                                    offset:{row:qty, col:0},
+                                    start:function () {
+                                        return {row:(isBefore ? i : i + qty)};
+                                    },
+                                    createCells:function () {
+                                        for (var row = 0; row < o.trs.length; row++) {
+                                            row = row * 1;
+                                            var offset = (isBefore ? 0 : 1) + i;
+                                            jS.spreadsheets[jS.i].splice(row + offset, 0, []);
+                                            for (var col = 0; col < o.trs[row].children.length; col++) {
+                                                col = col * 1;
+                                                if (col == 0) {//skip bar
+                                                    jS.controls.bar.y.td[jS.i].splice(row + offset, 0, $(o.trs[row].children[col]));
+                                                } else {
+                                                    jS.createCell(jS.i, row + offset, col);
+                                                }
+                                            }
+                                        }
+
+                                        jS.refreshRowLabels(i);
+                                    }
+                                };
+                                break;
+                            case "col":
+                                o = {
+                                    el:function () {
+                                        var tdStart = jS.rowTds(sheet, 1)[i],
+                                            lastRow = jS.rowTds(sheet),
+                                            tdEnd = lastRow[lastRow.length - 1],
+
+                                            loc1 = jS.getTdLocation(tdStart),
+                                            loc2 = jS.getTdLocation(tdEnd),
+
+                                            tds = [];
+
+                                        for (var j = 0; j <= loc2.row; j++) {
+                                            tds.push(sheet.tbody.children[j].children[i]);
+                                        }
+
+                                        return tds;
+                                    },
+                                    col:function () {
+                                        return jS.col(sheet, i);
+                                    },
+                                    cols: [],
+                                    newCol:function () {
+                                        var col = doc.createElement('col');
+                                        col.setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
+                                        o.cols.push(col);
+                                        return col;
+                                    },
+                                    loc:function (tds) {
+                                        tds = (tds ? tds : o.el());
+                                        return jS.getTdLocation(tds[0]);
+                                    },
+                                    tds: [],
+                                    newObj:function () {
+                                        var td = doc.createElement('td');
+                                        o.tds.push(td);
+                                        return td;
+                                    },
+                                    offset:{row:0, col:qty},
+                                    start:function () {
+                                        return {col:(isBefore ? i : i + qty)};
+                                    },
+                                    createCells:function () {
+                                        var rows = jS.rows(sheet);
+                                        for (var row = 0; row < rows.length; row++) {
+                                            var col = (isBefore ? 0 : 1) + i,
+                                                colMax = col + qty,
+                                                j = 0;
+                                            for (col; col < colMax; col++) {
+                                                var td = sheet.tbody.children[row].children[col],
+                                                    $td = $(td);
+                                                if (row == 0) {
+                                                    jS.controls.bar.x.td[jS.i].splice(col, 0, $td);
+                                                    td.innerText = jSE.columnLabelString(col);
+                                                    td.className = jS.cl.barTop + ' ' + jS.cl.uiBar;
+                                                    td.type = 'bar';
+                                                    td.entity = 'top';
+
+                                                    o.cols[j].setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
+                                                    o.cols[j].bar = td;
+                                                    j++;
+                                                } else {
+                                                    jS.spreadsheets[jS.i][row].splice(col, 0, {});
+                                                    jS.createCell(jS.i, row, col);
+                                                }
+                                            }
+                                        }
+
+                                        jS.refreshColumnLabels(i);
+                                    }
+                                };
+                                break;
+                        }
+
+                        var el = o.el(),
+                            loc = o.loc(el),
+                            col,
+                            j = el.length - 1,
+                            k;
+
+                        if (isBefore) {
+                            do {
+                                k = qty - 1;
+                                do {
+                                    el[j].parentNode.insertBefore(o.newObj(), el[j]);
+                                } while (k--);
+                            } while (j--);
+
+                            if (o.newCol) {
+                                col = o.col();
+                                k = qty - 1;
+                                do {
+                                    col.parentNode.insertBefore(o.newCol(), col);
+                                } while (k--);
+                            }
+                        } else {
+                            do {
+                                k = qty - 1;
+                                do {
+                                    insertAfter(o.newObj(), el[j]);
+                                } while (k--);
+                            } while (j--);
+
+                            if (o.newCol) {
+                                col = o.col();
+                                k = qty - 1;
+                                do {
+                                    insertAfter(o.newCol(), col)
+                                } while (k--);
+                            }
+                        }
+
+                        o.createCells();
+
+                        if (!skipFormulaReparse && isLast != true) {
+                            //offset formulas
+                            jS.offsetFormulas(loc, o.offset, isBefore);
+                        }
+
+                        jS.obj.pane().resizeScroll();
+
+                        if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
+                            jS.colLast = activeCell[0].cellIndex;
+                            jS.rowLast = activeCell[0].parentNode.rowIndex;
+                        }
+                    },
+
+                    /**
+                     * creates single row
+                     * @param {Number} i, optional, row index
+                     * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
+                     * @methodOf jS.controlFactory
+                     * @name addRow
+                     */
+                    addRow:function (i, isBefore) {
+                        jS.controlFactory.addCells(i, isBefore, 1, 'row');
+                        jS.trigger('sheetAddRow', [i, isBefore, 1]);
+                    },
+
+                    /**
+                     * creates single column
+                     * @param {Number} i, optional, column index
+                     * @param {Boolean} isBefore places cells before the selected cell if set to true, otherwise they will go after, or at end
+                     * @methodOf jS.controlFactory
+                     * @name addColumn
+                     */
+                    addColumn:function (i, isBefore) {
+                        jS.controlFactory.addCells(i, isBefore, 1, 'col');
+                        jS.trigger('sheetAddColumn', [i, isBefore, 1]);
+                    },
+
+                    /**
+                     * Creates all the bars to the left of the spreadsheet, if they exist, they are first removed
+                     * @param {jQuery|HTMLElement} table Table of spreadsheet
+                     * @methodOf jS.controlFactory
+                     * @name barLeft
+                     */
+                    barLeft:function (table) {
+                        var tr = table.tbody.children,
+                            i = tr.length - 1;
+
+                        //table / tbody / tr
+                        if (i > -1) {
+                            do {
+                                tr[i].insertBefore(doc.createElement('td'), tr[i].children[0]);
+                            } while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
+                        }
+                    },
+
+                    /**
+                     * Creates all the bars to the top of the spreadsheet on colgroup col elements, if they exist, they are first removed
+                     * @param {HTMLElement} table representing spreadsheet
+                     * @methodOf jS.controlFactory
+                     * @name barTop
+                     */
+                    barTop:function (table) {
+                        var colgroup = table.colgroup,
+                            cols = colgroup.children,
+                            i,
+                            trFirst = table.tbody.children[0],
+
+                            colCorner = doc.createElement('col'), //left column & corner
+                            tdCorner = doc.createElement('td'),
+
+                            barTopParent = doc.createElement('tr');
+
+                        //If the col elements outnumber the td's, get rid of the extra as it messes with the ui
+                        while (cols.length > trFirst.children.length) {
+                            colgroup.removeChild(cols[cols.length -1]);
+                        }
+
+                        colCorner.width = s.colMargin + 'px';
+                        colCorner.style.width = colCorner.width;
+                        colgroup.insertBefore(colCorner, colgroup.children[0]); //end col corner
+
+                        barTopParent.appendChild(tdCorner);
+
+                        barTopParent.className = jS.cl.barTopParent;
+                        table.tbody.insertBefore(barTopParent, table.tbody.children[0]);
+                        table.barTopParent = barTopParent;
+                        table.corner = tdCorner;
+                        jS.controls.barTopParent[jS.i] = $(barTopParent);
+
+                        i = trFirst.children.length - 1;
+
+                        do {
+                            var td = doc.createElement('td');
+                            if (!cols[i]) {
+                                cols[i] = doc.createElement('col');
+                                colgroup.insertBefore(cols[i], colCorner.nextSibling);
+
+                            }
+
+                            cols[i].bar = td;
+                            td.col = cols[i];
+                            barTopParent.insertBefore(td, tdCorner.nextSibling);
+                        } while (i-- > 0);
+
+                        table.barTop = jS.controls.barTopParent[jS.i].children();
+
+                        return barTopParent;
+                    },
+
+                    /**
+                     * Creates the draggable objects for freezing cells
+                     * @type {Object}
+                     * @memberOf jS.controlFactory
+                     * @name barHandleFreeze
+                     * @namespace
+                     */
+                    barHandleFreeze:{
+
+                        /**
+                         * @param {jQuery|HTMLElement} pane
+                         * @returns {Boolean}
+                         * @methodOf jS.controlFactory.barHandleFreeze
+                         * @name top
+                         */
+                        top:function (pane) {
+                            if (jS.isBusy()) return false;
+                            var frozenAt = jS.frozenAt(),
+                                scrolledTo = jS.scrolledTo();
+                            if (!(scrolledTo.end.col <= frozenAt.col + 1)) return false;
+
+                            jS.obj.barHelper().remove();
+
+                            var bar = jS.obj.barTop(frozenAt.col + 1),
+                                pos = bar.position(),
+                                highlighter,
+                                offset = $(pane).offset(),
+                                handle = doc.createElement('div'),
+                                $handle = pane.freezeHandleTop = $(handle)
+                                    .appendTo(pane)
+                                    .addClass(jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
+                                    .height(bar.height())
+                                    .css('left', (pos.left - handle.clientWidth) + 'px')
+                                    .attr('title', jS.msg.dragToFreezeCol),
+                                tds = pane.table.barTop;
+
+
+                            jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
+                            jS.controls.bar.x.handleFreeze[jS.i] = $handle;
+
+                            jS.draggable($handle, {
+                                axis:'x',
+                                start:function () {
+                                    jS.setBusy(true);
+
+                                    highlighter = $(doc.createElement('div'))
+                                        .appendTo(pane)
+                                        .css('position', 'absolute')
+                                        .addClass('ui-state-highlight ' + jS.cl.barHelper)
+                                        .height(pane.table.corner.clientHeight)
+                                        .fadeTo(0,0.33);
+                                },
+                                drag:function() {
+                                    var target = jS.nearest($handle, tds).prev();
+                                    if (target.length && target.position) {
+                                        highlighter.width(target.position().left + target.width());
+                                    }
+                                },
+                                stop:function (e, ui) {
+                                    highlighter.remove();
+                                    jS.setBusy(false);
+                                    jS.setDirty(true);
+                                    var target = jS.nearest($handle, tds);
+                                    jS.obj.barHelper().remove();
+                                    jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
+                                    jS.evt.scroll.start('x', pane);
+                                },
+                                containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - win.scrollBarSize.width), offset.top]
+                            });
+                        },
+
+                        /**
+                         *
+                         * @param {jQuery|HTMLElement} pane
+                         * @returns {Boolean}
+                         * @methodOf jS.controlFactory.barHandleFreeze
+                         * @name left
+                         */
+                        left:function (pane) {
+                            if (jS.isBusy()) return false;
+                            var frozenAt = jS.frozenAt(),
+                                scrolledTo = jS.scrolledTo();
+                            if (!(scrolledTo.end.row <= (frozenAt.row + 1))) return false;
+
+                            jS.obj.barHelper().remove();
+
+                            var bar = $(pane.table.tbody.children[frozenAt.row + 1].children[0]),
+                                pos = bar.position(),
+                                highlighter,
+                                offset = $(pane).offset(),
+                                handle = doc.createElement('div'),
+                                $handle = pane.freezeHandleLeft = $(handle)
+                                    .appendTo(pane)
+                                    .addClass(jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
+                                    .width(bar.width())
+                                    .css('top', (pos.top - handle.clientHeight) + 'px')
+                                    .attr('title', jS.msg.dragToFreezeRow),
+                                    trs = $(pane.table.tbody.children);
+
+                            jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
+                            jS.controls.bar.y.handleFreeze[jS.i] = $handle;
+
+                            jS.draggable($handle, {
+                                axis:'y',
+                                start:function () {
+                                    jS.setBusy(true);
+
+                                    highlighter = $(doc.createElement('div'))
+                                        .appendTo(pane)
+                                        .css('position', 'absolute')
+                                        .addClass('ui-state-highlight ' + jS.cl.barHelper)
+                                        .width(handle.clientWidth)
+                                        .fadeTo(0,0.33);
+                                },
+                                drag:function() {
+                                    var target = jS.nearest($handle, trs).prev();
+                                    if (target.length && target.position) {
+                                        highlighter.height(target.position().top + target.height());
+                                    }
+                                },
+                                stop:function (e, ui) {
+                                    highlighter.remove();
+                                    jS.setBusy(false);
+                                    jS.setDirty(true);
+                                    var target = jS.nearest($handle, trs);
+                                    jS.obj.barHelper().remove();
+                                    jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
+                                    jS.evt.scroll.start('y', pane);
+                                },
+                                containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - win.scrollBarSize.height)]
+                            });
+                        },
+
+                        /**
+                         * @methodOf jS.controlFactory.barHandleFreeze
+                         * @name corner
+                         */
+                        corner:function () {
+                        }
+                    },
+
+                    /**
+                     *
+                     * Creates menus for contextual menus and top bar button
+                     * @param bar
+                     * @param menuItems
+                     * @returns {jQuery|HTMLElement}
+                     * @memberOf jS.controlFactory
+                     * @name menu
+                     */
+                    menu:function (bar, menuItems) {
+                        var menu, buttons = $([]);
+
+                        switch (bar) {
+                            case "top":
+                                menu = $(doc.createElement('div'))
+                                    .addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
+                                jS.controls.bar.x.menu[jS.i] = menu;
+                                break;
+                            case "left":
+                                menu = $(doc.createElement('div'))
+                                    .addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
+                                jS.controls.bar.y.menu[jS.i] = menu;
+                                break;
+                            case "cell":
+                                menu = $(doc.createElement('div'))
+                                    .addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
+                                jS.controls.tdMenu[jS.i] = menu;
+                                break;
+                        }
+
+                        jS.controls.menus[jS.i] = jS.obj.menus().add(menu);
+
+                        menu
+                            .mouseleave(function () {
+                                menu.hide();
+                            })
+                            .bind('contextmenu', function() {return false;})
+                            .appendTo($body)
+                            .hide()
+                            .disableSelectionSpecial();
+
+                        for (var msg in menuItems) {
+                            if (menuItems[msg]) {
+                                if ($.isFunction(menuItems[msg])) {
+                                    buttons = buttons.add(
+                                        $(doc.createElement('div'))
+                                            .text(msg)
+                                            .data('msg', msg)
+                                            .click(function () {
+                                                menuItems[$(this).data('msg')].apply(this, [jS]);
+                                                menu.hide();
+                                                return false;
+                                            })
+                                            .appendTo(menu)
+                                            .hover(function() {
+                                                buttons.removeClass('ui-state-highlight');
+                                                $(this).addClass('ui-state-highlight');
+                                            }, function() {
+                                                $(this).removeClass('ui-state-highlight');
+                                            })
+                                        );
+
+                                } else if (menuItems[msg] == 'line') {
+                                    $(doc.createElement('hr')).appendTo(menu);
+                                }
+                            }
+                        }
+
+                        return menu;
+                    },
+
+                    /**
+                     * Creates items within menus using jQuery.sheet.instance.msg
+                     * @memberOf jS.controlFactory
+                     * @namespace
+                     * @name barMenu
+                     */
+                    barMenu:{
+
+                        /**
+                         * @param {Object} e jQuery event
+                         * @param {Number} i column
+                         * @param {jQuery|HTMLElement} target
+                         * @returns {*}
+                         * @methodOf jS.controlFactory.barMenu
+                         * @name top
+                         */
+                        top:function (e, i, target) {
+                            if (jS.isBusy()) return false;
+                            var menu = jS.obj.barMenuTop().hide();
+
+                            if (!menu.length) {
+                                menu = jS.controlFactory.menu('top', s.contextmenuTop);
+                            }
+
+                            jS.obj.menus().hide();
+
+                            if (!target) {
+                                menu
+                                    .css('left', (e.pageX - 5) + 'px')
+                                    .css('top', (e.pageY - 5) + 'px')
+                                    .show();
+                                return menu;
+                            }
+
+                            var barMenuParentTop = jS.obj.barMenuParentTop().hide();
+
+                            if (!barMenuParentTop.length) {
+
+                                barMenuParentTop = $(doc.createElement('div'))
+                                    .addClass(jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barTopMenuButton)
+                                    .append(
+                                        $(doc.createElement('span'))
+                                            .addClass('ui-icon ui-icon-triangle-1-s')
+                                    )
+                                    .mousedown(function (e) {
+                                        barMenuParentTop.parent()
+                                            .mousedown()
+                                            .mouseup();
+
+                                        var offset = barMenuParentTop.offset();
+
+                                        menu
+                                            .css('left', (e.pageX - 5) + 'px')
+                                            .css('top', (e.pageY - 5) + 'px')
+                                            .show();
+                                    })
+                                    .blur(function () {
+                                        if (menu) menu.hide();
+                                    })
+                                    .bind('destroy', function () {
+                                        barMenuParentTop.remove();
+                                        jS.controls.bar.x.menuParent[jS.i] = null;
+                                    });
+
+                                jS.controls.bar.x.menuParent[jS.i] = barMenuParentTop;
+                            }
+
+                            barMenuParentTop
+                                .prependTo(target)
+                                .show();
+                        },
+
+                        /**
+                         *
+                         * @param e
+                         * @param i
+                         * @returns {Boolean}
+                         * @methodOf jS.controlFactory.barMenu
+                         * @name left
+                         */
+                        left:function (e, i) {
+                            if (jS.isBusy()) return false;
+                            jS.obj.barMenuLeft().hide();
+
+                            if (i) jS.obj.barHandleFreezeLeft().remove();
+                            var menu;
+
+                            menu = jS.obj.barMenuLeft();
+
+                            if (!menu.length) {
+                                menu = jS.controlFactory.menu('left', s.contextmenuLeft);
+                            }
+
+                            jS.obj.menus().hide();
+
+                            menu
+                                .css('left', (e.pageX - 5) + 'px')
+                                .css('top', (e.pageY - 5) + 'px')
+                                .show();
+
+                            return true;
+                        },
+
+                        /**
+                         * @methodOf jS.controlFactory.barMenu
+                         * @name corner
+                         */
+                        corner:function () {
+                        }
+                    },
+
+
+                    /**
+                     * Creates contextual menus for cells (a right click menu)
+                     * @param {Object} e jQuery event
+                     * @returns {Boolean}
+                     * @methodOf jS.controlFactory
+                     * @name tdMenu
+                     */
+                    tdMenu:function (e) {
+                        if (jS.isBusy()) return false;
+                        jS.obj.tdMenu().hide();
+
+                        var menu = jS.obj.tdMenu();
+
+                        if (!menu.length) {
+                            menu = jS.controlFactory.menu('cell', s.contextmenuCell);
+                        }
+
+                        jS.obj.menus().hide();
+
+                        menu
+                            .css('left', (e.pageX - 5) + 'px')
+                            .css('top', (e.pageY - 5) + 'px')
+                            .show();
+                    },
+
+
+                    /**
+                     * Creates the control/container for everything above the spreadsheet, removes them if they already exist
+                     * @methodOf jS.controlFactory
+                     * @name header
+                     */
+                    header:function () {
+                        jS.obj.header().remove();
+                        jS.obj.tabContainer().remove();
+
+                        var header = doc.createElement('div'),
+                            firstRow = doc.createElement('table'),
+                            firstRowTr = doc.createElement('tr'),
+                            secondRow,
+                            secondRowTr,
+                            title = doc.createElement('td'),
+                            label,
+                            menuLeft,
+                            menuRight,
+                            formula,
+                            formulaParent;
+
+                        header.appendChild(firstRow);
+                        firstRow.appendChild(firstRowTr);
+                        header.className = jS.cl.header + ' ' + jS.cl.uiControl;
+
+                        jS.controls.header = $(header);
+
+                        if (s.title) {
+                            if ($.isFunction(s.title)) {
+                                s.title = jS.title(jS, I);
+                            }
+
+                            title.className = jS.cl.title;
+                            jS.controls.title = $(title).html(s.title)
+                        } else {
+                            $(title).hide();
+                        }
+                        firstRowTr.appendChild(title);
+
+                        //Sheet Menu Control
+                        function makeMenu(menu) {
+                            if ($.isFunction(menu)) {
+                                menu = $(menu(jS));
+                            } else {
+                                menu = $(menu);
+                            }
+
+                            if (menu.is('ul')) {
+                                menu
+                                    .find("ul").hide()
+                                    .addClass(jS.cl.uiMenuUl);
+
+                                menu
+                                    .find("li")
+                                    .addClass(jS.cl.uiMenuLi)
+                                    .hover(function () {
+                                        $(this).find('ul:first')
+                                            .hide()
+                                            .show();
+                                    }, function () {
+                                        $(this).find('ul:first')
+                                            .hide();
+                                    });
+                            }
+                            return menu;
+                        }
+
+                        if (jS.isSheetEditable()) {
+                            if (s.menuLeft) {
+                                menuLeft = doc.createElement('td');
+                                menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
+                                firstRowTr.insertBefore(menuLeft, title);
+
+                                jS.controls.menuLeft[jS.i] = $(menuLeft)
+                                    .append(makeMenu(s.menuLeft));
+
+                                jS.controls.menuLeft[jS.i].find('img').load(function () {
+                                    jS.sheetSyncSize();
+                                });
+                            }
+
+                            if (s.menuRight) {
+                                menuRight = doc.createElement('td');
+                                menuRight.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
+                                firstRowTr.appendChild(menuRight);
+
+                                jS.controls.menuRight[jS.i] = $(menuRight)
+                                    .append(makeMenu(s.menuRight));
+
+                                jS.controls.menuRight[jS.i].find('img').load(function () {
+                                    jS.sheetSyncSize();
+                                });
+                            }
+
+                            label = doc.createElement('td');
+                            label.className = jS.cl.label;
+                            jS.controls.label = $(label);
+
+                            //Edit box menu
+                            formula = doc.createElement('textarea');
+                            formula.className = jS.cl.formula;
+                            formula.onkeydown = jS.evt.formula.keydown;
+                            formula.onkeyup = function () {
+                                jS.obj.inPlaceEdit().val(this.value);
+                            };
+                            formula.onchange = function () {
+                                jS.obj.inPlaceEdit().val(this.value);
+                            };
+                            formula.onpaste = jS.evt.pasteOverCells;
+                            formula.onfocus = function () {
+                                jS.setNav(false);
+                            };
+                            formula.onfocusout = function () {
+                                jS.setNav(true);
+                            };
+                            formula.onblur = function () {
+                                jS.setNav(true);
+                            };
+                            jS.controls.formula = $(formula);
+
+                            // resizable formula area - a bit hard to grab the handle but is there!
+                            var formulaResize = doc.createElement('span');
+                            formulaResize.appendChild(formula);
+
+                            secondRow = doc.createElement('table');
+                            secondRowTr = doc.createElement('tr');
+                            secondRow.appendChild(secondRowTr);
+
+                            header.appendChild(secondRow);
+
+
+                            formulaParent = doc.createElement('td');
+                            formulaParent.className = jS.cl.formulaParent;
+                            formulaParent.appendChild(formulaResize);
+                            secondRowTr.appendChild(label);
+                            secondRowTr.appendChild(formulaParent);
+
+                            jS.resizableSheet($(formulaResize), {
+                                minHeight:jS.controls.formula.height(),
+                                maxHeight:78,
+                                handles:'s',
+                                resize:function (e, ui) {
+                                    jS.controls.formula.height(ui.size.height);
+                                },
+                                stop: function() {
+                                    jS.sheetSyncSize();
+                                }
+                            });
+
+                            $.sheet.instance.each(function () {
+                                this.nav = false;
+                            });
+
+                            jS.setNav(true);
+
+                            $doc.keydown(jS.evt.doc.keydown);
+                        }
+
+                        return header;
+                    },
+
+                    /**
+                     * Creates the user interface for spreadsheets
+                     * @methodOf jS.controlFactory
+                     * @name ui
+                     */
+                    ui:function () {
+                        var ui = doc.createElement('div');
+                        ui.setAttribute('class', jS.cl.ui);
+                        jS.controls.ui = $(ui);
+                        return ui;
+                    },
+
+
+                    /**
+                     * Creates the tab interface for spreadsheets
+                     * @methodOf jS.controlFactory
+                     * @name tabContainer
+                     */
+                    tabContainer:function () {
+                        var tabContainer = jS.controls.tabContainer = $(doc.createElement('span'))
+                            .addClass(jS.cl.tabContainer)
+                            .mousedown(function (e) {
+                                var i = e.target.i;
+                                if (i >= 0) {
+                                    jS.trigger('sheetSwitch', [i]);
+                                }
+                                return false;
+                            })
+                            .dblclick(function (e) {
+                                var i = e.target.i;
+                                if (i >= 0) {
+                                    jS.trigger('sheetRename', [i]);
+                                }
+                                return false;
+                            });
+
+
+                        if (jS.isSheetEditable()) {
+                            var addSheet = doc.createElement('span');
+                            addSheet.setAttribute('class', jS.cl.tab + ' ' + jS.cl.uiTab + ' ui-corner-bottom');
+                            addSheet.setAttribute('title', jS.msg.addSheet);
+                            addSheet.innerHTML = '&nbsp;+&nbsp;';
+                            addSheet.onmousedown = function () {
+                                jS.addSheet();
+
+                                return false;
+                            };
+                            addSheet.i = -1;
+
+                            tabContainer = tabContainer.add(addSheet);
+
+                            if ($.fn.sortable) {
+                                var startPosition;
+
+                                tabContainer.sortable({
+                                    placeholder:'ui-state-highlight',
+                                    axis:'x',
+                                    forceHelperSize:true,
+                                    forcePlaceholderSize:true,
+                                    opacity:0.6,
+                                    start:function (e, ui) {
+                                        startPosition = ui.item.index();
+                                        jS.trigger('sheetTabSortStart', [e, ui]);
+                                    },
+                                    update:function (e, ui) {
+                                        jS.trigger('sheetTabSortUpdate', [e, ui, startPosition]);
+                                    }
+                                });
+                            }
+                        } else {
+                            tabContainer.append(doc.createElement('span'));
+                        }
+
+                        return tabContainer;
+                    },
+
+                    /**
+                     * Creates the scrolling system used by each spreadsheet
+                     * @param enclosure
+                     * @param pane
+                     * @param sheet
+                     * @methodOf jS.controlFactory
+                     * @name scrollUI
+                     */
+                    scrollUI:function (enclosure, pane, sheet) {
+                        var scrollOuter = doc.createElement('div'),
+                            scrollInner = doc.createElement('div'),
+                            scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
+                            scrollStyleY = pane.scrollStyleY = doc.createElement('style'),
+                            $scrollOuter = $(scrollOuter),
+                            $scrollInner = $(scrollInner),
+                            $pane = $(pane);
+
+                        pane.scrollUI = {
+                            scrollOuter: scrollOuter,
+                            scrollInner: scrollInner
+                        };
+
+                        scrollOuter.setAttribute('class', jS.cl.scroll);
+                        scrollOuter.appendChild(scrollInner);
+
+                        scrollOuter.onscroll = function() {
+                            if (!jS.isBusy()) {
+                                jS.evt.scroll.scrollTo({axis:'x', pixel:scrollOuter.scrollLeft}, 0);
+                                jS.evt.scroll.scrollTo({axis:'y', pixel:scrollOuter.scrollTop}, 0);
+
+                                jS.autoFillerGoToTd();
+                                if (pane.inPlaceEdit) {
+                                    pane.inPlaceEdit.goToTd();
+                                }
+                            }
+                        };
+
+                        scrollOuter.onmousedown = function() {
+                            jS.obj.barHelper().remove();
+                        };
+
+                        jS.controls.scroll[jS.i] = $(scrollOuter)
+                            .disableSelectionSpecial();
+
+                        jS.controls.scrolls = jS.obj.scrolls().add(scrollOuter);
+
+                        scrollStyleX.updateStyle = function (indexes, style) {
+                            indexes = indexes || [];
+
+                            if (indexes.length != this.i || style) {
+                                this.i = indexes.length || this.i;
+
+                                style = style || self.nthCss('col', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().col + 1) +
+                                    self.nthCss('td', '#' + jS.id.table + jS.i + ' ' + 'tr', this, indexes, jS.frozenAt().col + 1);
+
+                                this.css(style);
+
+                                jS.scrolledTo();
+
+                                if (indexes.length) {
+                                    jS.scrolledArea[jS.i].start.col = math.max(indexes.pop() || 1, 1);
+                                    jS.scrolledArea[jS.i].end.col = math.max(indexes.shift() || 1, 1);
+                                }
+
+                                jS.obj.barHelper().remove();
+                            }
+                        };
+
+                        pane.appendChild(scrollStyleX);
+                        pane.appendChild(scrollStyleY);
+
+                        scrollStyleY.updateStyle = function (indexes, style) {
+                            indexes = indexes || [];
+
+                            if (indexes.length != this.i || style) {
+                                this.i = indexes.length || this.i;
+
+                                style = style || self.nthCss('tr', '#' + jS.id.table + jS.i, this, indexes, jS.frozenAt().row + 1);
+
+                                this.css(style);
+
+                                jS.scrolledTo();
+
+                                if (indexes.length) {
+                                    jS.scrolledArea[jS.i].start.row = math.max(indexes.pop() || 1, 1);
+                                    jS.scrolledArea[jS.i].end.row = math.max(indexes.shift() || 1, 1);
+                                }
+
+                                jS.obj.barHelper().remove();
+                            }
+                        };
+
+                        jS.controlFactory.styleUpdater(scrollStyleX);
+                        jS.controlFactory.styleUpdater(scrollStyleY);
+
+                        jS.controls.bar.x.scroll[jS.i] = scrollStyleX;
+                        jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
+
+                        var xStyle,
+                            yStyle,
+                            sheetWidth,
+                            sheetHeight,
+                            enclosureWidth,
+                            enclosureHeight,
+                            firstRow = sheet.tbody.children[0];
+
+                        pane.resizeScroll = function () {
+                            xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.styleString());
+                            yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.styleString());
+
+                            scrollStyleX.updateStyle(null, ' ');
+                            scrollStyleY.updateStyle(null, ' ');
+
+                            sheetWidth = (firstRow.clientWidth || sheet.clientWidth) + 'px';
+                            sheetHeight = sheet.clientHeight + 'px';
+                            enclosureWidth = enclosure.clientWidth + 'px';
+                            enclosureHeight = enclosure.clientHeight + 'px';
+
+                            $scrollInner
+                                .css('width', sheetWidth)
+                                .css('height', sheetWidth);
+
+                            $scrollOuter
+                                .css('width', enclosureWidth)
+                                .css('height' + enclosureHeight);
+
+                            jS.evt.scroll.start('x', pane, sheet, scrollStyleX);
+                            jS.evt.scroll.start('y', pane, sheet, scrollStyleY);
+
+                            scrollStyleX.updateStyle(null, xStyle);
+                            scrollStyleY.updateStyle(null, yStyle);
+
+                            if (pane.inPlaceEdit) {
+                                pane.inPlaceEdit.goToTd();
+                            }
+                        };
+
+                        /*
+                        * Mousewheel rewrites itself the first time it is triggered in order to perform faster*/
+                        var chooseMouseWheel = function (e) {
+                            e = e || win.event;
+                            var mousewheel;
+                            if ("mousewheel" == e.type) {
+                                var div = function (a, b) {
+                                        return 0 != a % b ? a : a / b;
+                                    },
+                                    scrollNoXY = 1;
+                                if (e.wheelDeltaX !== u) {
+                                    mousewheel = function(e) {
+                                        e = e || win.event;
+                                        scrollOuter.scrollTop += div(-e.wheelDeltaY, scrollNoXY);
+                                        scrollOuter.scrollLeft += div(-e.wheelDeltaX, scrollNoXY);
+                                        return false;
+                                    };
+                                } else {
+                                    mousewheel = function(e) {
+                                        e = e || win.event;
+                                        scrollOuter.scrollTop += div(-e.wheelDelta, scrollNoXY);
+                                        return false;
+                                    };
+                                }
+                            } else {
+                                mousewheel = function(e) {
+                                    if (this.detail = (e.detail || e.deltaX || e.deltaY)) {
+                                        (9 < this.detail ? this.detail = 3 : -9 > this.detail && (this.detail = -3));
+                                        var top = 0, left = 0;
+                                        switch (this.detail) {
+                                            case 1:
+                                            case -1:
+                                                left = this.detail * 50;
+                                                break;
+                                            case 3:
+                                            case -3:
+                                                top = this.detail * 15;
+                                                break;
+                                        }
+
+                                        scrollOuter.scrollTop += top;
+                                        scrollOuter.scrollLeft += left;
+                                    }
+                                    return false;
+                                };
+                            }
+                            $pane.mousewheel(mousewheel);
+                            return false;
+                        }
+
+                        $pane.mousewheel(chooseMouseWheel);
+
+                        return scrollOuter;
+                    },
+
+                    styleUpdater: function (style){
+                        if (style.styleSheet) {
+                            style.css = function (css) {
+                                if (!this.styleSheet.disabled) {
+                                    this.styleSheet.cssText = css;
+                                }
+                            };
+                            style.touch = function () {};
+                            style.styleString = function() {
+                                if (!this.styleSheet.disabled) {
+                                    return this.styleSheet.cssText;
+                                }
+                                return '';
+                            };
+                        } else {
+                            style.css = function (css) {
+                                this.innerHTML = css;
+                            };
+                            style.touch = function () {
+                                this.innerHTML = this.innerHTML + ' ';
+                            };
+                            style.styleString = function() {
+                                return this.innerHTML;
+                            };
+                        }
+                    },
+
+                    hide:function (enclosure, pane, sheet) {
+                        pane = pane || jS.obj.pane();
+
+                        var toggleHideStyleX = doc.createElement('style'),
+                            toggleHideStyleY = doc.createElement('style'),
+                            hiddenRows,
+                            hiddenColumns;
+
+                        toggleHideStyleX.updateStyle = function (e) {
+                            var style = self.nthCss('col', '#' + jS.id.table + jS.i, this, jS.toggleHide.hiddenColumns[jS.i], 0) +
+                                self.nthCss('td', '#' + jS.id.table + jS.i + ' tr', this, jS.toggleHide.hiddenColumns[jS.i], 0);
+
+                            this.css(style);
+
+                            jS.autoFillerGoToTd();
+                        };
+
+                        toggleHideStyleY.updateStyle = function (e) {
+                            var style = self.nthCss('tr', '#' + jS.id.table + jS.i, this, jS.toggleHide.hiddenRows[jS.i], 0);
+
+                            this.css(style);
+
+                            jS.autoFillerGoToTd();
+                        };
+
+                        jS.controlFactory.styleUpdater(toggleHideStyleX);
+                        jS.controlFactory.styleUpdater(toggleHideStyleY);
+
+                        jS.controls.toggleHide.x[jS.i] = $(toggleHideStyleX);
+                        jS.controls.toggleHide.y[jS.i] = $(toggleHideStyleY);
+
+                        pane.appendChild(toggleHideStyleX);
+                        pane.appendChild(toggleHideStyleY);
+
+                        s.hiddenColumns[jS.i] = s.hiddenColumns[jS.i] || [];
+                        s.hiddenRows[jS.i] = s.hiddenRows[jS.i] || [];
+
+                        if (!s.hiddenColumns[jS.i].length || !s.hiddenRows[jS.i].length) {
+                            hiddenRows = sheet.attributes['data-hiddenrows'] || {value:''};
+                            hiddenColumns = sheet.attributes['data-hiddencolumns'] || {value:''};
+                            s.hiddenRows[jS.i] = arrHelpers.toNumbers(hiddenRows.value.split(','));
+                            s.hiddenColumns[jS.i] = arrHelpers.toNumbers(hiddenColumns.value.split(','));
+                        }
+
+                        if (jS.s.hiddenRows[jS.i]) {
+                            for (var row in jS.s.hiddenRows[jS.i]) {
+                                jS.toggleHide.row(jS.s.hiddenRows[jS.i][row]);
+                            }
+                        }
+
+                        if (s.hiddenColumns[jS.i]) {
+                            for (var col in s.hiddenColumns[jS.i]) {
+                                jS.toggleHide.column(s.hiddenColumns[jS.i][col]);
+                            }
+                        }
+                    },
+
+                    /**
+                     * Creates the spreadsheet user interface
+                     * @param {HTMLElement} ui raw user interface
+                     * @param {HTMLElement} table raw table
+                     * @param {Number} i the new count for spreadsheets in this instance
+                     * @methodOf jS.controlFactory
+                     * @name sheetUI
+                     */
+                    sheetUI:function (ui, table, i) {
+                        jS.i = i;
+
+                        jS.tuneTableForSheetUse(table);
+
+                        jS.readOnly[i] = table.className.match('readonly');
+
+                        var enclosure = jS.controlFactory.enclosure(table),
+                            $enclosure = $(enclosure),
+                            pane = enclosure.pane,
+                            $pane = $(pane),
+                            paneContextmenuEvent = function (e) {
+                                e = e || win.event;
+                                if (jS.isBusy()) {
+                                    return false;
+                                }
+                                if (jS.isBar(e.target)) {
+                                    var entity = e.target.entity,
+                                        i = jS.getBarIndex[entity](e.target);
+
+                                    if (i < 0) return false;
+
+                                    if (jS.evt.barInteraction.first == jS.evt.barInteraction.last) {
+                                        jS.controlFactory.barMenu[entity](e, i);
+                                    }
+                                } else {
+                                    jS.controlFactory.tdMenu(e);
+                                }
+                                return false;
+                            };
+
+                        ui.appendChild(enclosure);
+
+                        jS.controlFactory.barTop(table);
+                        jS.controlFactory.barLeft(table);
+
+                        pane.appendChild(table);
+
+                        if (jS.isSheetEditable()) {
+                            var autoFiller = jS.controlFactory.autoFiller();
+                            if (autoFiller) {
+                                pane.appendChild(autoFiller);
+                            }
+                        }
+
+                        jS.sheetTab(true);
+
+                        if (jS.isSheetEditable()) {
+                            var formula = jS.obj.formula(),
+                                mouseDownEntity = "";
+
+                            $pane.mousedown(function (e) {
+                                jS.setNav(true);
+                                if (jS.isBusy()) {
+                                    return false;
+                                }
+
+                                if (jS.isCell(e.target)) {
+                                    if (e.button == 2) {
+                                        paneContextmenuEvent.apply(this, [e]);
+                                        jS.evt.cellOnMouseDown(e);
+                                        return true;
+                                    }
+                                    jS.evt.cellOnMouseDown(e);
+                                    return false;
+                                }
+
+                                if (jS.isBar(e.target)) { //possibly a bar
+                                    if (e.button == 2) {
+                                        paneContextmenuEvent.apply(this, [e]);
+                                    }
+                                    mouseDownEntity = e.target.entity;
+                                    jS.evt.barInteraction.select(e.target);
+                                    return false;
+                                }
+                            });
+
+                            pane.onmouseup = function() {
+                                mouseDownEntity = "";
+                            };
+
+                            pane.onmouseover = function (e) {
+                                e = e || win.event;
+                                e.target = e.target || e.srcElement;
+                                //This manages bar resize, bar menu, and bar selection
+                                if (jS.isBusy()) {
+                                    return false;
+                                }
+
+                                if (!jS.isBar(e.target)) {
+                                    return false;
+                                }
+                                var bar = $(e.target),
+                                    entity = e.target.entity,
+                                    i = jS.getBarIndex[entity](e.target);
+
+                                if (i < 0) {
+                                    return false;
+                                }
+
+                                if (jS.evt.barInteraction.selecting && entity == mouseDownEntity) {
+                                    jS.evt.barInteraction.last = i;
+
+                                    jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
+                                } else {
+                                    jS.resizeBar[entity](bar, i, pane, table);
+
+                                    if (jS.isSheetEditable()) {
+                                        jS.controlFactory.barHandleFreeze[entity](pane);
+
+                                        if (entity == "top") {
+                                            jS.controlFactory.barMenu[entity](e, i, bar);
+                                        }
+                                    }
+                                }
+                            };
+
+                            pane.ondblclick = jS.evt.cellOnDblClick;
+
+                            $pane
+                                .bind('contextmenu', paneContextmenuEvent)
+                                .disableSelectionSpecial()
+                                .bind('cellEdit', jS.evt.cellEdit);
+                        }
+
+                        jS.themeRoller.start(table);
+
+                        jS.createSpreadsheet(table, i);
+
+                        jS.checkMinSize(table);
+
+                        jS.controlFactory.tab();
+
+                        jS.controlFactory.hide(enclosure, pane, table);
+
+                        jS.setChanged(true);
+                    },
+
+                    /**
+                     * The viewing console for spreadsheet
+                     * @returns {*|jQuery|HTMLElement}
+                     * @methodOf jS.controlFactory
+                     * @name enclosure
+                     */
+                    enclosure:function (table) {
+                        var pane = doc.createElement('div'),
+                            enclosure = doc.createElement('div');
+
+                        enclosure.scollUI = jS.controlFactory.scrollUI(enclosure, pane, table);
+                        enclosure.appendChild(enclosure.scollUI);
+
+                        pane.setAttribute('class', jS.cl.pane + ' ' + jS.cl.uiPane);
+                        enclosure.appendChild(pane);
+                        enclosure.setAttribute('class', jS.cl.enclosure);
+
+                        enclosure.pane = pane;
+                        enclosure.table = table;
+
+                        pane.table = table;
+                        pane.enclosure = enclosure;
+
+                        table.pane = pane;
+                        table.enclosure = enclosure;
+
+                        jS.controls.pane[jS.i] = pane;
+                        jS.controls.panes = jS.obj.panes().add(pane);
+                        jS.controls.enclosure[jS.i] = $(enclosure);
+                        jS.controls.enclosures = jS.obj.enclosures().add(enclosure);
+
+                        return enclosure;
+                    },
+
+                    /**
+                     * Adds a tab for navigation to a spreadsheet
+                     * @returns {Node|jQuery}
+                     * @methodOf jS.controlFactory
+                     * @name tab
+                     */
+                    tab:function () {
+                        var tab = doc.createElement('span'),
+                            $tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
+
+                        tab.setAttribute('class', jS.cl.tab);
+                        tab.innerHTML = jS.sheetTab(true);
+
+                        tab.i = jS.i;
+                        tab.setAttribute('class',jS.cl.uiTab + ' ui-corner-bottom');
+                        jS.controls.tabs = jS.obj.tabs().add($tab);
+
+                        return tab;
+                    },
+
+                    /**
+                     * Creates a teaxtarea for a user to put a value in that floats on top of the current selected cell
+                     * @param {jQuery|HTMLElement} td the td to be edited
+                     * @param {Boolean} noSelect
+                     * @methodOf jS.controlFactory
+                     * @name inPlaceEdit
+                     */
+                    inPlaceEdit:function (td, noSelect) {
+                        td = td || jS.obj.tdActive();
+
+                        if (!td.length) {
+                            td = $(jS.rowTds(null, 1)[1]);
+                            jS.cellEdit(td);
+                        }
+
+                        if (!td.length) return;
+
+                        jS.obj.inPlaceEdit().trigger('destroy');
+                        var formula = jS.obj.formula(),
+                            val = formula.val(),
+                            textarea,
+                            $textarea,
+                            pane = jS.obj.pane();
+
+                        if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
+
+                        textarea = doc.createElement('textarea');
+                        pane.inPlaceEdit = textarea;
+                        $textarea = $(textarea);
+                        textarea.i = jS.i;
+                        textarea.value = formula[0].value;
+                        textarea.className = jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit;
+                        textarea.td = td[0];
+                        textarea.goToTd = function() {
+                            this.offset = td.offset();
+                            if (!this.offset.left && !this.offset.right) {
+                                $textarea.hide();
+                            } else {
+                                this.setAttribute('style',
+                                    'left:' + (this.offset.left - 1) + 'px;' +
+                                    'top:' + (this.offset.top - 1) + 'px;' +
+                                    'width:' + this.td.clientWidth + 'px;' +
+                                    'height:' + this.td.clientHeight + 'px;' +
+                                    'min-width:' + this.td.clientWidth + 'px;' +
+                                    'min-height:' + this.td.clientHeight + 'px;');
+                            }
+                        };
+                        textarea.goToTd();
+                        textarea.onkeydown = jS.evt.inPlaceEdit.keydown;
+                        textarea.onkeyup = function() { formula[0].value = textarea.value; };
+                        textarea.onchange = function() { formula[0].value = textarea.value; };
+                        textarea.onfocus = function () { jS.setNav(false); };
+                        textarea.onfocusout = function () { jS.setNav(true); };
+                        textarea.onblur = function () { jS.setNav(true); };
+                        $body.append(textarea);
+
+
+                        jS.controls.inPlaceEdit[jS.i] = $textarea
+                            .bind('paste', jS.evt.pasteOverCells)
+                            .focus()
+                            .bind('destroy', function () {
+                                pane.inPlaceEdit = null;
+                                jS.cellLast.isEdit = (textarea.value != val);
+                                $textarea.remove();
+                                jS.controls.inPlaceEdit[textarea.i] = false;
+                            });
+
+                        if (!noSelect) {
+                            $textarea.select();
+                        }
+
+                        //Make the textarea resizable automatically
+                        if ($.fn.elastic) {
+                            $textarea.elastic();
+                        }
+                    },
+
+                    /**
+                     * Created the autoFiller object
+                     * @returns {*|jQuery|null}
+                     * @methodOf jS.controlFactory
+                     * @name autoFiller
+                     */
+                    autoFiller:function () {
+                        if (!s.autoFiller) return null;
+
+                        var autoFiller = doc.createElement('div'),
+                            handle = doc.createElement('div'),
+                            cover = doc.createElement('div');
+
+                        autoFiller.className = jS.cl.autoFiller + ' ' + jS.cl.uiAutoFiller;
+                        handle.className = jS.cl.autoFillerHandle;;
+                        cover.className = jS.cl.autoFillerCover;
+
+                        autoFiller.onmousedown = function () {
+                            var td = jS.obj.tdActive();
+                            if (td) {
+                                var loc = jS.getTdLocation(td);
+                                jS.cellSetActive(td, loc, true, jS.autoFillerNotGroup, function () {
+                                    var highlighted = jS.highlighted(),
+                                        hLoc = jS.getTdLocation(highlighted.first());
+                                    jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
+                                    jS.autoFillerGoToTd(highlighted.last());
+                                    jS.autoFillerNotGroup = false;
+                                });
+                            }
+                        };
+
+                        jS.controls.autoFiller[jS.i] = $(autoFiller);
+                        return autoFiller;
+                    }
+                },
+
+                /**
+                 * Allows grouping of cells
+                 * @memberOf jS
+                 * @name autoFillerNotGroup
+                 */
+                autoFillerNotGroup:true,
+
+
+                /**
+                 * Sends tab delimited string into cells, usually a paste from external spreadsheet application
+                 * @param oldVal what formula should be when this is done working with all the values
+                 * @returns {Boolean}
+                 * @methodOf jS
+                 * @name updateCellsAfterPasteToFormula
+                 */
+                updateCellsAfterPasteToFormula:function (oldVal) {
+                    var newValCount = 0,
+                        formula = jS.obj.formula(),
+                        last = new Date();
+
+                    oldVal = oldVal || formula.val();
+
+                    var loc = {row:jS.cellLast.row, col:jS.cellLast.col},
+                        val = formula.val(), //once ctrl+v is hit formula now has the data we need
+                        firstValue = val;
+
+                    if (loc.row == 0 && loc.col == 0) return false; //at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
+
+                    var row = tsv.parse(':::::' + val);
+
+                    //Single cell value
+                    if (!$.isArray(row)) {
+                        formula.val(row);
+                        jS.fillUpOrDown(false, row);
+                        return true;
+                    }
+
+                    //values that need put into multi cells
+                    for (var i = 0; i < row.length; i++) {
+                        jS.cellLast.isEdit = true;
+                        var col = row[i];
+                        for (var j = 0; j < col.length; j++) {
+                            newValCount++;
+                            var td = jS.getTd(jS.i, i + loc.row, j + loc.col);
+
+                            td.row = loc.row;
+                            td.col = loc.col;
+
+                            if (td.length) {
+                                if (!jS.spreadsheets[jS.i] || !jS.spreadsheets[jS.i][i + loc.row] || !jS.spreadsheets[jS.i][i + loc.row][j + loc.col]) continue;
+                                var cell = jS.spreadsheets[jS.i][i + loc.row][j + loc.col];
+                                if (cell) {
+                                    s.parent.one('sheetPreCalculation', function () {
+                                        if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
+                                                cell.formula = col[j].substring(1);
+                                                cell.value = '';
+                                                td.data('formula', col[j]);
+                                        } else {
+                                                cell.formula = '';
+                                                cell.value = col[j];
+                                                td.removeData('formula');
+                                        }
+                                    });
+                                    jS.calcDependencies.apply(cell);
+
+                                    if (i == 0 && j == 0) { //we have to finish the current edit
+                                        firstValue = col[j];
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (val != firstValue) {
+                        formula.val(firstValue);
+                    }
+
+                    jS.fillUpOrDown(false, firstValue);
+
+                    jS.evt.cellEditDone(true);
+                },
+
+                /**
+                 * Event handlers for instance
+                 * @memberOf jS
+                 * @name evt
+                 * @namespace
+                 */
+                evt:{
+
+                    inPlaceEdit:{
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.inPlaceEdit
+                         * @name enter
+                         */
+                        enter:function (e) {
+                            if (e.shiftKey) {
+                                return true;
+                            }
+                            return jS.evt.cellSetActiveFromKeyCode(e, true);
+                        },
+
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.inPlaceEdit
+                         * @name tab
+                         */
+                        tab:function (e) {
+                            if (e.shiftKey) {
+                                return true;
+                            }
+                            return jS.evt.cellSetActiveFromKeyCode(e, true);
+                        },
+                        /**
+                         * Edits the textarea that appears over cells for in place edit
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.inPlaceEdit
+                         * @name keydown
+                         */
+                        keydown:function (e) {
+                            e = e || win.event;
+                            jS.trigger('sheetFormulaKeydown', [true]);
+
+                            switch (e.keyCode) {
+                                case key.ENTER:
+                                    return jS.evt.inPlaceEdit.enter(e);
+                                    break;
+                                case key.TAB:
+                                    return jS.evt.inPlaceEdit.tab(e);
+                                    break;
+                                case key.ESCAPE:
+                                    jS.evt.cellEditAbandon();
+                                    return false;
+                                    break;
+                            }
+                        }
+                    },
+
+                    formula:{
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.formula
+                         * @name keydown
+                         */
+                        keydown:function (e) {
+                            e = e || win.event;
+                            if (jS.readOnly[jS.i]) return false;
+                            if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+
+                            jS.trigger('sheetFormulaKeydown', [false]);
+
+                            switch (e.keyCode) {
+                                case key.C:
+                                    if (e.ctrlKey) {
+                                        return jS.evt.doc.copy(e);
+                                    } else {
+                                        jS.obj.tdActive().dblclick();
+                                        return true;
+                                    }
+                                case key.X:
+                                    if (e.ctrlKey) {
+                                        return jS.evt.doc.cut(e);
+                                    } else {
+                                        jS.obj.tdActive().dblclick();
+                                        return true;
+                                    }
+                                case key.Y:
+                                    if (e.ctrlKey) {
+                                        jS.evt.doc.redo(e);
+                                        return false;
+                                    } else {
+                                        jS.obj.tdActive().trigger('cellEdit');
+                                        return true;
+                                    }
+                                    break;
+                                case key.Z:
+                                    if (e.ctrlKey) {
+                                        jS.evt.doc.undo(e);
+                                        return false;
+                                    } else {
+                                        jS.obj.tdActive().trigger('cellEdit');
+                                        return true;
+                                    }
+                                    break;
+                                case key.ESCAPE:
+                                    jS.evt.cellEditAbandon();
+                                    break;
+                                case key.ENTER:
+                                    jS.evt.cellSetActiveFromKeyCode(e, true);
+                                    return false;
+                                    break;
+                                default:
+                                    jS.cellLast.isEdit = true;
+                            }
+                        },
+
+                        /**
+                         * Helper for events
+                         * @param {Boolean} ifTrue
+                         * @param e {Object} jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.keydownHandler
+                         * @name formulaKeydownIf
+                         */
+                        If:function (ifTrue, e) {
+                            if (ifTrue) {
+                                jS.obj.tdActive().dblclick();
+                                return true;
+                            }
+                            return false;
+                        }
+                    },
+
+                    /**
+                     * Key down handlers
+                     * @memberOf jS.evt
+                     * @name docKeydownHandler
+                     * @namespace
+                     */
+                    doc:{
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.doc
+                         * @name enter
+                         */
+                        enter:function (e) {
+                            if (!jS.cellLast.isEdit && !e.ctrlKey) {
+                                jS.obj.tdActive().dblclick();
+                            }
+                            return false;
+                        },
+
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.doc
+                         * @name tab
+                         */
+                        tab:function (e) {
+                            jS.evt.cellSetActiveFromKeyCode(e);
+                        },
+
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.doc
+                         * @name findCell
+                         */
+                        findCell:function (e) {
+                            if (e.ctrlKey) {
+                                jS.cellFind();
+                                return false;
+                            }
+                            return true;
+                        },
+
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.doc
+                         * @name redo
+                         */
+                        redo:function (e) {
+                            if (e.ctrlKey && !jS.cellLast.isEdit) {
+                                jS.undo.manager.redo();
+                                return false;
+                            }
+                            return true;
+                        },
+
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.doc
+                         * @name undo
+                         */
+                        undo:function (e) {
+                            if (e.ctrlKey && !jS.cellLast.isEdit) {
+                                jS.undo.manager.undo();
+                                return false;
+                            }
+                            return true;
+                        },
+
+                        /**
+                         * Copy what is in the highlighted tds
+                         * @param e
+                         * @param clearValue
+                         * @return {Boolean}
+                         */
+                        copy:function (e, clearValue) {
+                            var tds = jS.highlighted(true),
+                                formula = jS.obj.formula(),
+                                oldValue = formula.val(),
+                                cellsTsv = jS.tdsToTsv(tds, clearValue);
+
+                            formula
+                                .val(cellsTsv)
+                                .focus()
+                                .select();
+
+                            $doc
+                                .one('keyup', function () {
+                                    if (clearValue) {
+                                        formula.val('');
+                                    } else {
+                                        formula.val(oldValue);
+                                    }
+                                });
+
+                            return true;
+                        },
+
+                        cut:function (e) {
+                            return this.copy(e, true);
+                        },
+
+                        /**
+                         * Manages the page up and down buttons
+                         * @param {Boolean} reverse Go up or down
+                         * @returns {Boolean}
+                         * @methodOf jS.evt.doc
+                         * @name pageUpDown
+                         */
+                        pageUpDown:function (reverse) {
+                            var size = jS.sheetSize(),
+                                pane = jS.obj.pane(),
+                                paneHeight = pane.clientHeight,
+                                prevRowsHeights = 0,
+                                thisRowHeight = 0,
+                                td;
+
+                            if (reverse) { //go up
+                                for (var i = jS.cellLast.row; i > 0 && prevRowsHeights < paneHeight; i--) {
+                                    td = jS.getTd(jS.i, i, 1);
+                                    if (!td.data('hidden') && td.is(':hidden')) td.show();
+                                    prevRowsHeights += td.parent().height();
+                                }
+                            } else { //go down
+                                for (var i = jS.cellLast.row; i < size.rows && prevRowsHeights < paneHeight; i++) {
+                                    td = jS.getTd(jS.i, i, 1);
+                                    prevRowsHeights += td.parent().height();
+                                }
+                            }
+                            jS.cellEdit(td);
+
+                            return false;
+                        },
+
+                        /**
+                         *
+                         * @param {Object} e jQuery event
+                         * @returns {*}
+                         * @methodOf jS.evt.doc
+                         * @name keydown
+                         */
+                        keydown:function (e) {
+                            e = e || win.event;
+                            if (jS.readOnly[jS.i]) return false;
+                            if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+
+                            if (jS.nav) {
+                                switch (e.keyCode) {
+                                    case key.DELETE:
+                                        jS.tdsToTsv(null, true);
+                                        jS.obj.formula().val('');
+                                        break;
+                                    case key.TAB:
+                                        jS.evt.doc.tab(e);
+                                        break;
+                                    case key.ENTER:
+                                        jS.evt.cellSetActiveFromKeyCode(e);
+                                        break;
+                                    case key.LEFT:
+                                    case key.UP:
+                                    case key.RIGHT:
+                                    case key.DOWN:
+                                        (e.shiftKey ? jS.evt.cellSetHighlightFromKeyCode(e) : jS.evt.cellSetActiveFromKeyCode(e));
+                                        break;
+                                    case key.PAGE_UP:
+                                        jS.evt.doc.pageUpDown(true);
+                                        break;
+                                    case key.PAGE_DOWN:
+                                        jS.evt.doc.pageUpDown();
+                                        break;
+                                    case key.HOME:
+                                    case key.END:
+                                        jS.evt.cellSetActiveFromKeyCode(e);
+                                        break;
+                                    case key.V:
+                                        if (e.ctrlKey) {
+                                            return jS.evt.formula.If(!jS.evt.pasteOverCells(e), e);
+                                        } else {
+                                            jS.obj.tdActive().trigger('cellEdit');
+                                            return true;
+                                        }
+                                        break;
+                                    case key.Y:
+                                        if (e.ctrlKey) {
+                                            jS.evt.doc.redo(e);
+                                            return false;
+                                        } else {
+                                            jS.obj.tdActive().trigger('cellEdit');
+                                            return true;
+                                        }
+                                        break;
+                                    case key.Z:
+                                        if (e.ctrlKey) {
+                                            jS.evt.doc.undo(e);
+                                            return false;
+                                        } else {
+                                            jS.obj.tdActive().trigger('cellEdit');
+                                            return true;
+                                        }
+                                        break;
+                                    case key.ESCAPE:
+                                        jS.evt.cellEditAbandon();
+                                        break;
+                                    case key.F:
+                                        if (e.ctrlKey) {
+                                            return jS.evt.formula.If(jS.evt.doc.findCell(e), e);
+                                        } else {
+                                            jS.obj.tdActive().trigger('cellEdit');
+                                            return true;
+                                        }
+                                        break;
+                                    case key.CAPS_LOCK:
+                                    case key.SHIFT:
+                                    case key.ALT:
+                                        break;
+                                    case key.CONTROL: //we need to filter these to keep cell state
+                                        jS.obj.formula().focus().select();
+                                        return true;
+                                        break;
+                                    default:
+                                        jS.obj.tdActive().trigger('cellEdit');
+                                        return true;
+                                        break;
+                                }
+                                return false;
+                            }
+                        }
+                    },
+
+                    /**
+                     * Used for pasting from other spreadsheets
+                     * @param {Object} e jQuery event
+                     * @returns {Boolean}
+                     * @methodOf jS.evt
+                     * @name pasteOverCells
+                     */
+                    pasteOverCells:function (e) {
+                        e = e || win.event;
+                        if (e.ctrlKey || e.type == "paste") {
+                            var fnAfter = function () {
+                                jS.updateCellsAfterPasteToFormula();
+                            };
+
+                            var doc = $doc
+                                .one('keyup', function () {
+                                    fnAfter();
+                                    fnAfter = function () {
+                                    };
+                                    doc.mouseup();
+                                })
+                                .one('mouseup', function () {
+                                    fnAfter();
+                                    fnAfter = function () {
+                                    };
+                                    doc.keyup();
+                                });
+
+                            jS.setDirty(true);
+                            jS.setChanged(true);
+                            return true;
+                        }
+                    },
+
+                    /**
+                     * Updates a cell after edit afterward event "sheetCellEdited" is called w/ params (td, row, col, spreadsheetIndex, sheetIndex)
+                     * @param {Boolean} force if set to true forces a calculation of the selected sheet
+                     * @methodOf jS.evt
+                     * @name cellEditDone
+                     */
+                    cellEditDone:function (force) {
+                        jS.obj.inPlaceEdit().trigger('destroy');
+                        if (jS.cellLast.isEdit || force) {
+                            var formula = jS.obj.formula(),
+                                td = jS.obj.tdActive();
+
+                            if (jS.isFormulaEditable(td)) {
+                                //Lets ensure that the cell being edited is actually active
+                                if (td && jS.cellLast.row > 0 && jS.cellLast.col > 0) {
+
+                                    //This should return either a val from textbox or formula, but if fails it tries once more from formula.
+                                    var v = formula.val(),
+                                        cell = td[0].jSCell;
+
+                                    if (!cell.edited) {
+                                        cell.edited = true;
+                                        jS.controls.cellsEdited[jS.i] = jS.obj.cellsEdited().add(cell);
+                                    }
+
+                                    s.parent.one('sheetPreCalculation', function () {
+                                        if (v.charAt(0) == '=') {
+                                            td.data('formula', v);
+                                            cell.value = v;
+                                            cell.formula = v;
+                                        } else {
+                                            td.removeData('formula');
+                                            cell.value = v;
+                                            cell.formula = '';
+                                        }
+                                    });
+                                    jS.calcDependencies.apply(cell);
+
+                                    //formula.focus().select();
+                                    jS.cellLast.isEdit = false;
+
+                                    //perform final function call
+                                    jS.trigger('sheetCellEdited', [cell]);
+                                }
+                            }
+                        }
+                    },
+
+                    /**
+                     * Abandons a cell edit
+                     * @param {Boolean} skipCalc if set to true will skip sheet calculation;
+                     * @methodOf jS.evt
+                     * @name cellEditAbandon
+                     */
+                    cellEditAbandon:function (skipCalc) {
+                        jS.obj.inPlaceEdit().trigger('destroy');
+                        jS.themeRoller.bar.clearActive();
+                        jS.themeRoller.cell.clearHighlighted(null, true);
+
+                        if (!skipCalc) {
+                            jS.calc();
+                        }
+
+                        jS.cellLast.td = $([]);
+                        jS.cellLast.row = 0;
+                        jS.cellLast.col = 0;
+                        jS.rowLast = 0;
+                        jS.colLast = 0;
+                        jS.highlightedLast.start = {row:0,col:0};
+                        jS.highlightedLast.end = {row:0,col:0};
+
+                        jS.labelUpdate('', true);
+                        jS.obj.formula()
+                            .val('')
+                            .blur();
+
+                        jS.autoFillerHide();
+
+                        return false;
+                    },
+
+                    /**
+                     * Sets active cell from a pixel location
+                     * @param {Number} left pixels left
+                     * @param {Number} top pixels top
+                     * @returns {Boolean}
+                     * @methodOf jS.evt
+                     * @name cellSetFocusFromXY
+                     */
+                    cellSetFocusFromXY:function (left, top) {
+                        var td = jS.getTdFromXY(left, top);
+                        if (td.type == 'cell') {
+                            td = $(td);
+                            jS.cellEdit(td);
+                            return false;
+                        }
+                        return true;
+                    },
+
+                    /**
+                     * Highlights a cell from a key code
+                     * @param {Object} e jQuery event
+                     * @returns {Boolean}
+                     * @methodOf jS.evt
+                     * @name cellSetHighlightFromKeyCode
+                     */
+                    cellSetHighlightFromKeyCode:function (e) {
+                        var grid = jS.highlightedLastOrdered(),
+                            size = jS.sheetSize(),
+                            td = jS.obj.tdActive(),
+                            loc = jS.getTdLocation(td),
+                            start = grid.start,
+                            end = grid.end;
+
+                        switch (e.keyCode) {
+                            case key.UP:
+                                if (grid.start.row < loc.row) {
+                                    start.row = grid.start.row;
+                                    start.row--;
+                                    start.row = math.max(start.row, 1);
+                                    break;
+                                }
+
+                                end.row = grid.end.row;
+                                end.row--;
+                                end.row = math.max(end.row, 1);
+
+                                break;
+                            case key.DOWN:
+                                if (grid.start.row <= start.row) {
+                                    start.row = grid.start.row;
+                                    start.row++;
+                                    start.row = math.min(start.row, size.rows);
+                                    break;
+                                }
+
+                                end.row = grid.end.row;
+                                end.row++;
+                                end.row = math.min(end.row, size.rows);
+
+                                break;
+                            case key.LEFT:
+                                if (grid.start.col < loc.col) {
+                                    start.col = grid.start.col;
+                                    start.col--;
+                                    start.col = math.max(start.col, 1);
+                                    break;
+                                }
+
+                                end.col = grid.end.col;
+                                end.col--;
+                                end.col = math.max(end.col, 1);
+
+                                break;
+                            case key.RIGHT:
+                                if (grid.start.col < loc.col) {
+                                    start.col = grid.start.col;
+                                    start.col++;
+                                    start.col = math.min(start.col, size.cols);
+                                    break;
+                                }
+
+                                end.col = grid.end.col;
+                                end.col++;
+                                end.col = math.min(end.col, size.cols);
+
+                                break;
+                        }
+
+                        //highlight the cells
+                        jS.highlightedLast.start = start;
+                        jS.highlightedLast.end = end;
+
+                        jS.cycleCellArea(function (o) {
+                            jS.themeRoller.cell.setHighlighted(o.td);
+                        }, start, end);
+
+                        return false;
+                    },
+
+
+                    /**
+                     * Activates a cell from a key code
+                     * @param {Object} e jQuery event
+                     * @param {Boolean} skipMove optional
+                     * @returns {Boolean}
+                     * @methodOf jS.evt
+                     * @name cellSetActiveFromKeyCode
+                     */
+                    cellSetActiveFromKeyCode:function (e, skipMove) {
+                        var loc = {
+                                row: jS.cellLast.row,
+                                col: jS.cellLast.col
+                            },
+                            overrideIsEdit = false,
+                            highlighted,
+                            doNotClearHighlighted = false;
+
+                        switch (e.keyCode) {
+                            case key.UP:
+                                loc.row--;
+                                break;
+                            case key.DOWN:
+                                loc.row++;
+                                break;
+                            case key.LEFT:
+                                loc.col--;
+                                break;
+                            case key.RIGHT:
+                                loc.col++;
+                                break;
+                            case key.ENTER:
+                                loc = jS.evt.incrementAndStayInGrid(jS.highlightedLastOrdered(), loc, 'row', 'col', e.shiftKey);
+                                overrideIsEdit = true;
+                                highlighted = jS.highlighted();
+                                if (highlighted.length > 1) {
+                                    doNotClearHighlighted = true;
+                                } else {
+                                    if (!skipMove) {
+                                        loc.row += (e.shiftKey ? -1 : 1);
+                                    }
+                                    if (s.autoAddCells && loc.row > jS.sheetSize().rows) {
+                                        jS.controlFactory.addRow();
+                                    }
+                                }
+                                break;
+                            case key.TAB:
+                                loc = jS.evt.incrementAndStayInGrid(jS.highlightedLastOrdered(), loc, 'col', 'row', e.shiftKey);
+                                overrideIsEdit = true;
+                                highlighted = jS.highlighted();
+                                if (highlighted.length > 1) {
+                                    doNotClearHighlighted = true;
+                                } else {
+                                    if (!skipMove) {
+                                        loc.col += (e.shiftKey ? -1 : 1);
+                                    }
+                                    if (s.autoAddCells && loc.col > jS.sheetSize().cols) {
+                                        jS.controlFactory.addColumn();
+                                    }
+                                }
+                                break;
+                            case key.HOME:
+                                loc.col = 1;
+                                break;
+                            case key.END:
+                                loc.col = jS.obj.tdActive().parent().children('td').length - 1;
+                                break;
+                        }
+
+                        //we check here and make sure all values are above 0, so that we get a selected cell
+                        loc.col = loc.col || 1;
+                        loc.row = loc.row || 1;
+
+                        //to get the td could possibly make keystrokes slow, we prevent it here so the user doesn't even know we are listening ;)
+                        if (!jS.cellLast.isEdit || overrideIsEdit) {
+                            //get the td that we want to go to
+                            var td = jS.getTd(jS.i, loc.row, loc.col);
+
+                            //if the td exists, lets go to it
+                            if (td) {
+                                jS.cellEdit(td, null, doNotClearHighlighted);
+                                return false;
+                            }
+                        }
+                        //default, can be overridden above
+                        return true;
+                    },
+
+                    /**
+                     * Calculate position for either horizontal movement or vertical movement within a grid, both forward and reverse
+                     * @param {Object} grid
+                     * @param {Object} loc
+                     * @param {String} locA
+                     * @param {String} locB
+                     * @param {Boolean} reverse
+                     * @returns {Object} loc
+                     * @methodOf jS.evt
+                     * @name incrementAndStayInGrid
+                     */
+                    incrementAndStayInGrid: function (grid, loc, locA, locB, reverse) {
+                        if (reverse) {
+                            loc[locA]--;
+                            if (loc[locA] < grid.start[locA]) {
+                                loc[locA] = grid.end[locA];
+                                loc[locB]--;
+                            }
+                            if (loc[locB] < grid.start[locB]) {
+                                loc[locB] = grid.end[locB];
+                            }
+                        } else {
+                            loc[locA]++;
+                            if (loc[locA] > grid.end[locA]) {
+                                loc[locA] = grid.start[locA];
+                                loc[locB]++;
+                            }
+                            if (loc[locB] > grid.end[locB]) {
+                                loc[locB] = grid.start[locB];
+                            }
+                        }
+
+                        return loc;
+                    },
+
+                    /**
+                     * Cell on mouse down
+                     * @param {Object} e jQuery event
+                     * @methodOf jS.evt
+                     * @name cellOnMouseDown
+                     */
+                    cellOnMouseDown:function (e) {
+
+
+                        jS.obj.formula().blur();
+                        if (e.shiftKey) {
+                            jS.getTdRange(e, jS.obj.formula().val());
+                        } else {
+                            jS.cellEdit($(e.target), true);
+                        }
+                    },
+
+                    /**
+                     * Cell on double click
+                     * @param {Object} e jQuery event
+                     * @methodOf jS.evt
+                     * @name cellOnDblClick
+                     */
+                    cellOnDblClick:function (e) {
+                        if (jS.isBusy()) return false;
+
+                        jS.controlFactory.inPlaceEdit(null, true);
+                        //jS.log('click, in place edit activated');
+                    },
+
+                    cellEdit: function(e) {
+                        if (jS.isBusy()) return false;
+
+                        jS.controlFactory.inPlaceEdit();
+                    },
+
+                    /**
+                     * Handles bar events, used for highlighting and activating
+                     * @memberOf jS.evt
+                     * @name barInteraction
+                     * @namespace
+                     */
+                    barInteraction:{
+
+                        /**
+                         * The first bar that received the event (mousedown)
+                         * @memberOf jS.evt.barInteraction
+                         * @name first
+                         */
+                        first:0,
+
+                        /**
+                         * The last bar that received the event (mousedown)
+                         * @memberOf jS.evt.barInteraction
+                         * @name last
+                         */
+                        last:0,
+
+                        /**
+                         * Tracks if we are in select mode
+                         * @memberOf jS.evt.barInteraction
+                         * @name selecting
+                         */
+                        selecting:false,
+
+                        /**
+                         * Manages the bar selection
+                         * @param {Object} o target
+                         * @returns {*}
+                         * @methodOf jS.evt.barInteraction
+                         * @name select
+                         */
+                        select:function (o) {
+                            if (!o) return;
+                            if (!o.type == 'bar') return;
+                            var entity = o.entity, //returns "top" or "left";
+                                i = jS.getBarIndex[entity](o);
+
+                            if (i < 0) return false;
+
+                            jS[entity + 'Last'] = i; //keep track of last column for inserting new columns
+                            jS.evt.barInteraction.last = jS.evt.barInteraction.first = i;
+
+                            jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
+                            jS.evt.barInteraction.first = jS.evt.barInteraction.last = jS[entity + 'Last'] = i;
+
+                            jS.evt.barInteraction.selecting = true;
+                            $doc
+                                .one('mouseup', function () {
+                                    jS.evt.barInteraction.selecting = false;
+                                });
+
+                            return false;
+                        }
+                    },
+
+                    /**
+                     * Manages scrolling
+                     * @memberOf jS.evt
+                     * @name scroll
+                     * @namespace
+                     */
+                    scroll:{
+
+                        /**
+                         * axis cache, x & y
+                         * @memberOf jS.evt.scroll
+                         * @name axis
+                         */
+                        axis:{x:{}, y:{}},
+
+                        /**
+                         * tracks the current spreadsheet size
+                         * @memberOf jS.evt.scroll
+                         * @name size
+                         */
+                        size:{},
+
+                        /**
+                         * tracks last select cell
+                         * @memberOf jS.evt.scroll
+                         * @name td
+                         */
+                        td:{},
+
+                        /**
+                         * prepairs everything needed for a scroll, needs activated every time spreadsheet changes in size
+                         * @param {String} axisName x or y
+                         * @param {jQuery|HTMLElement} pane pane object
+                         * @methodOf jS.evt.scroll
+                         * @name start
+                         */
+                        start:function (axisName, pane) {
+                            jS.autoFillerHide();
+
+                            pane = pane || jS.obj.pane();
+                            var me = jS.evt.scroll,
+                                scrollUI = pane.scrollUI,
+                                outer = scrollUI.scrollOuter,
+                                axis = me.axis[axisName];
+
+                            me.size = jS.sheetSize(pane.table);
+                            me.td = jS.obj.tdActive();
+
+                            axis.v = [];
+                            axis.name = axisName;
+
+                            switch (axisName || 'x') {
+                                case 'x':
+                                    axis.max = me.size.cols;
+                                    axis.min = 0;
+                                    axis.size = me.size.cols;
+                                    pane.scrollStyleX.updateStyle();
+                                    axis.scrollStyle = pane.scrollStyleX;
+                                    axis.area = outer.scrollWidth - outer.clientWidth;
+                                    axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
+                                    axis.scrollUpdate = function () {
+                                        outer.scrollLeft = (axis.value) * (axis.area / axis.size);
+                                    };
+                                    axis.gridSize = 100 / axis.size;
+                                    break;
+                                case 'y':
+                                    axis.max = me.size.rows;
+                                    axis.min = 0;
+                                    axis.size = me.size.rows;
+                                    pane.scrollStyleY.updateStyle();
+                                    axis.scrollStyle = pane.scrollStyleY;
+                                    axis.area = outer.scrollHeight - outer.clientHeight;
+                                    axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
+                                    axis.scrollUpdate = function () {
+                                        outer.scrollTop = (axis.value) * (axis.area / axis.size);
+                                    };
+                                    axis.gridSize = 100 / axis.size;
+                                    break;
+                            }
+
+                            var i = axis.max;
+                            do {
+                                var position = new Number(axis.gridSize * i);
+                                position.index = i + 1;
+                                axis.v.unshift(position);
+                            } while(i--);
+                        },
+
+                        /**
+                         * Scrolls to a position within the spreadsheet
+                         * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
+                         * @methodOf jS.evt.scroll
+                         * @name scrollTo
+                         */
+                        scrollTo:function (pos) {
+                            pos = pos || {};
+                            pos.axis = pos.axis || 'x';
+                            pos.value = pos.value || 0;
+                            pos.pixel = pos.pixel || 0;
+
+                            if (!jS.evt.scroll.axis) {
+                                jS.evt.scroll.start(pos.axis);
+                            }
+                            var me = jS.evt.scroll.axis[pos.axis];
+
+                            if (!pos.value) {
+                                pos.value = arrHelpers.closest(me.v, math.abs(pos.pixel / me.area) * 100, me.min).index;
+                            }
+
+                            pos.max = pos.max || me.max;
+
+                            var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
+                                indexes = [];
+
+                            if (i >= 0) {
+                                do {
+                                    indexes.push(i + me.min);
+                                } while(i-- > 0);
+                            }
+                            if (indexes.length) {
+                                if (me.scrollStyle) me.scrollStyle.updateStyle(indexes);
+                            } else {
+                                if (me.scrollStyle) me.scrollStyle.updateStyle();
+                            }
+
+                            me.value = pos.value;
+                        },
+
+                        /**
+                         * Called after scroll is done
+                         * @methodOf jS.evt.scroll
+                         * @name stop
+                         */
+                        stop:function () {
+                            if (this.axis.x.scrollUpdate) this.axis.x.scrollUpdate();
+                            if (this.axis.y.scrollUpdate) this.axis.y.scrollUpdate();
+
+                            if (jS.evt.scroll.td) {
+                                jS.evt.scroll.td = null;
+                                jS.autoFillerGoToTd();
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 *
+                 * @param {Number} start index to start from
+                 * @methodOf jS
+                 * @name refreshColumnLabels
+                 */
+                refreshColumnLabels:function (start) {
+                    start = start || 0;
+
+                    jS.obj.barMenuParentTop().trigger('destroy');
+
+                    var tds = jS.controls.bar.x.td[jS.i];
+
+                    if (!tds) return;
+
+                    for (var i = start; i < tds.length; i++) {
+                        if (i) {//greater than 1 (corner)
+                            tds[i].text(jSE.columnLabelString(tds[i][0].cellIndex));
+                        }
+                    }
+                },
+
+
+                /**
+                 *
+                 * @param {Number} start index to start from
+                 * @methodOf jS
+                 * @name refreshRowLabels
+                 */
+                refreshRowLabels:function (start) {
+                    start = start || 0;
+
+                    var tds = jS.controls.bar.y.td[jS.i];
+
+                    if (!tds) return;
+
+                    for (var i = start; i < tds.length; i++) {
+                        if (i) {
+                            $(tds[i]).text(tds[i][0].parentNode.rowIndex);
+                        }
+                    }
+                },
+
+                /**
+                 * Detects if an object is a td within a spreadsheet's table
+                 * @param {jQuery|HTMLElement} o target
+                 * @returns {Boolean}
+                 * @methodOf jS
+                 * @name isCell
+                 */
+                isCell:function (o) {
+                    if (o && o.tagName && o.tagName == 'TD' && o.type && o.type == 'cell') {
+                        return true;
+                    }
+                    return false;
+                },
+
+                /**
+                 * Detects if an object is a bar td within a spreadsheet's table
+                 * @param {jQuery|HTMLElement} o target
+                 * @returns {Boolean}
+                 * @methodOf jS
+                 * @name isBar
+                 */
+                isBar:function (o) {
+                    if (o && o.tagName && o.tagName == 'TD' && o.type && o.type == 'bar') {
+                        return true;
+                    }
+                    return false;
+                },
+
+                /**
+                 * Tracks read state of spreadsheet
+                 * @memberOf jS
+                 * @name readOnly
+                 */
+                readOnly:[],
+
+                /**
+                 * Detects read state of a spreadsheet
+                 * @param {Number} i index of spreadsheet within instance
+                 * @returns {Boolean}
+                 * @methodOf jS
+                 * @name isSheetEditable
+                 */
+                isSheetEditable:function (i) {
+                    i = i || jS.i;
+                    return (
+                        s.editable == true && !jS.readOnly[i]
+                        );
+                },
+
+                /**
+                 * Detects read state of formula of an object
+                 * @param {jQuery|HTMLElement} o target
+                 * @returns {Boolean}
+                 * @methodOf jS
+                 * @name isFormulaEditable
+                 */
+                isFormulaEditable:function (o) {
+                    if (s.lockFormulas) {
+                        if (o.data('formula') !== u) {
+                            return false;
+                        }
+                    }
+                    return true;
+                },
+
+                /**
+                 * Toggles full screen mode
+                 * @methodOf jS
+                 * @name toggleFullScreen
+                 */
+                toggleFullScreen:function () {
+                    if (!jS) return;
+                    jS.evt.cellEditDone();
+                    var fullScreen = jS.obj.fullScreen(),
+                        pane = jS.obj.pane();
+                    if (fullScreen.is(':visible')) {
+                        $win.unbind('jSResize');
+                        $body.removeClass('bodyNoScroll');
+                        s.parent = fullScreen[0].origParent;
+
+                        s.parent.prepend(fullScreen.children());
+
+                        fullScreen.remove();
+
+                        jS.sheetSyncSize();
+                        pane.resizeScroll();
+                        jS.trigger('sheetFullScreen', [false]);
+                    } else { //here we make a full screen
+                        $body.addClass('bodyNoScroll');
+
+                        var parent = $(s.parent),
+                            fullScreen = doc.createElement('div'),
+                            events = $._data(s.parent[0], 'events');
+
+                        fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + ' ' + jS.cl.parent;
+
+                        fullScreen.origParent = parent;
+                        s.parent = jS.controls.fullScreen = $(fullScreen)
+                            .append(parent.children())
+                            .appendTo($body);
+
+                        $win
+                            .bind('resize', function() {
+                                $win.trigger('jSResize');
+                            })
+                            .bind('jSResize', function () {
+                                this.w = $win.width();
+                                this.h = $win.height();
+                                s.parent
+                                    .width(this.w)
+                                    .height(this.h);
+
+                                jS.sheetSyncSize();
+                                pane.resizeScroll();
+                            })
+                            .trigger('jSResize');
+
+
+                        parent.trigger('sheetFullScreen', [true]);
+
+                        for (var event in events) {
+                            for (var i = 0; i < events[event].length; i++) {
+                                s.parent.bind(event, events[event][i].handler);
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Assists in rename of spreadsheet
+                 * @methodOf jS
+                 * @name renameSheet
+                 */
+                renameSheet:function (i) {
+                    if (isNaN(i)) return false;
+
+                    if (i > -1)
+                        jS.sheetTab();
+                },
+
+                /**
+                 * Switches spreadsheet
+                 * @param {Number} i index of spreadsheet within instance
+                 * @methodOf jS
+                 * @name switchSheet
+                 */
+                switchSheet:function (i) {
+                    if (isNaN(i)) return false;
+
+                    if (i == -1) {
+                        jS.addSheet();
+                    } else if (i != jS.i) {
+                        jS.setActiveSheet(i);
+                        jS.calc(i);
+                    }
+                },
+
+                /**
+                 * Makes table object usable by sheet
+                 * @param {jQuery|HTMLElement} table
+                 * @returns {*}
+                 * @methodOf jS
+                 * @name tuneTableForSheetUse
+                 */
+                tuneTableForSheetUse:function (table) {
+                    var $table = $(table);
+                    jS.controls.table[jS.i] = $table
+                        .addClass(jS.cl.table)
+                        .addClass(jS.cl.uiTable)
+                        .attr('id', jS.id.table + jS.i)
+                        .attr('border', '1px')
+                        .attr('cellpadding', '0')
+                        .attr('cellspacing', '0');
+
+                    jS.formatTable(table);
+                    jS.sheetDecorateRemove(false, $table);
+
+                    jS.controls.tables = jS.obj.tables().add(table);
+
+                    //override frozenAt settings with table's data-frozenatrow and data-frozenatcol
+                    var frozenAtRow = $table.attr('data-frozenatrow') * 1,
+                        frozenAtCol = $table.attr('data-frozenatcol') * 1;
+
+                    if (!jS.s.frozenAt[jS.i]) jS.s.frozenAt[jS.i] = {row:0, col:0};
+                    if (frozenAtRow) jS.s.frozenAt[jS.i].row = frozenAtRow;
+                    if (frozenAtCol) jS.s.frozenAt[jS.i].col = frozenAtCol;
+                },
+
+                /**
+                 * Cycles through all the td's and turns table into spreadsheet
+                 * @param {HTMLElement} table spreadsheet
+                 * @param {Number} i spreadsheet index within instance
+                 * @methodOf jS
+                 * @name createSpreadsheet
+                 */
+                createSpreadsheet:function (table, i) {
+                    table.spreadsheet = jS.spreadsheets[i] = []; //reset the sheet's spreadsheet
+
+                    var rows = jS.rows(table),
+                        row = rows.length - 1,
+                        col;
+                    if (row < 0) return;
+                    do {
+                        col = rows[row].children.length - 1;
+                        if (col < 0) return;
+                        do {
+                            var td = rows[row].children[col];
+                            if (row > 0 && col > 0) {
+                                jS.createCell(i, row, col);
+                            } else {
+                                if (col == 0 && row > 0) { //barleft
+                                    td.type = 'bar';
+                                    td.entity = 'left';
+                                    td.innerHTML = row;
+                                    td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.cl.uiBar;
+                                    td.setAttribute('style', 'height:' + td.nextSibling.style.height); //This element is generated and needs to track the height of the item just before it
+                                }
+
+                                if (row == 0 && col > 0) { //bartop
+                                    td.type = 'bar';
+                                    td.entity = 'top';
+                                    td.innerHTML = jSE.columnLabelString(col);
+                                    td.className = jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.cl.uiBar;
+                                }
+
+                                if (row == 0 && col == 0) { //corner
+                                    td.type = 'bar';
+                                    td.entity = 'corner';
+                                    td.className = jS.cl.uiBar + ' ' + ' ' + jS.cl.barCorner;
+                                    jS.controls.bar.corner[jS.i] = td;
+                                }
+                            }
+                        } while (col--);
+                    } while (row--);
+                },
+
+                /**
+                 * Toggles cells from being hidden, not yet used needs a bit of work
+                 * @memberOf jS
+                 * @name toggleHide
+                 */
+                toggleHide:{
+                    hiddenRows:[],
+                    row:function (i) {
+                        i = i || jS.rowLast;
+                        if (!i) return;
+
+                        var row = jS.rows()[i],
+                            $row = $(row),
+                            style = [];
+
+                        if (!this.hiddenRows[jS.i]) this.hiddenRows[jS.i] = [];
+
+                        if ($row.length && $.inArray(i + 1, this.hiddenRows[jS.i]) < 0) {
+                            this.hiddenRows[jS.i].push(i + 1);
+                        } else {
+                            this.hiddenRows[jS.i].splice(this.hiddenRows[jS.i].indexOf(i + 1), 1);
+                        }
+
+                        jS.obj.toggleHideStyleY()[0].updateStyle();
+                    },
+                    rowShowAll:function () {
+                        $.each(this.hiddenRows[jS.i] || [], function (j) {
+                            $(this).removeData('hidden');
+                        });
+                        jS.obj.toggleHideStyleY().html('');
+                        this.hiddenRows[jS.i] = [];
+                    },
+
+                    hiddenColumns:[],
+                    columnIndexOffset:[],
+                    column:function (i) {
+                        i = i || jS.colLast;
+                        if (!i) return;
+
+                        var col = jS.cols()[i],
+                            $col = $(col),
+                            style = [];
+
+                        if (!this.hiddenColumns[jS.i]) this.hiddenColumns[jS.i] = [];
+
+                        if ($col.length && $.inArray(i + 1, this.hiddenColumns[jS.i]) < 0) {
+                            this.hiddenColumns[jS.i].push(i + 1);
+                        } else {
+                            this.hiddenColumns[jS.i].splice(this.hiddenColumns[jS.i].indexOf(i + 1), 1);
+                        }
+
+                        jS.obj.toggleHideStyleX()[0].updateStyle();
+                    },
+                    columnShowAll:function () {
+                        jS.obj.toggleHideStyleX().html('');
+                        this.hiddenColumns[jS.i] = [];
+                    }
+                },
+
+                merged:[],
+
+                /**
+                 * Merges cells together
+                 * @param {Object} tds
+                 * @methodOf jS
+                 * @name merge
+                 */
+                merge:function (tds) {
+                    tds = tds || jS.highlighted();
+                    if (!tds.length) {
+                        return;
+                    }
+                    var cellsValue = [],
+                        tdFirstLoc = jS.getTdLocation(tds[0]),
+                        tdLastLoc = jS.getTdLocation(tds[tds.length - 1]),
+                        colI = 0,
+                        rowI = 0,
+                        firstCell = tds[0].jSCell,
+                        last = new Date();
+
+                    if (tdFirstLoc.row) {
+                        jS.setDirty(true);
+                        jS.setChanged(true);
+
+                        //create a group to be merged into 1
+                        if (!jS.merged[jS.i + '_' + tdFirstLoc.row + '_' + tdFirstLoc.col]) jS.merged[jS.i + '_' + tdFirstLoc.row + '_' + tdFirstLoc.col] = [];
+                        var merged = jS.merged[jS.i + '_' + tdFirstLoc.row + '_' + tdFirstLoc.col];
+
+                        for (var row = tdFirstLoc.row; row <= tdLastLoc.row; row++) {
+                            if (row) {
+                                rowI++;
+                            }
+                            for (var col = tdFirstLoc.col; col <= tdLastLoc.col; col++) {
+                                if (row == tdFirstLoc.row) {
+                                    colI++;
+                                }
+                                var td = jS.getTd(jS.i, row, col),
+                                    cell = jS.spreadsheets[jS.i][row][col],
+                                    cellLeft = jS.spreadsheets[jS.i][row][tdFirstLoc.col - 1] || jS.spreadsheets[jS.i][row][tdFirstLoc.col],
+                                    cellRight = jS.spreadsheets[jS.i][row][tdLastLoc.col + 1] || jS.spreadsheets[jS.i][row][tdLastLoc.col],
+                                    cellUp = jS.spreadsheets[jS.i][tdLastLoc.row - 1][tdLastLoc.col] || jS.spreadsheets[jS.i][tdLastLoc.row][tdLastLoc.col],
+                                    cellDown = jS.spreadsheets[jS.i][tdLastLoc.row + 1][tdLastLoc.col] || jS.spreadsheets[jS.i][tdLastLoc.row][tdLastLoc.col];
+
+                                merged.push(cell);
+
+                                cellsValue.push(cell.formula ? "(" + cell.formula.substring(1) + ")" : cell.value);
+
+                                s.parent.one('sheetPreCalculation', function () {
+                                    if (col != tdFirstLoc.col || row != tdFirstLoc.row) {
+                                        cell.formula = null;
+                                        cell.value = '';
+                                        cell.html = '';
+                                        cell.defer = firstCell;
+                                        cell.right = cellRight;
+                                        cell.down = cellDown;
+                                        cell.left = cellLeft;
+                                        cell.up = cellUp;
+
+                                        td
+                                            .removeAttr('data-formula')
+                                            .html('')
+                                            .hide();
+                                    }
+                                });
+
+                                jS.calcDependencies.apply(cell);
+                            }
+                        }
+
+
+                        firstCell.value = cellsValue.join(' ');
+                        firstCell.formula = (firstCell.formula ? cellsValue.join(' ') : '');
+
+                        tds.first()
+                            .show()
+                            .attr('rowSpan', rowI)
+                            .attr('colSpan', colI);
+
+                        jS.calcDependencies.apply(firstCell);
+                        jS.evt.cellEditDone();
+                        jS.autoFillerGoToTd();
+                    }
+                },
+
+                /**
+                 * Unmerges cells together
+                 * @param {Object} td
+                 * @methodOf jS
+                 * @name unmerge
+                 */
+                unmerge:function (td) {
+                    td = td || jS.highlighted()[0];
+                    if (!td) {
+                        return;
+                    }
+                    var loc = jS.getTdLocation(td),
+                        last = new Date();
+
+                    var rowMax = math.max(td.getAttribute('rowSpan') * 1, 1);
+                    var colMax = math.max(td.getAttribute('colSpan') * 1, 1);
+
+                    for (var row = loc.row; row <= loc.row + rowMax; row++) {
+                        for (var col = loc.col; col <= loc.col + colMax; col++) {
+                            var td = $(jS.getTd(jS.i, row, col))
+                                    .show()
+                                    .removeAttr('colSpan')
+                                    .removeAttr('rowSpan'),
+                                cell = td[0].jSCell;
+
+                            cell.up = cell.down = cell.left = cell.right = cell.defer = null;
+
+                            jS.calcDependencies.apply(cell, [last]);
+                        }
+                    }
+                    jS.autoFillerGoToTd();
+                },
+
+                /**
+                 * Fills values down or up to highlighted cells from active cell;
+                 * @param {Boolean} goUp default is down, when set to true value are filled from bottom, up;
+                 * @param {String} v the value to set cells to, if not set, formula will be used;
+                 * @param {Object} cells
+                 * @methodOf jS
+                 * @name fillUpOrDown
+                 */
+                fillUpOrDown:function (goUp, v, cells) {
+                    jS.evt.cellEditDone();
+                    cells = cells || jS.highlighted(true);
+
+                    if (cells.length < 1) {
+                        return;
+                    }
+
+                    var activeTd = jS.obj.tdActive(),
+                        last = new Date();
+
+                    if (cells.length < 1) {
+                        return;
+                    }
+
+                    var startLoc = jS.getTdLocation(cells[0].td),
+                        endLoc = jS.getTdLocation(cells[cells.length - 1].td),
+                        relativeLoc = jS.getTdLocation(activeTd),
+                        offset = {
+                            row:0,
+                            col:0
+                        },
+                        newV = v || activeTd[0].jSCell.value,
+                        isNumber = false,
+                        i = cells.length - 1,
+                        fn = function() {};
+
+                    v = v || activeTd[0].jSCell.value;
+
+                    if (i >= 0) {
+                    if (v.charAt && v.charAt(0) == '=') {
+                        if (i >= 0) {
+                            do {
+                                if (!goUp) {
+                                    offset.row = relativeLoc.row - endLoc.row;
+                                    offset.col = relativeLoc.col - endLoc.col;
+                                } else {
+                                    offset.row = relativeLoc.row - startLoc.row;
+                                    offset.col = relativeLoc.col - startLoc.col;
+                                }
+
+                                newV = jS.reparseFormula(v, offset);
+
+                                s.parent.one('sheetPreCalculation', function () {
+                                    cells[i].formula = newV;
+                                    cells[i].value = '';
+                                    cells[i].td.data('formula', newV);
+                                });
+
+                                jS.calcDependencies.apply(cells[i], [last]);
+                            } while (i--);
+                            return true;
+                        }
+                    } else {
+                        if ((isNumber = !isNaN(newV)) || newV.length > 0) {
+                            if (isNumber && newV != '') {
+                                newV *= 1;
+
+                                if (!goUp) {
+                                    newV += cells.length - 1;
+                                }
+                                fn = function() {
+                                    newV--;
+                                };
+                            }
+                        }
+
+                        do {
+                            s.parent.one('sheetPreCalculation', function () {
+                                cells[i].formula = '';
+                                cells[i].value = newV;
+                                cells[i].td.removeData('formula');
+                            });
+
+                            jS.calcDependencies.apply(cells[i], [last]);
+
+                            fn();
+                        } while (i--);
+                    }
+                    }
+
+                    return false;
+                },
+
+                tdsToTsv:function (cells, clearValue, fnEach) {
+                    cells = cells || jS.highlighted(true);
+                    if (cells.type) {
+                        cells = [cells];
+                    }
+                    fnEach = fnEach || function (loc, cell) {
+                        if (clearValue) {
+                            s.parent.one('sheetPreCalculation', function () {
+                                cell.formula = '';
+                                cell.value = '';
+                            });
+                            jS.calcDependencies.apply(cell, [last]);
+                        }
+                    };
+                    var cellValues = [],
+                        firstLoc,
+                        lastLoc,
+                        minLoc = {},
+                        last = new Date(),
+                        i = cells.length - 1,
+                        row,
+                        col;
+
+                    if (i >= 0) {
+                        firstLoc = jS.getTdLocation(cells[0].td);
+                        lastLoc = jS.getTdLocation(cells[cells.length - 1].td);
+                        minLoc.row = math.min(firstLoc.row, lastLoc.row);
+                        minLoc.col = math.min(firstLoc.col, lastLoc.col);
+                        do {
+                            var loc = jS.getTdLocation(cells[i].td),
+                                value = (cells[i].formula ? '=' + cells[i].formula : cells[i].value);
+
+                            row = math.abs(loc.row - minLoc.row);
+                            col = math.abs(loc.col - minLoc.col);
+
+                            if (!cellValues[row]) cellValues[row] = [];
+
+                            if ((value += '').match(/\n/)) {
+                                value = '"' + value + '"';
+                            }
+
+                            cellValues[row][col] = (value || '');
+
+                            fnEach.apply(cells[i].td, [loc, cells[i]]);
+                        } while (i-- > 0);
+
+
+                        i = cellValues.length - 1;
+                        do {
+                            cellValues[i] = cellValues[i].join('\t');
+                        } while (i-- > 0);
+
+                        return cellValues.join('\n');
+                    }
+                    return '';
+                },
+
+                /**
+                 * Makes cell formulas increment within a range
+                 * @param {Object} loc {row: int, col: int}
+                 * @param {Object} offset {row: int,col: int} offsets increment
+                 * @param {Boolean} isBefore inserted before location
+                 * @methodOf jS
+                 * @name offsetFormulas
+                 */
+                offsetFormulas:function (loc, offset, isBefore) {
+                    var size = jS.sheetSize(),
+                    //shifted range is the range of cells that are moved
+                        shiftedRange = {
+                            first:loc,
+                            last:{
+                                row:size.rows,
+                                col:size.cols
+                            }
+                        },
+                    //effected range is the entire spreadsheet
+                        affectedRange = {
+                            first:{
+                                row:1,
+                                col:1
+                            },
+                            last:{
+                                row:size.rows,
+                                col:size.cols
+                            }
+                        },
+                        last = new Date(),
+                        cellStack = [];
+
+
+
+                    jS.cycleCells(function () {
+                        var cell = this;
+                        if (this.formula && typeof this.formula == 'string' && jS.isFormulaEditable(this.td)) {
+                            this.formula = jS.reparseFormula(this.formula, offset, loc, isBefore);
+
+                            this.td.data('formula', '=' + this.formula);
+                        }
+
+                        cellStack.push(function() {
+                            jS.calcDependencies.apply(cell, [last, true]);
+                        });
+
+                    }, affectedRange.first, affectedRange.last);
+
+                    while (cellStack.length) {
+                        cellStack.pop()();
+                    }
+
+                    jS.evt.cellEditDone();
+                },
+
+                /**
+                 * Reparses a formula
+                 * @param formula
+                 * @param {Object} offset {row: int,col: int} offsets increment
+                 * @param {Object} loc
+                 * @param {Boolean} isBefore
+                 * @returns {String}
+                 * @methodOf jS
+                 * @name reparseFormula
+                 */
+                reparseFormula:function (formula, offset, loc, isBefore) {
+                    return formula.replace(jSE.regEx.cell, function (ignored, col, row, pos) {
+                        if (col == "SHEET") return ignored;
+                        offset = offset || {loc: 0, row: 0};
+
+                        var oldLoc = {
+                                row:row * 1,
+                                col:jSE.columnLabelIndex(col)
+                            },
+                            moveCol,
+                            moveRow,
+                            override = {col: col, row: row};
+
+                        if (loc) {
+                            if (oldLoc.col == loc.col || col == '#REF!') {
+                                override.col = '#REF!';
+                                override.use = true;
+                            }
+                            if (oldLoc.row == loc.row || row == '#REF!') {
+                                override.row = '#REF!';
+                                override.use = true;
+                            }
+                            if (override.use) {
+                                return override.col + override.row;
+                            }
+                            if (isBefore) {
+                                if (oldLoc.col > loc.col) {
+                                    moveCol = true;
+                                }
+                                if (oldLoc.row > loc.row) {
+                                    moveRow = true;
+                                }
+                            } else {
+                                if (oldLoc.col > loc.col) {
+                                    moveCol = true;
+                                }
+                                if (oldLoc.row > loc.row) {
+                                    moveRow = true;
+                                }
+                            }
+
+                            if (moveCol || moveRow) {
+                                if (moveCol) oldLoc.col += offset.col;
+                                if (moveRow) oldLoc.row += offset.row;
+
+                                return jS.makeFormula(oldLoc);
+                            }
+                        } else {
+                            return jS.makeFormula(oldLoc, offset);
+                        }
+
+                        return ignored;
+                    });
+                },
+
+                /**
+                 * Reconstructs a formula
+                 * @param {Object} loc {row: i, col: i}
+                 * @param {Object} offset {row: i, col: i}
+                 * @returns {String}
+                 * @methodOf jS
+                 * @name makeForumla
+                 */
+                makeFormula:function (loc, offset) {
+                    offset = $.extend({row:0, col:0}, offset);
+
+                    //set offsets
+                    loc.col += offset.col;
+                    loc.row += offset.row;
+
+                    //0 based now
+                    if (loc.col < 0) loc.col = 0;
+                    if (loc.row < 0) loc.row = 0;
+
+                    return jSE.parseCellName(loc.col, loc.row);
+                },
+
+                /**
+                 * Cylces through a certain group of td objects in a spreadsheet table and applies a function to them
+                 * @param {Function} fn the function to apply to a cell
+                 * @param {Object} firstLoc {row: 0, col: 0} the cell to start at
+                 * @param {Object} lastLoc {row: 0, col: 0} the cell to end at
+                 * @param {Number} i spreadsheet index within instance
+                 * @methodOf jS
+                 * @name cycleCells
+                 */
+                cycleCells:function (fn, firstLoc, lastLoc, i) {
+                    i = i || jS.i;
+                    firstLoc = firstLoc || {row:1, col:1};
+
+                    if (!lastLoc) {
+                        var size = jS.sheetSize();
+                        lastLoc = {row:size.rows, col:size.cols};
+                    }
+
+                    var row = lastLoc.row, col;
+                    if (row < firstLoc.row) return;
+                    do {
+                        col = lastLoc.col;
+                        do {
+                            fn.apply(jS.spreadsheets[i][row][col], [i, row, col]);
+                        } while (col-- > firstLoc.col);
+                    } while (row-- > firstLoc.row);
+                },
+
+                /**
+                 * Cylces through all td objects in a spreadsheet table and applies a function to them
+                 * @param fn
+                 * @methodOf jS
+                 * @name cycleCellsAll
+                 */
+                cycleCellsAll:function (fn) {
+                    var jSI = jS.i, i,size,endLoc;
+                    for (i = 0; i <= jS.sheetCount; i++) {
+                        jS.i = i;
+                        size = jS.sheetSize();
+                        endLoc = {row:size.rows, col:size.cols};
+                        jS.cycleCells(fn, {row:0, col:0}, endLoc, i);
+                    }
+                    jS.i = jSI;
+                },
+
+                /**
+                 * Cycles through a certain group of td objects in a spreadsheet table and applies a function to them, firstLoc can be bigger then lastLoc, this is more dynamic
+                 * @param {Function} fn the function to apply to a cell
+                 * @param {Object} firstLoc {row: 0, col: 0} the cell to start at
+                 * @param {Object} lastLoc {row: 0, col: 0} the cell to end at
+                 * @param {Boolean} ordered
+                 * @methodOf jS
+                 * @name cycleCellArea
+                 */
+                cycleCellArea:function (fn, firstLoc, lastLoc, ordered) {
+                    var grid = {start:{}, end: {}},
+                        row,
+                        col,
+                        cell,
+                        i = jS.i,
+                        o = {cell: $([]), td: $([])};
+
+
+                    if (ordered) {
+                        grid.start = firstLoc;
+                        grid.end = lastLoc;
+                    } else {
+                        grid.start.row = math.max(math.min(firstLoc.row, lastLoc.row), 1);
+                        grid.start.col = math.max(math.min(firstLoc.col, lastLoc.col), 1);
+                        grid.end.row = math.max(firstLoc.row, lastLoc.row, 1);
+                        grid.end.col = math.max(firstLoc.col, lastLoc.col, 1);
+                    }
+
+                    row = grid.end.row;
+
+                    do {
+                        col = grid.end.col;
+                        do {
+                            cell = jS.spreadsheets[i][row][col];
+                            o.cell = o.cell.add(cell);
+                            o.td = o.td.add(cell.td);
+                        } while (col-- > grid.start.col);
+                    } while (row-- > grid.start.row);
+
+                    if (fn) fn(o);
+                },
+
+
+                /**
+                 * Adds tbody, colgroup, heights and widths to different parts of a spreadsheet
+                 * @param {HTMLElement} table table object
+                 * @methodOf jS
+                 * @name formatTable
+                 */
+                formatTable:function (table) {
+                    var w = s.newColumnWidth,
+                        h = s.colMargin,
+                        children = table.children,
+                        i = children.length - 1,
+                        j,
+                        col,
+                        tbody,
+                        colgroup,
+                        firstTr;
+
+                    if (i > -1) {
+                        do {
+                            switch (children[i].nodeName) {
+                                case 'TBODY':
+                                    hasTbody = true;
+                                    tbody = children[i];
+                                    break;
+                                case 'COLGROUP':
+                                    hasColgroup = true;
+                                    colgroup = children[i];
+                                    break;
+                            }
+                        } while (i--);
+
+                        if (!tbody) {
+                            tbody = doc.createElement('tbody');
+                            $(children).wrap(tbody);
+                        }
+
+                        if (!colgroup || colgroup.children.length < 1) {
+                            colgroup = doc.createElement('colgroup');
+
+                            table.insertBefore(colgroup, tbody);
+
+                            firstTr = tbody.children[0];
+
+                            for (i = 0, j = firstTr.children.length; i < j; i++) {
+                                col = doc.createElement('col');
+                                colgroup.appendChild(col);
+                                col.style.width = w + 'px';
+                                col.width = w + 'px';
+                            }
+                            for (i = 0, j = tbody.children.length; i < j; i++) {
+                                tbody.children[i].height = h + 'px';
+                                tbody.children[i].style.height = h + 'px';
+                            }
+                        }
+                    }
+
+                    table.tbody = tbody;
+                    table.colgroup = colgroup;
+                    table.removeAttribute('width');
+                    table.style.width = '';
+                },
+
+                /**
+                 * Ensure sheet minimums have been met, if not add columns and rows
+                 * @param {jQuery|HTMLElement} o table object
+                 * @methodOf jS
+                 * @name checkMinSize
+                 */
+                checkMinSize:function (o) {
+                    var size = jS.sheetSize(o),
+                        addRows = s.minSize.rows || 0,
+                        addCols = s.minSize.cols || 0,
+                        frozenAt = jS.frozenAt();
+
+                    addRows = (frozenAt.row > addRows ? frozenAt.row + 1 : addRows);
+                    addCols = (frozenAt.col > addCols ? frozenAt.col + 1 : addCols);
+
+                    if (size.cols < addCols) {
+                        jS.controlFactory.addColumnMulti(null, addCols - size.cols);
+                    }
+
+                    if (size.rows < addRows) {
+                        jS.controlFactory.addRowMulti(null, addRows - size.rows);
+                    }
+                },
+
+                /**
+                 * jQuery ui Themeroller integration
+                 * @memberOf jS
+                 * @name themeRoller
+                 * @namespace
+                 */
+                themeRoller:{
+
+                    /**
+                     * Starts themeroller integration
+                     * @param {jQuery|HTMLElement} sheet spreadsheet table
+                     * @methodOf jS.themeRoller
+                     * @name start
+                     */
+                    start:function (sheet) {
+                        jS.obj.header().addClass(jS.cl.uiControl);
+                        jS.obj.label().addClass(jS.cl.uiControl);
+                        jS.obj.formula().addClass(jS.cl.uiControlTextBox);
+                    },
+
+                    /**
+                     * Themeroller cell interactions
+                     * @memberOf jS.themeRoller
+                     * @name cell
+                     * @namespace
+                     */
+                    cell:{
+
+                        /**
+                         * Highlights object
+                         * @param {jQuery|HTMLElement} obj td object
+                         * @methodOf jS.themeRoller.cell
+                         * @name setHighlighted
+                         */
+                        setHighlighted:function (obj, addToHighlighted) {
+                            var i,
+                                _obj = jS.highlightedLast.obj,
+                                x = jS.obj.scrollStyleX();
+
+                            if (_obj && _obj.length && !addToHighlighted) {
+                                i = _obj.length - 1;
+                                do {
+                                    _obj[i].isHighlighted = false;
+                                } while (i-- > 0);
+                            }
+
+                            if (obj && obj.length > 0) {
+                                i = obj.length - 1;
+                                do {
+                                    if (!obj[i].isHighlighted) {
+                                        obj[i].isHighlighted = true;
+                                        if (!obj[i].className.match(jS.cl.uiTdHighlighted)) {
+                                            obj[i].className += ' ' + jS.cl.uiTdHighlighted;
+                                        }
+                                    }
+                                } while (i-- > 0);
+                            }
+
+                            if (addToHighlighted) {
+                                jS.highlightedLast.obj = jS.highlightedLast.obj.add(obj);
+                            } else {
+                                jS.themeRoller.cell.clearHighlighted(_obj);
+
+                                if (obj) jS.highlightedLast.obj = obj;
+                            }
+
+                            x.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
+                        },
+
+                        /**
+                         * Detects if there is a cell highlighted
+                         * @returns {Boolean}
+                         * @methodOf jS.themeRoller.cell
+                         * @name isHighlighted
+                         */
+                        isHighlighted:function () {
+                            return (jS.highlightedLast.obj.length ? true : false);
+                        },
+
+                        /**
+                         * Clears highlighted cells
+                         * @param {Object} locLast
+                         * @methodOf jS.themeRoller.cell
+                         * @name clearHighlighted
+                         */
+                        clearHighlighted:function (obj, force) {
+                            if (jS.themeRoller.cell.isHighlighted()) {
+                                obj = obj || jS.highlightedLast.obj;
+
+                                if (obj && obj.length) {
+                                    i = obj.length - 1;
+                                    do {
+                                        if (!obj[i].isHighlighted || force) {
+                                            obj[i].className = obj[i].className.replace(jS.cl.uiTdHighlighted, '');
+                                            obj[i].isHighlighted = false;
+                                        }
+                                    } while (i-- > 0);
+                                }
+                            }
+
+                            jS.highlightedLast.obj = $([]);
+
+                        }
+                    },
+
+                    /**
+                     * Themeroller bar interactions
+                     * @memberOf jS.themeRoller
+                     * @name bar
+                     * @namespace
+                     */
+                    bar:{
+
+                        /**
+                         * Adds initial style to bar
+                         * @param {jQuery|HTMLElement} o bar object
+                         * @methodOf jS.themeRoller.bar
+                         * @name style
+                         */
+                        style:function (o) {
+                            $(o).addClass(jS.cl.uiBar);
+                        },
+
+                        /**
+                         * Sets a bar to be active
+                         * @param {String} direction left or top
+                         * @param {HTMLElement} td index of bar
+                         * @methodOf jS.themeRoller.bar
+                         * @name setActive
+                         */
+                        setActive:function (direction, td) {
+                            switch (direction) {
+                                case 'top':
+                                    jS.highlightedLast.barTop
+                                        .removeClass(jS.cl.uiBarHighlight);
+                                    jS.highlightedLast.barTop = $(td).addClass(jS.cl.uiBarHighlight);
+                                    break;
+                                case 'left':
+                                    jS.highlightedLast.barLeft
+                                        .removeClass(jS.cl.uiBarHighlight);
+                                    jS.highlightedLast.barLeft = $(td).addClass(jS.cl.uiBarHighlight);
+                                    break;
+                            }
+                        },
+
+                        /**
+                         * Clears bars from being active
+                         * @methodOf jS.themeRoller.bar
+                         * @name clearActive
+                         */
+                        clearActive:function () {
+                            jS.highlightedLast.barLeft
+                                .removeClass(jS.cl.uiBarHighlight);
+                            jS.highlightedLast.barLeft = $([]);
+
+                            jS.highlightedLast.barTop
+                                .removeClass(jS.cl.uiBarHighlight);
+                            jS.highlightedLast.barTop = $([]);
+                        }
+                    },
+
+                    /**
+                     * Themeroller tab interactions
+                     * @memberOf jS.themeRoller
+                     * @name tab
+                     * @namespace
+                     */
+                    tab:{
+
+                        /**
+                         * Sets a tab to be active
+                         * @param {jQuery|HTMLElement} o tab object
+                         * @methodOf jS.themeRoller.tab
+                         * @name setActive
+                         */
+                        setActive:function (o) {
+                            this.clearActive();
+                            jS.obj.tab().addClass(jS.cl.uiTabActive);
+                        },
+
+                        /**
+                         * Clears a tab from being active
+                         * @methodOf jS.themeRoller.tab
+                         * @name clearActive
+                         */
+                        clearActive:function () {
+                            jS.obj.tabContainer().find('span.' + jS.cl.uiTabActive)
+                                .removeClass(jS.cl.uiTabActive);
+                        }
+                    }
+                },
+
+                /**
+                 * jQuery ui resizeable integration
+                 * @param {jQuery|HTMLElement} o To set resizable
+                 * @param {Object} settings the settings used with jQuery ui resizable
+                 * @methodOf jS
+                 * @name resizable
+                 */
+                resizable:function (o, settings) {
+                    if (!o.data('resizable')) {
+                        o.resizable(settings);
+                    }
+                },
+
+                frozenAt:function () {
+                    var frozenAt;
+                    if (!(frozenAt = jS.s.frozenAt[jS.i])) frozenAt = {row:0, col:0};
+
+                    frozenAt.row = math.max(frozenAt.row, 0);
+                    frozenAt.col = math.max(frozenAt.col, 0);
+
+                    return frozenAt;
+                },
+
+                scrolledTo:function () {
+                    if (!jS.scrolledArea[jS.i]) {
+                        var frozenAt = jS.frozenAt();
+                        jS.scrolledArea[jS.i] = {
+                            start: {
+                                row:math.max(frozenAt.row, 1),
+                                col: math.max(frozenAt.col, 1)
+                            },
+                            end: {
+                                row:math.max(frozenAt.row, 1),
+                                col:math.max(frozenAt.col, 1)
+                            }
+                        };
+                    }
+                    return jS.scrolledArea[jS.i];
+                },
+
+                /**
+                 * instance busy state
+                 * @memberOf jS
+                 * @name busy
+                 */
+                busy:[],
+
+
+                /**
+                 * Set the spreadsheet busy status
+                 * @param {Boolean} busy
+                 * @memberOf jS
+                 * @name setBusy
+                 */
+                setBusy:function (busy) {
+                    if (busy) {
+                        jS.busy.push(busy);
+                    } else {
+                        jS.busy.pop();
+                    }
+                },
+
+                isBusy:function () {
+                    return (jS.busy.length > 0);
+                },
+
+                /**
+                 * jQuery ui draggable integration
+                 * @param {jQuery|HTMLElement} o To set resizable
+                 * @param {Object} settings the settings used with jQuery ui resizable
+                 * @methodOf jS
+                 * @name draggable
+                 */
+                draggable:function (o, settings) {
+                    if (!o.data('jSdraggable')) {
+                        o
+                            .data('jSdraggable', true)
+                            .draggable(settings);
+                    }
+                },
+
+                /**
+                 * jQuery nearest integration
+                 * @param o
+                 * @param settings
+                 * @methodOf jS
+                 * @name nearest
+                 */
+                nearest:function (o, settings) {
+                    return $(o).nearest(settings);
+                },
+
+                /**
+                 * Bar resizing
+                 * @memberOf jS
+                 * @name resizeBar
+                 * @namespace
+                 */
+                resizeBar:{
+
+                    /**
+                     * Provides the top bar with ability to resize
+                     * @param {jQuery|HTMLElement} bar td bar object
+                     * @param {Number} i index of bar
+                     * @param {jQuery|HTMLElement} pane spreadsheet pane
+                     * @param {jQuery|HTMLElement} sheet spreadsheet table
+                     * @methodOf jS.resizeBar
+                     * @name top
+                     */
+                    top:function (bar, i, pane, sheet) {
+                        jS.obj.barTopControls().remove();
+                        var barController = $(doc.createElement('div'))
+                            .addClass(jS.cl.barController + ' ui-state-highlight')
+                            .width(bar.width())
+                            .height(0)
+                            .prependTo(bar);
+
+                        jS.controls.bar.x.controls[jS.i] = jS.obj.barTopControls().add(barController);
+
+                        jS.resizableCells(barController, {
+                            handles:'e',
+                            start:function (e, ui) {
+                                jS.autoFillerHide();
+                                jS.setBusy(true);
+                                this.col = $(jS.col(sheet, i));
+                                if (pane.freezeHandleTop) {
+                                    pane.freezeHandleTop.remove();
+                                }
+                            },
+                            resize:function (e, ui) {
+                                this.col
+                                    .width(ui.size.width)
+                                    .attr('width', ui.size.width + 'px')
+                                    .css('width', ui.size.width + 'px');
+
+                                if (pane.inPlaceEdit) {
+                                    pane.inPlaceEdit.goToTd();
+                                }
+                            },
+                            stop:function (e, ui) {
+                                jS.setBusy(false);
+                                pane.resizeScroll();
+                                jS.followMe();
+                                jS.setDirty(true);
+                            },
+                            minWidth: 32
+                        });
+
+                        barController.children()
+                            .height(bar.height())
+                            .css('position', 'absolute');
+                    },
+
+                    /**
+                     * Provides the left bar with ability to resize
+                     * @param {jQuery|HTMLElement} bar td bar object
+                     * @param {Number} i index of bar
+                     * @param {jQuery|HTMLElement} pane spreadsheet pane
+                     * @param {jQuery|HTMLElement} sheet spreadsheet table
+                     * @methodOf jS.resizeBar
+                     * @name left
+                     */
+                    left:function (bar, i, pane, sheet) {
+                        jS.obj.barLeftControls().remove();
+                        var offset = bar.offset(),
+                            barController = $(doc.createElement('div'))
+                                .addClass(jS.cl.barController + ' ui-state-highlight')
+                                .prependTo(bar)
+                                .offset({
+                                    top:offset.top,
+                                    left:offset.left
+                                });
+
+                        jS.controls.bar.y.controls[jS.i] = jS.obj.barLeftControls().add(barController);
+
+                        var child = $(doc.createElement('div'))
+                                .addClass('jSBarControllerChild')
+                                .height(bar.height())
+                                .prependTo(barController);
+
+                        jS.resizableCells(child, {
+                            handles:'s',
+                            start:function () {
+                                jS.autoFillerHide();
+                                jS.setBusy(true);
+                                if (pane.freezeHandleLeft) {
+                                    pane.freezeHandleLeft.remove();
+                                }
+                            },
+                            resize:function (e, ui) {
+                                bar
+                                    .css('height', ui.size.height + 'px')
+                                    .attr('height', ui.size.height);
+
+                                bar.next()
+                                    .css('height', ui.size.height + 'px')
+                                    .attr('height', ui.size.height);
+
+                                if (pane.inPlaceEdit) {
+                                    pane.inPlaceEdit.goToTd();
+                                }
+                            },
+                            stop:function (e, ui) {
+                                jS.setBusy(false);
+                                pane.resizeScroll();
+                                jS.followMe();
+                                jS.setDirty(true);
+                            },
+                            minHeight: 15
+                        });
+
+                        barController.children().children()
+                            .width(bar.width())
+                            .css('position', 'absolute');
+                    },
+
+                    /**
+                     * Provides the corner bar, just a place holder, needed for auto events
+                     * @methodOf jS.resizeBar
+                     * @name corner
+                     */
+                    corner:function () {
+                    }
+                },
+
+                /**
+                 * Removes sheet decorations
+                 * @param {Boolean} makeClone creates a clone rather than the actual object
+                 * @param {jQuery|HTMLElement} sheets spreadsheet table object to remove decorations from
+                 * @returns {jQuery|HTMLElement}
+                 * @methodOf jS
+                 * @name sheetDecorateRemove
+                 */
+                sheetDecorateRemove:function (makeClone, sheets) {
+                    sheets = sheets || jS.obj.tables();
+                    sheets = (makeClone ? sheets.clone() : sheets);
+
+                    //Get rid of highlighted cells and active cells
+                    sheets.find('td.' + jS.cl.uiTdActive)
+                        .removeClass(jS.cl.uiTdActive);
+
+                    sheets.find('td.' + jS.cl.uiTdHighlighted)
+                        .removeClass(jS.cl.uiTdHighlighted);
+                    return sheets;
+                },
+
+                /**
+                 * Removed bars from spreadsheet table
+                 * @param {jQuery|HTMLElement} sheet spreadsheet table object to remove bars from
+                 * @returns {jQuery|HTMLElement}
+                 * @methodOf jS
+                 * @name sheetBarsRemove
+                 */
+                sheetBarsRemove:function (sheet) {
+                    sheet = $(sheet ? sheet : jS.obj.tables());
+                    sheet.find('tr.' + jS.cl.barTopParent).remove();
+                    sheet.find('td.' + jS.cl.barLeft).remove();
+                    return sheet;
+                },
+
+                /**
+                 * Updates the label so that the user knows where they are currently positioned
+                 * @param {String|Object} v Value to update to, if object {col, row}
+                 * @param {Boolean} setDirect
+                 * @methodOf jS
+                 * @name labelUpdate
+                 */
+                labelUpdate:function (v, setDirect) {
+                    if (!setDirect) {
+                        v = jSE.parseCellName(v.col, v.row);
+                        if (v) jS.obj.label().text(v);
+                    } else {
+                        jS.obj.label().text(v);
+                    }
+                },
+
+                /**
+                 * Starts td to be edited
+                 * @param {jQuery|HTMLElement} td
+                 * @param {Boolean} isDrag should be determined by if the user is dragging their mouse around setting cells
+                 * @param {Boolean} doNotClearHighlighted
+                 */
+                cellEdit:function (td, isDrag, doNotClearHighlighted) {
+                    if (jS.cellLast.td.length < 1) {
+                        //doNotClearHighlighted = false;
+                    }
+
+                    jS.autoFillerNotGroup = true; //make autoFiller directional again.
+                    //This finished up the edit of the last cell
+                    jS.evt.cellEditDone();
+
+                    if (!td.length) return;
+
+                    var loc = jS.getTdLocation(td),
+                        cell = td[0].jSCell,
+                        v;
+
+                    if (!cell) return;
+
+                    jS.trigger('sheetCellEdit', [cell]);
+
+                    if (!td.is(jS.cellLast.td)) {
+                        jS.followMe(td);
+                    } else {
+                        jS.autoFillerGoToTd(td);
+                    }
+
+                    //Show where we are to the user
+                    jS.labelUpdate(loc);
+
+                    if (cell.formula) {
+                        v = '=' + cell.formula;
+                    } else {
+                        v = cell.value;
+                    }
+
+                    var formula = jS.obj.formula()
+                        .val(v)
+                        .blur();
+
+                    jS.cellSetActive(td, loc, isDrag, null, null, doNotClearHighlighted);
+                },
+
+                /**
+                 * sets cell active to sheet, and highlights it for the user, shouldn't be called directly, should use cellEdit
+                 * @param {jQuery|HTMLElement} td
+                 * @param {Object} loc {col, row}
+                 * @param {Boolean} isDrag should be determined by if the user is dragging their mouse around setting cells
+                 * @param {Boolean} directional makes highlighting directional, only left/right or only up/down
+                 * @param {Function} fnDone called after the cells are set active
+                 * @param {Boolean} doNotClearHighlighted
+                 * @memberOf jS
+                 * @name cellSetActive
+                 */
+                cellSetActive:function (td, loc, isDrag, directional, fnDone, doNotClearHighlighted) {
+                    if (loc.col != u) {
+                        jS.cellLast.td = td; //save the current cell/td
+
+                        jS.cellLast.row = jS.rowLast = loc.row;
+                        jS.cellLast.col = jS.colLast = loc.col;
+
+                        if (!doNotClearHighlighted) {
+                            jS.themeRoller.cell.setHighlighted(td); //themeroll the cell and bars
+                            jS.highlightedLast.start = loc;
+                            jS.highlightedLast.end = loc;
+                        }
+
+                        if (!td.length) return;
+
+                        jS.themeRoller.bar.setActive('left', td[0].barLeft);
+                        jS.themeRoller.bar.setActive('top', td[0].barTop);
+
+                        var selectModel,
+                            clearHighlightedModel;
+
+                        switch (s.cellSelectModel) {
+                            case 'excel':
+                            case 'gdrive':
+                                selectModel = function () {};
+                                clearHighlightedModel = function() {};//jS.themeRoller.cell.clearHighlighted;
+                                break;
+                            case 'oo':
+                                selectModel = function (target) {;
+                                    if (jS.isCell(target)) {
+                                        jS.cellEdit($(target));
+                                    }
+                                };
+                                clearHighlightedModel = function () {};
+                                break;
+                        }
+
+                        if (isDrag) {
+                            var locTrack = {},
+                                pane = jS.obj.pane();
+
+                            locTrack.last = loc;//we keep track of the most recent location because we don't want tons of recursion here
+
+                            pane.onmousemove = function (e) {
+                                e = e || win.event;
+                                e.target = e.target || e.srcElement;
+                                if (jS.isBusy()) return false;
+
+                                var locEnd = jS.highlightedLast.end = jS.getTdLocation(e.target),
+                                    ok = true;
+
+                                if (locEnd.col < 1 || locEnd.row < 1) return false; //bar
+
+                                if (directional) {
+                                    ok = false;
+                                    if (loc.col == locEnd.col || loc.row == locEnd.row) {
+                                        ok = true;
+                                    }
+                                }
+
+                                if ((locTrack.last.col != locEnd.col || locTrack.last.row != locEnd.row) && ok) { //this prevents this method from firing too much
+                                    //select active cell if needed
+                                    selectModel(e.target);
+
+                                    //highlight the cells
+                                    jS.cycleCellArea(function (o) {
+                                        jS.themeRoller.cell.setHighlighted(o.td);
+                                    }, loc, locEnd);
+                                }
+
+                                locTrack.last = locEnd;
+                            };
+
+                            doc.onmouseup = function() {
+                                pane.onmousemove = null;
+                                pane.onmousemove = null;
+                                pane.onmouseup = null;
+                                doc.onmouseup = null;
+
+                                if (fnDone) {
+                                    fnDone();
+                                }
+                            };
+                        }
+                    }
+                },
+
+                /**
+                 * the most recent used column
+                 * @memberOf jS
+                 * @name colLast
+                 */
+                colLast:0,
+
+                /**
+                 * the most recent used row
+                 * @memberOf jS
+                 * @name rowLast
+                 */
+                rowLast:0,
+
+                /**
+                 * the most recent used cell, {td, row, col, isEdit}
+                 * @memberOf jS
+                 * @type {Object}
+                 * @name cellLast
+                 */
+                cellLast:{
+                    td:$([]), //this is a dud td, so that we don't get errors
+                    row:0,
+                    col:0,
+                    isEdit:false
+                },
+
+                /**
+                 * the most recent highlighted cells {td, rowStart, colStart, rowEnd, colEnd}
+                 * @memberOf jS
+                 * @type {Object}
+                 * @name highlightedLast
+                 */
+                highlightedLast:{
+                    obj:$([]),
+                    start: {row: 0, col: 0},
+                    end: {row: 0, col: 0},
+                    barLeft: $([]),
+                    barTop: $([])
+                },
+                highlightedLastOrdered: function() {
+                    var grid = this.highlightedLast,
+                        _grid = {start:{}, end:{}};
+
+                    _grid.start.row = Math.min(grid.start.row, grid.end.row);
+                    _grid.start.col = Math.min(grid.start.col, grid.end.col);
+                    _grid.end.row = Math.max(grid.start.row, grid.end.row);
+                    _grid.end.col = Math.max(grid.start.col, grid.end.col);
+
+                    return _grid;
+                },
+                editedLast: [],
+
+                /**
+                 * sets a cells class for styling
+                 * @param {String} setClass class(es) to set cells to
+                 * @param {String} removeClass class(es) to remove from cell if the setClass would conflict with
+                 * @param {Object} tds
+                 * @returns {Boolean}
+                 * @methodOf jS
+                 * @name cellStyleToggle
+                 */
+                cellStyleToggle:function (setClass, removeClass, tds) {
+                    tds = tds || jS.highlighted();
+                    if (tds.length < 1) {
+                        return false;
+                    }
+                    jS.setDirty(true);
+                    //Lets check to remove any style classes
+                    var td,
+                        $td,
+                        i = tds.length - 1,
+                        cells = jS.obj.cellsEdited(),
+                        cellsEdited = jS.controls.cellsEdited[jS.i],
+                        hasClass;
+
+                    //TODO: use calcDependencies and sheetPreCalculation to set undo redo data
+
+                    if (i >= 0) {
+                        hasClass = tds[0].className.match(setClass); //go by first element in set
+                        do {
+                            td = tds[i];
+                            $td = $(td);
+
+                            if (removeClass) {//If there is a class that conflicts with this one, we remove it first
+                                $td.removeClass(removeClass);
+                            }
+
+                            //Now lets add some style
+                            if (hasClass) {
+                                $td.removeClass(setClass);
+                            } else {
+                                $td.addClass(setClass);
+                            }
+
+                            if (!td.jSCell.edited) {
+                                td.jSCell.edited = true;
+                                cellsEdited = cells.add(td.jSCell);
+                            }
+
+                        } while (i--);
+
+                        return true;
+                    }
+
+                    return false;
+                },
+
+                cellTypeToggle:function(type, cells) {
+                    cells = cells || jS.highlighted(true);
+
+                    if (cells.length < 1) {
+                        return;
+                    }
+
+                    var i = cells.length - 1,
+                        remove = cells[i].type == type;
+
+                    if (i >= 0) {
+                        do {
+                            if (remove) {
+                                cells[i].type = null;
+                            } else {
+                                cells[i].type = type;
+                            }
+                            jS.updateCellDependencies.apply(cells[i]);
+                        } while(i--);
+                    }
+                },
+
+                /**
+                 * Resizes fonts in a cell by 1 pixel
+                 * @param {String} direction "up" or "down"
+                 * @param {Object} tds
+                 * @methodOf jS
+                 * @name fontReSize
+                 */
+                fontReSize:function (direction, tds) {
+                    tds = tds || jS.highlighted();
+                    if (tds.length < 1) {
+                        return;
+                    }
+
+                    var resize = 0;
+                    switch (direction) {
+                        case 'up':
+                            resize = 1;
+                            break;
+                        case 'down':
+                            resize = -1;
+                            break;
+                    }
+
+                    //Lets check to remove any style classes
+                    var td,
+                        $td,
+                        i = tds.length - 1,
+                        size,
+                        cells = jS.obj.cellsEdited(),
+                        cellsEdited = jS.controls.cellsEdited[jS.i];
+
+                    //TODO: use calcDependencies and sheetPreCalculation to set undo redo data
+
+                    if (i >= 0) {
+                        do {
+                            td = tds[i];
+                            $td = $(td);
+                            size = ($td.css("font-size") + '').replace("px", "") * 1;
+                            $td.css("font-size", ((size || 10) + resize) + "px");
+
+                            if (!td.jSCell.edited) {
+                                td.jSCell.edited = true;
+                                cellsEdited = cells.add(td.jSCell);
+                            }
+                        } while(i--);
+                        return true;
+                    }
+                    return false;
+
+                },
+
+                /**
+                 * Current number of cells being parsed
+                 * @type {Number}
+                 * @memberOf jS
+                 * @name callStack
+                 */
+                callStack:0,
+
+                /**
+                 * Ignites calculation with cell, is recursively called if cell uses value from another cell
+                 * @param {Number} sheetIndex sheet index within instance
+                 * @param {Number} rowIndex row index
+                 * @param {Number} colIndex col index
+                 * @returns {*} cell value after calculated
+                 * @name updateCellValue
+                 * @methodOf jS
+                 */
+                updateCellValue:function (sheetIndex, rowIndex, colIndex) {
+                    var sheet, row, cell, fn;
+                    if (!this.type || !this.type == 'cell') {
+                        //first detect if the cell exists if not return nothing
+                        if (!(sheet = jS.spreadsheets[sheetIndex])) return s.error({error:jS.msg.notFoundSheet});
+                        if (!(row = sheet[rowIndex])) return s.error({error:jS.msg.notFoundRow});
+                        if (!(cell = row[colIndex])) return s.error({error:jS.msg.notFoundColumn});
+                    } else {
+                        cell = this;
+                        sheetIndex = this.sheet;
+                        rowIndex = this.row;
+                        colIndex = this.col;
+                    }
+
+                    cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
+
+                    if (cell.result) { //unset the last result if it is set
+                        delete cell.result;
+                    }
+
+                    switch (cell.state[cell.state.length - 1]) {
+                        case 'updating':
+                            return s.error({error:jS.msg.loopDetected});
+                        case 'updatingDependencies':
+                            return (cell.valueOverride != u ? cell.valueOverride : cell.value);
+                    }
+
+                    if (cell.defer) {//merging creates a defer property, which points the cell to another location to get the other value
+                        return jS.updateCellValue.apply(cell.defer);
+                    }
+
+                    cell.state.push('updating');
+                    cell.html = [];
+                    cell.fnCount = 0;
+                    cell.result = null;
+
+                    if (cell.calcLast != jS.calcLast || cell.calcDependenciesLast != jS.calcDependenciesLast) {
+                        cell.valueOverride = null;
+                        cell.calcLast = jS.calcLast;
+                        cell.calcDependenciesLast = jS.calcDependenciesLast;
+                        cell.needsUpdated = true;
+
+                        cell.calcCount++;
+                        if (cell.formula) {
+                            try {
+                                if (cell.formula.charAt(0) == '=') {
+                                    cell.formula = cell.formula.substring(1);
+                                }
+
+                                var formulaParser;
+                                if (jS.callStack) { //we prevent parsers from overwriting each other
+                                    if (!cell.formulaParser) { //cut down on un-needed parser creation
+                                        cell.formulaParser = Formula(jS.cellHandler);
+                                    }
+                                    formulaParser = cell.formulaParser
+                                } else {//use the sheet's parser if there aren't many calls in the callStack
+                                    formulaParser = jS.FormulaParser;
+                                }
+
+                                jS.callStack++;
+                                formulaParser.setObj(cell);
+                                cell.result = formulaParser.parse(cell.formula);
+                            } catch (e) {
+                                cell.result = e.toString();
+                                jS.alertFormulaError(cell.value);
+                            }
+                            jS.callStack--;
+                            jS.filterValue.apply(cell);
+                        } else if (cell.type && s.cellTypeHandlers[cell.type]) {
+                            s.cellTypeHandlers[cell.type].apply(cell);
+                        } else {
+                            if (cell.value != u && cell.value.charAt) {
+                                fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
+                                if (fn) {
+                                    fn.apply(cell, [cell.value]);
+                                } else {
+                                    fn = jS.s.cellEndHandlers[cell.value.charAt(cell.value.length - 1)];
+                                    if (fn) {
+                                        fn.apply(cell, [cell.value]);
+                                    }
+                                }
+                            }
+                            jS.filterValue.apply(cell);
+                        }
+                    }
+                    cell.needsUpdated = false;
+                    cell.state.pop();
+                    return (cell.valueOverride != u ? cell.valueOverride : cell.value);
+                },
+
+                updateCellDependencies:function () {
+                    if ((this.state || (this.state = [])).length) return;
+                    this.state.push('updatingDependencies');
+                    var dependencies = this.dependencies || []; //just in case it was never set
+                    this.dependencies = [];
+                    var i = dependencies.length - 1;
+
+                    if (i > -1) {
+                        do {
+                            var dependantCell = dependencies[i],
+                                dependantCellLoc = jS.getTdLocation(dependantCell.td);
+
+                            dependantCell.calcDependenciesLast = 0;
+
+                            jS.updateCellValue.apply(dependantCell);
+                            if (dependantCellLoc.row > 0 && dependantCellLoc.col > 0) {
+                                jS.updateCellDependencies.apply(dependantCell);
+                            }
+                        } while (i--);
+                    }
+
+                    this.state.pop();
+                },
+
+                /**
+                 * Fillters cell's value so correct entity is displayed, use apply on cell object
+                 * @returns {Object} cell
+                 * @methodOf jS
+                 * @name filterValue
+                 */
+                filterValue:function () {
+                    //html may be null, so we check here
+                    var html = (this.html && this.html.length ? this.html.join('') : '');
+
+                    if (this.result != u) {
+                        this.value = this.result;
+
+                        this.td.html(html ? this.html : s.encode(this.value));
+                    } else if (html) {
+                        this.td.html(this.html);
+                    } else {
+                        if (this.value != "" || this.td[0].innerHTML != "") {
+                            this.td[0].innerHTML = s.encode(this.value);
+                        }
+                    }
+                },
+
+                /**
+                 * Object handler for formulaParser
+                 * @name cellHandler
+                 * @memberOf jS
+                 * @namespace
+                 */
+                cellHandler:{
+
+                    /**
+                     * Variable handler for formulaParser, arguments are the variable split by '.'.  Expose variables by using jQuery.sheet setting formulaVariables
+                     * @returns {*}
+                     * @methodOf jS.cellHandler
+                     * @name variable
+                     */
+                    variable:function () {
+                        if (arguments.length) {
+                            var name = arguments[0],
+                                attr = arguments[1],
+                                formulaVariables = jS.s.formulaVariables,
+                                formulaVariable;
+
+                            switch (name.toLowerCase()) {
+                                case 'true':
+                                    this.html.push('TRUE');
+                                    return true;
+                                case 'false':
+                                    this.html.push('FALSE');
+                                    return false;
+                            }
+
+                            if (formulaVariable = formulaVariables[name] && !attr) {
+                                return formulaVariable;
+                            } else if (formulaVariable && attr) {
+                                return formulaVariable[attr];
+                            } else {
+                                return '';
+                            }
+                        }
+                    },
+
+                    /**
+                     * time to fraction of day 1 / 0-24
+                     * @param {Time} time
+                     * @param {Boolean} isAMPM
+                     * @returns {*}
+                     * @methodOf jS.cellHandler
+                     * @name time
+                     */
+                    time:function (time, isAMPM) {
+                        return times.fromString(time, isAMPM);
+                    },
+
+                    /**
+                     * get a number from variable
+                     * @param {*} num
+                     * @returns {Number}
+                     * @methodOf jS.cellHandler
+                     * @name number
+                     */
+                    number:function (num) {
+                        switch (typeof num) {
+                            case 'number':
+                                return num;
+                            case 'string':
+                                if (!isNaN(num)) {
+                                    return num * 1;
+                                }
+                            case 'object':
+                                if (num.getMonth) {
+                                    return dates.toCentury(num);
+                                }
+                        }
+                        return 0;
+                    },
+
+                    performMath: function (mathType, num1, num2) {
+                        var type1, type2, value, output = function(val) {return val;};
+                        switch (type1 = (typeof num1)) {
+                            case 'number':break;
+                            case 'string':
+                                if (!isNaN(num1)) {
+                                    num1 *= 1;
+                                }
+                                break;
+                            case 'object':
+                                if (num1.getMonth) {
+                                    num1 = dates.toCentury(num1);
+                                    output = dates.get;
+                                }
+                                break;
+                            default:
+                        }
+
+                        switch (type2 = (typeof num2)) {
+                            case 'number':break;
+                            case 'string':
+                                if (!isNaN(num2)) {
+                                    num2 *= 1;
+                                }
+                                break;
+                            case 'object':
+                                if (num2.getMonth) {
+                                    num2 = dates.toCentury(num2);
+                                }
+                                break;
+                            default:
+                        }
+
+                        switch (mathType) {
+                            case '+':
+                                value = num1 + num2;
+                                break;
+                            case '-':
+                                value = num1 - num2;
+                                break;
+                            case '/':
+                                value = num1 / num2;
+                                break;
+                            case '*':
+                                value = num1 * num2;
+                                break;
+                            case '^':
+                                value = math.pow(num1, num2);
+                                break;
+                        }
+
+                        return output(value);
+                    },
+
+                    /**
+                     * Concatenate a string
+                     * @returns {String}
+                     * @methodOf jS.cellHandler
+                     * @name concatenate
+                     */
+                    concatenate:function () {
+                        var loc = jS.getTdLocation(this.td);
+                        return jFN.CONCATENATE.apply(this, arguments).value;
+                    },
+
+                    /**
+                     * Get cell value
+                     * @param {String} id example "A1"
+                     * @returns {*}
+                     * @methodOf jS.cellHandler
+                     * @name cellValue
+                     */
+                    cellValue:function (id) { //Example: A1
+                        var loc = jSE.parseLocation(id), cell;
+
+                        cell = jS.cellHandler.createDependency.apply(this, [this.sheet, loc]);
+
+                        jS.updateCellValue.apply(cell);
+                        return (cell.valueOverride != u ? cell.valueOverride : cell.value);
+                    },
+
+                    /**
+                     * Creates a relationship between 2 cells, where the formula originates and the cell that is required to supply a value to
+                     * @param {Number} sheetIndex
+                     * @param {Object} loc {row, col}
+                     */
+                    createDependency:function (sheetIndex, loc) {
+                        var sheet, row, cell;
+                        if (!(sheet = jS.spreadsheets[sheetIndex])) return;
+                        if (!(row = sheet[loc.row])) return;
+                        if (!(cell = row[loc.col])) return;
+
+                        if (!cell.dependencies) cell.dependencies = [];
+                        if ($.inArray(this, cell.dependencies) < 0) {
+                            cell.dependencies.push(this);
+                        }
+                        return cell;
+                    },
+
+                    /**
+                     * Get cell values as an array
+                     * @param {String} start example "A1"
+                     * @param {String} end example "B1"
+                     * @returns {Array}
+                     * @methodOf jS.cellHandler
+                     * @name cellRangeValue
+                     */
+                    cellRangeValue:function (start, end) {//Example: A1:B1
+                        start = jSE.parseLocation(start);
+                        end = jSE.parseLocation(end);
+                        var result = [],
+                            i = math.max(start.row, end.row),
+                            iEnd = math.min(start.row, end.row),
+                            j = math.max(start.col, end.col),
+                            jStart = j,
+                            jEnd = math.min(start.col, end.col),
+                            cell;
+
+                        if (i >= iEnd || j >= jEnd) {
+                            do {
+                                j = jStart;
+                                do {
+                                    cell = jS.spreadsheets[this.sheet][i][j];
+                                    jS.cellHandler.createDependency.apply(this, [this.sheet, {row:i, col:j}]);
+                                    result.unshift(jS.updateCellValue.apply(cell));
+                                } while(j-- > jEnd);
+                            } while (i-- > iEnd);
+                            return result;
+                        }
+
+                        return result;
+                    },
+
+                    /**
+                     * Get cell value
+                     * @param {String} id example "$A$1"
+                     * @returns {*}
+                     * @methodOf jS.cellHandler
+                     * @name fixedCellValue
+                     */
+                    fixedCellValue:function (id) {
+                        id = id.replace(/\$/g, '');
+                        return jS.cellHandler.cellValue.apply(this, [id]);
+                    },
+
+                    /**
+                     * Get cell values as an array
+                     * @param {String} start example "$A$1"
+                     * @param {String} end example "$B$1"
+                     * @returns {Array}
+                     * @methodOf jS.cellHandler
+                     * @name fixedCellRangeValue
+                     */
+                    fixedCellRangeValue:function (start, end) {
+                        start = start.replace(/\$/g, '');
+                        end = end.replace(/\$/g, '');
+                        return jS.cellHandler.cellRangeValue.apply(this, [start, end]);
+                    },
+
+                    /**
+                     * Get cell value from a different sheet within an instance
+                     * @param {String} sheet example "SHEET1"
+                     * @param {String} id example "A1"
+                     * @returns {*}
+                     * @methodOf jS.cellHandler
+                     * @name remoteCellValue
+                     */
+                    remoteCellValue:function (sheet, id) {//Example: SHEET1:A1
+                        var loc = jSE.parseLocation(id);
+                        sheet = jSE.parseSheetLocation(sheet);
+
+                        jS.cellHandler.createDependency.apply(this, [sheet, loc]);
+
+                        return jS.updateCellValue(sheet, loc.row, loc.col);
+                    },
+
+                    /**
+                     * Get cell values as an array from a different sheet within an instance
+                     * @param {String} sheet example "SHEET1"
+                     * @param {String} start example "A1"
+                     * @param {String} end example "B1"
+                     * @returns {Array}
+                     * @methodOf jS.cellHandler
+                     * @name remoteCellRangeValue
+                     */
+                    remoteCellRangeValue:function (sheet, start, end) {//Example: SHEET1:A1:B2
+                        sheet = jSE.parseSheetLocation(sheet);
+                        start = jSE.parseLocation(start);
+                        end = jSE.parseLocation(end);
+
+                        var result = [];
+
+                        for (var i = start.row; i <= end.row; i++) {
+                            for (var j = start.col; j <= end.col; j++) {
+                                result.push(jS.updateCellValue(sheet, i, j));
+                            }
+                        }
+
+                        return [result];
+                    },
+
+                    /**
+                     * Calls a function either from jQuery.sheet.engine or defined in jQuery sheet setting formulaFunctions.  When calling a function the cell being called from is "this".
+                     * @param {String} fn function name (Will be converted to upper case)
+                     * @param {Array} args arguments needing to be sent to function
+                     * @returns {*}
+                     * @methodOf jS.cellHandler
+                     * @name callFunction
+                     */
+                    callFunction:function (fn, args) {
+                        fn = fn.toUpperCase();
+                        args = args || [];
+
+                        if ($.sheet.fn[fn]) {
+                            this.fnCount++;
+                            var values = [],
+                                html = [],
+                                i = args.length;
+
+                            if (i) {
+                                do {
+                                    if (args[i] != u) {
+                                        if (args[i].value || args[i].html) {
+                                            values.unshift(args[i].value);
+                                            html.unshift(args[i].html);
+                                        } else {
+                                            values.unshift(args[i]);
+                                            html.unshift(args[i]);
+                                        }
+                                    }
+                                } while (i--);
+                            }
+
+                            var result = $.sheet.fn[fn].apply(this, values);
+                            if (result != null) {
+                                if (result.html != u) {
+                                    this.html.push(result.html);
+                                } else {
+                                    this.html.push(null);
+                                }
+                                if (result.value != u) {
+                                    return result.value;
+                                }
+                            }
+                            return result;
+                        } else {
+                            return s.error({error:"Function " + fn + " Not Found"});
+                        }
+                    }
+                },
+
+                /**
+                 * Cell lookup handlers
+                 * @name cellLookupHandlers
+                 * @memberOf jS
+                 * @namespace
+                 */
+                cellLookupHandlers:{
+
+                    /**
+                     * @param {String} id example "$A$1"
+                     * @returns {Array} [sheet, startCell, endCell]
+                     * @methodOf jS.cellLookupHandlers
+                     * @name fixedCellValue
+                     */
+                    fixedCellValue:function (id) {
+                        return [jS.sheet, jSE.parseLocation(id), jSE.parseLocation(id)];
+                    },
+
+                    /**
+                     * @param {String} sheet example "SHEET1"
+                     * @param {String} start example "$A$1"
+                     * @param {String} end example "$B$1"
+                     * @returns {Array} [sheet, startCell, endCell]
+                     * @methodOf jS.cellLookupHandlers
+                     * @name fixedCellRangeValue
+                     */
+                    fixedCellRangeValue:function (sheet, start, end) {
+                        return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
+                    },
+
+                    /**
+                     * doesn't do anything right now
+                     * @param id
+                     * @methodOf jS.cellLookupHandlers
+                     * @name cellValue
+                     */
+                    cellValue:function (id) {
+
+                    },
+
+                    /**
+                     * @param {String} sheet example "SHEET1"
+                     * @param {String} start example "A1"
+                     * @param {String} end example "B1"
+                     * @returns {Array} [sheet, startCell, endCell]
+                     * @methodOf jS.cellLookupHandlers
+                     * @name cellRangeValue
+                     */
+                    cellRangeValue:function (sheet, start, end) {
+                        return [jS.sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
+                    },
+
+                    /**
+                     * @param {String} sheet example "SHEET1"
+                     * @param {String} id example "A1"
+                     * @returns {Array} [sheet, startCell, endCell]
+                     * @methodOf jS.cellLookupHandlers
+                     * @name remoteCellValue
+                     */
+                    remoteCellValue:function (sheet, id) {
+                        return [jS.sheet, jSE.parseLocation(id), jSE.parseLocation(id)];
+                    },
+
+                    /**
+                     *
+                     * @param {String} sheet example "SHEET1"
+                     * @param {String} start example "A1"
+                     * @param {String} end example "B1"
+                     * @returns {Array} [sheet, startCell, endCell]
+                     * @methodOf jS.cellLookupHandlers
+                     * @name remoteCellRangeValue
+                     */
+                    remoteCellRangeValue:function (sheet, start, end) {
+                        return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
+                    },
+
+                    /**
+                     * @returns {*}
+                     * @methodOf jS.cellLookupHandlers
+                     * @name callFunction
+                     */
+                    callFunction:function () {
+                        if (arguments[0] == "VLOOKUP" || arguments[0] == "HLOOKUP" && arguments[1]) {
+                            return arguments[1].reverse()[1];
+                        }
+                    }
+                },
+
+                /**
+                 * Looks up cell using jS.cellLookupHandlers
+                 * @returns {Array}
+                 * @methodOf jS
+                 * @name cellLookup
+                 */
+                cellLookup:function () {
+                    var formulaParser = Formula($.extend(formulaParser.lexer.handler, jS.cellLookupHandlers));
+                    formulaParser.setObj(this.obj);
+
+                    var args = formulaParser.parse(this.obj.formula),
+                        lookupTable = [];
+
+                    for (var row = args[1].row; row <= args[2].row; row++) {
+                        for (var col = args[1].col; col <= args[2].col; col++) {
+                            lookupTable.push({
+                                sheet:args[0],
+                                row:row,
+                                col:col
+                            });
+                        }
+                    }
+
+                    return lookupTable;
+                },
+
+                /**
+                 *
+                 * @param {String} msg
+                 * @methodOf jS
+                 * @name alertFormulaError
+                 */
+                alertFormulaError:function (msg) {
+                    alert(
+                        'cell:' + row + ' ;' + col + '\n' +
+                        'value: "' + cell.formula + '"\n' +
+                        'error: \n' + e
+                    );
+                },
+
+                /**
+                 * Date of last calculation
+                 * @memberOf jS
+                 * @name calcLast
+                 */
+                calcLast:0,
+
+                /**
+                 * @memberOf jS
+                 * @name calcDependenciesLast
+                 */
+                calcDependenciesLast:0,
+
+                /**
+                 * Where jS.spreadsheets are calculated, and returned to their td counterpart
+                 * @param {Number} tableIndex table index
+                 * @methodOf jS
+                 * @name calc
+                 */
+                calc:function (tableIndex) {
+                    tableIndex = tableIndex || jS.i;
+                    if (jS.readOnly[tableIndex] || jS.isChanged() === false) return; //readonly is no calc at all
+
+                    jS.log('Calculation Started');
+                    jS.calcLast = new Date();
+                    jSE.calc(tableIndex, jS.spreadsheetsToArray()[tableIndex], jS.updateCellValue);
+                    jS.trigger('sheetCalculation', [
+                        {which:'speadsheet'}
+                    ]);
+                    jS.setChanged(false);
+                    jS.log('Calculation Ended');
+                },
+
+                /**
+                 * Calculates just the dependencies of a single cell, and their dependencies recursivley
+                 * @param {Date} last
+                 * @param {Boolean} skipUndoable
+                 */
+                calcDependencies:function (last, skipUndoable) {
+                    last = last || new Date();
+                    jS.calcDependenciesLast = last;
+
+                    if (!skipUndoable) {
+                        jS.undo.createCells([this], null, function() {
+                            jS.trigger('sheetPreCalculation', [
+                                {which:'cell', cell:this}
+                            ]);
+
+                            jS.setDirty(true);
+                            jS.setChanged(true);
+                            jS.updateCellValue.apply(this);
+                            jS.updateCellDependencies.apply(this);
+                            jS.trigger('sheetCalculation', [
+                                {which:'cell', cell: this}
+                            ]);
+
+                            return [this];
+                        });
+                    } else {
+                        jS.trigger('sheetPreCalculation', [
+                            {which:'cell', cell:this}
+                        ]);
+
+                        jS.setDirty(true);
+                        jS.setChanged(true);
+                        jS.updateCellValue.apply(this);
+                        jS.updateCellDependencies.apply(this);
+                        jS.trigger('sheetCalculation', [
+                            {which:'cell', cell: this}
+                        ]);
+                    }
+                },
+
+                /**
+                 * adds a spreadsheet table
+                 * @param {Object} size, optional
+                 * @methodOf jS
+                 * @name addSheet
+                 */
+                addSheet:function (size) {
+                    size = size || {rows: 25, cols: 10};
+                    if (size) {
+                        jS.evt.cellEditAbandon();
+                        jS.setDirty(true);
+                        jS.controlFactory.sheetUI(jS.obj.ui()[0], $.sheet.makeTable.fromSize(size), jS.sheetCount);
+
+                        jS.setActiveSheet(jS.sheetCount);
+
+                        jS.sheetCount++;
+
+                        jS.sheetSyncSize();
+
+                        jS.obj.pane().resizeScroll();
+
+                        jS.trigger('sheetAdd', [jS.i]);
+                    }
+                },
+
+                /**
+                 * deletes a spreadsheet table
+                 * @param {Number} i optional spreadsheet index within instance
+                 * @methodOf jS
+                 * @name deleteSheet
+                 */
+                deleteSheet:function (i) { /* removes the currently selected sheet */
+                    var oldI = i || jS.i;
+
+                    jS.obj.barHelper().remove();
+
+                    jS.obj.enclosure().remove();
+                    jS.obj.menus().remove();
+                    jS.obj.tabContainer().children().eq(jS.i).remove();
+                    jS.spreadsheets.splice(oldI, 1);
+                    jS.controls.autoFiller.splice(oldI, 1);
+                    jS.controls.bar.helper.splice(oldI, 1);
+                    jS.controls.bar.corner.splice(oldI, 1);
+                    jS.controls.bar.x.controls.splice(oldI, 1);
+                    jS.controls.bar.x.handleFreeze.splice(oldI, 1);
+                    jS.controls.bar.x.controls.splice(oldI, 1);
+                    jS.controls.bar.x.menu.splice(oldI, 1);
+                    if (jS.controls.bar.x.menuParent && jS.controls.bar.x.menuParent[oldI]) {
+                        jS.controls.bar.x.menuParent.splice(oldI, 1);
+                    }
+                    jS.controls.bar.x.parent.splice(oldI, 1);
+                    jS.controls.bar.x.scroll.splice(oldI, 1);
+                    jS.controls.bar.x.td.splice(oldI, 1);
+                    jS.controls.bar.y.controls.splice(oldI, 1);
+                    jS.controls.bar.y.handleFreeze.splice(oldI, 1);
+                    jS.controls.bar.y.controls.splice(oldI, 1);
+                    jS.controls.bar.y.menu.splice(oldI, 1);
+                    if (jS.controls.bar.y.menuParent && jS.controls.bar.y.menuParent[oldI]) {
+                        jS.controls.bar.y.menuParent.splice(oldI, 1);
+                    }
+                    jS.controls.bar.y.parent.splice(oldI, 1);
+                    jS.controls.bar.y.scroll.splice(oldI, 1);
+                    jS.controls.bar.y.td.splice(oldI, 1);
+                    jS.controls.barMenuLeft.splice(oldI, 1);
+                    jS.controls.barMenuTop.splice(oldI, 1);
+                    jS.controls.barLeft.splice(oldI, 1);
+                    jS.controls.barTop.splice(oldI, 1);
+                    jS.controls.barTopParent.splice(oldI, 1);
+                    jS.controls.chart.splice(oldI, 1);
+                    jS.controls.tdMenu.splice(oldI, 1);
+                    jS.controls.enclosure.splice(oldI, 1);
+                    jS.controls.fullScreen = null;
+                    jS.controls.inPlaceEdit.splice(oldI, 1);
+                    jS.controls.menus.splice(oldI, 1);
+                    jS.controls.menuLeft.splice(oldI, 1);
+                    jS.controls.menuRight.splice(oldI, 1);
+                    jS.controls.pane.splice(oldI, 1);
+                    jS.controls.scroll.splice(oldI, 1);
+                    jS.controls.tables.splice(oldI, 1);
+                    jS.controls.table.splice(oldI, 1);
+                    jS.controls.tab.splice(oldI, 1);
+                    jS.controls.toggleHide.x.splice(oldI, 1);
+                    jS.controls.toggleHide.y.splice(oldI, 1);
+                    jS.readOnly.splice(oldI, 1);
+                    jS.i = 0;
+                    jS.sheetCount--;
+                    jS.sheetCount = math.max(jS.sheetCount, 0);
+
+                    if (jS.sheetCount == 0) {
+                        jS.addSheet();
+                    }
+
+                    jS.setActiveSheet(jS.i);
+                    jS.setDirty(true);
+                    jS.setChanged(true);
+
+                    jS.trigger('sheetDelete', [oldI]);
+                },
+
+                /**
+                 * removes the currently selected row
+                 * @param {Number} row
+                 * @param {Boolean} skipCalc
+                 * @methodOf jS
+                 * @name deleteRow
+                 */
+                deleteRow:function (row, skipCalc) {
+                    var i, start, end, qty, size = jS.sheetSize();
+
+                    if (row) {
+                        start = end = row;
+                    } else {
+                        start = math.min(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
+                        end = math.max(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
+                    }
+
+                    qty = (end - start) + 1;
+
+                    if (start < 1 || size.cols < 2 || qty >= size.rows) {
+                        return;
+                    }
+
+                    i = end;
+
+                    do {
+                        //remove tr's first
+                        jS.getTd(jS.i, i, 1).parent().remove();
+                    } while (start < i--);
+
+                    //now remove bar
+                    jS.controls.bar.y.td[jS.i].splice(start, qty);
+
+                    //now remove cells
+                    jS.spreadsheets[jS.i].splice(start, qty);
+
+                    jS.refreshRowLabels(start);
+
+                    jS.setChanged(true);
+
+                    jS.offsetFormulas({
+                        row:start,
+                        col:0
+                    }, {
+                        row:-qty,
+                        col:0
+                    });
+
+                    jS.setDirty(true);
+
+                    jS.evt.cellEditAbandon();
+
+                    jS.obj.pane().resizeScroll();
+
+                    jS.trigger('sheetDeleteRow', i);
+                },
+
+                /**
+                 * removes the columns associated with highlighted cells
+                 * @param {Number} col
+                 * @param {Boolean} skipCalc
+                 * @methodOf jS
+                 * @name deleteColumn
+                 */
+                deleteColumn:function (col, skipCalc) {
+                    var i, start, end, qty, size = jS.sheetSize();
+
+                    if (col) {
+                        start = end = col;
+                    } else {
+                        start = math.min(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
+                        end = math.max(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
+                    }
+
+                    qty = (end - start) + 1;
+
+                    if (start < 1 || size.cols < 2 || qty >= size.cols) {
+                        return;
+                    }
+
+                    i = end;
+
+                    jS.obj.barHelper().remove();
+                    do {
+                        var table = jS.obj.table(),
+                            col = jS.col(table[0], i),
+                            bar = jS.obj.barTop(i).remove(),
+                            tds = col.tds,
+                            j = tds.length -1;
+
+                        //remove tds first
+                        do {
+                            $(tds[j]).remove();
+                        } while (j--);
+
+                        //now remove bar
+                        jS.obj.barTop(i).remove();
+
+                        //now remove col
+                        $(col).remove();
+                    } while (start < i--);
+
+                    //remove column
+                    jS.controls.bar.x.td[jS.i].splice(start, qty);
+
+                    //remove cells
+                    j = jS.spreadsheets[jS.i].length - qty;
+                    do {
+                        jS.spreadsheets[jS.i][j].splice(start, qty);
+                    } while (j-- > 1);
+
+                    //refresh labels
+                    jS.refreshColumnLabels(start);
+
+                    jS.setChanged(true);
+
+                    jS.offsetFormulas({
+                        row:0,
+                        col:start
+                    }, {
+                        row:0,
+                        col:-qty
+                    });
+
+                    jS.setDirty(true);
+
+                    jS.evt.cellEditAbandon();
+
+                    jS.obj.pane().resizeScroll();
+
+                    jS.trigger('sheetDeleteColumn', i);
+                },
+
+                /**
+                 * manages a tabs inner value
+                 * @param {Bool} get makes return the current value of the tab
+                 * @returns {jQuery|HTMLElement}
+                 * @methodOf jS
+                 * @name sheetTab
+                 */
+                sheetTab:function (get) {
+                    var sheetTab = '';
+                    if (get) {
+                        sheetTab = jS.obj.table().attr('title');
+                        sheetTab = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
+                    } else if (jS.isSheetEditable() && s.editableNames) { //ensure that the sheet is editable, then let them change the sheet's name
+                        var newTitle = prompt(jS.msg.newSheetTitle, jS.sheetTab(true));
+                        if (!newTitle) { //The user didn't set the new tab name
+                            sheetTab = jS.obj.table().attr('title');
+                            newTitle = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
+                        } else {
+                            jS.setDirty(true);
+                            jS.obj.table().attr('title', newTitle);
+                            jS.obj.tab().html(newTitle);
+
+                            sheetTab = newTitle;
+                        }
+                    }
+                    return $(doc.createElement('div')).text(sheetTab).html();
+                },
+
+                /**
+                 * detects if a td is not visible
+                 * @param {jQuery|HTMLElement} td
+                 * @methodOf jS
+                 * @name tdNotVisible
+                 * @returns {Boolean|Object}
+                 */
+                tdNotVisible:function(td) {
+                    var pane = jS.obj.pane(),
+                        visibleFold = {
+                            top:0,
+                            bottom:pane.clientHeight,
+                            left:0,
+                            right:pane.clientWidth
+                        },
+
+                        tdWidth = td.width(),
+                        tdHeight = td.height(),
+                        tdLocation = {
+                            top:td[0].offsetTop,
+                            bottom:td[0].offsetTop + tdHeight,
+                            left:td[0].offsetLeft,
+                            right:td[0].offsetLeft + tdWidth
+                        },
+                        tdParent = td.parent();
+
+                    if (!td[0].col) {
+                        return false;
+                    }
+
+                    var xHidden = $(td[0].barTop).is(':hidden'),
+                        yHidden = $(tdParent[0]).is(':hidden'),
+                        hidden = {
+                            up:yHidden,
+                            down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
+                            left:xHidden,
+                            right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
+                        };
+
+                    if (hidden.up || hidden.down || hidden.left || hidden.right) {
+                        return hidden;
+                    }
+
+                    return false;
+                },
+
+                /**
+                 * scrolls the sheet to the selected cell
+                 * @param {jQuery|HTMLElement} td
+                 * @methodOf jS
+                 * @name followMe
+                 */
+                followMe:function (td) {
+                    td = td || jS.obj.tdActive();
+                    if (!td.length) return;
+
+                    var i = 0,
+                        x = 0,
+                        y = 0,
+                        direction,
+                        pane = jS.obj.pane();
+
+                    pane.scrollStyleX.i = 0;
+                    pane.scrollStyleY.i = 0;
+
+                    jS.setBusy(true);
+
+                    while ((direction = this.tdNotVisible(td)) && i < 25) {
+                        var scrolledArea = jS.scrolledTo();
+
+                        if (direction.left) {
+                            x--;
+                            jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
+                        } else if (direction.right) {
+                            x++;
+                            jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
+                        }
+
+                        if (direction.up) {
+                            y--;
+                            jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
+                        } else if (direction.down) {
+                            y++;
+                            jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
+                        }
+
+                        i++;
+                    }
+
+
+                    setTimeout(function () {
+                        jS.setBusy(false);
+                    }, 100);
+                    jS.evt.scroll.stop();
+                    jS.autoFillerGoToTd(td);
+                },
+
+                /**
+                 * moves autoFiller to a selected cell
+                 * @param {jQuery|HTMLElement} td
+                 * @param {Number} h optional, height of a td object
+                 * @param {Number} w optional, width of a td object
+                 * @methodOf jS
+                 * @name autoFillerGoToTd
+                 */
+                autoFillerGoToTd:function (td, h, w) {
+                    if (!s.autoFiller) return;
+
+                    td = td || jS.obj.tdActive();
+
+                    if (td[0] && td[0].type == 'cell') { //ensure that it is a usable cell
+                        h = h || td[0].clientHeight;
+                        w = w || td[0].clientWidth;
+                        if (!h || !w) {
+                            jS.autoFillerHide();
+                            return;
+                        }
+
+                        var tdPos = td.position();
+                        jS.obj.autoFiller()
+                            .show()
+                            .css('top', ((tdPos.top + (h || td.height()) - 3) + 'px'))
+                            .css('left', ((tdPos.left + (w || td.width()) - 3) + 'px'));
+                    }
+                },
+
+                /**
+                 * hides the auto filler
+                 * @methodOf jS
+                 * @name autoFillerHide
+                 */
+                autoFillerHide:function () {
+                    if (!s.autoFiller) return;
+
+                    jS.obj.autoFiller().hide();
+                },
+
+                /**
+                 * sets active a spreadsheet inside of a sheet instance
+                 * @param {Number} i a sheet integer desired to show
+                 * @methodOf jS
+                 * @name setActiveSheet
+                 */
+                setActiveSheet:function (i) {
+                    i = i || 0;
+
+                    if (jS.cellLast.row > 0 || jS.cellLast.col > 0) {
+                        jS.evt.cellEditDone();
+                        jS.obj.formula().val('');
+                    }
+
+                    jS.obj.enclosures()
+                        .hide();
+
+                    jS.i = i;
+
+                    jS.obj.enclosure()
+                        .show();
+
+                    jS.themeRoller.tab.setActive();
+
+                    jS.readOnly[i] = jS.obj.table().hasClass('readonly');
+
+                    jS.obj.pane().resizeScroll();
+                },
+
+                /**
+                 * opens a spreadsheet into the active sheet instance
+                 * @param tables
+                 * @returns {Boolean} if set to true, foces bars on left and top not be reloaded
+                 * @methodOf jS
+                 * @name openSheet
+                 */
+                openSheet:function (tables) {
+                    if (jS.isDirty ? confirm(jS.msg.openSheet) : true) {
+                        jS.setBusy(true);
+                        var header = jS.controlFactory.header(),
+                            ui = jS.controlFactory.ui(),
+                            tabContainer = jS.controlFactory.tabContainer(),
+                            i = tables.length - 1;
+
+                        jS.sheetCount = tables.length - 1;
+
+                        header.ui = ui;
+                        header.tabContainer = tabContainer;
+
+                        ui.header = header;
+                        ui.tabContainer = tabContainer;
+
+                        tabContainer.header = header;
+                        tabContainer.ui = ui;
+
+                        s.parent
+                            .append(header)
+                            .append(ui)
+                            .append(tabContainer);
+
+                        for (i = 0; i < tables.length; i++) {
+                            jS.controlFactory.sheetUI(ui, tables[i], i);
+                            jS.sheetCount++;
+                            jS.calc(i);
+                            jS.trigger('sheetOpened', [i]);
+                        }
+
+                        // resizable container div
+                        jS.resizableSheet(s.parent, {
+                            minWidth:s.parent.width() * 0.1,
+                            minHeight:s.parent.height() * 0.1,
+                            start:function () {
+                                jS.setBusy(true);
+                                jS.obj.enclosure().hide();
+                                ui.tabContainer.hide();
+                            },
+                            stop:function () {
+                                jS.obj.enclosure().show();
+                                ui.tabContainer.show();
+                                jS.setBusy(false);
+                                jS.sheetSyncSize();
+                                jS.obj.pane().resizeScroll();
+                            }
+                        });
+
+                        jS.sheetSyncSize();
+
+                        jS.setActiveSheet(0);
+
+                        jS.setDirty(false);
+                        jS.setBusy(false);
+
+                        jS.trigger('sheetAllOpened');
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+
+                /**
+                 * creates a new sheet from size from prompt
+                 * @methodOf jS
+                 * @name newSheet
+                 */
+                newSheet:function () {
+                    s.parent
+                        .html($.sheet.makeTable.fromSize())
+                        .sheet(s);
+                },
+
+                /**
+                 * creates a new row and then applies an array's values to each of it's new values, not currently working
+                 * TODO: Needs refactored to use jS.spreadsheets
+                 * @param {Array} rowArray values to import
+                 * @methodOf jS
+                 * @name importRow
+                 */
+                importRow:function (rowArray) {
+                    jS.controlFactory.addRow();
+
+                    var error = "";
+                    jS.obj.table().find('tr:last td').each(function (i) {
+                        $(this).removeData('formula');
+                        try {
+                            //To test this, we need to first make sure it's a string, so converting is done by adding an empty character.
+                            if ((rowArray[i] + '').charAt(0) == "=") {
+                                $(this).data('formula', rowArray[i]);
+                            } else {
+                                $(this).html(rowArray[i]);
+                            }
+                        } catch (e) {
+                            //We want to make sure that is something bad happens, we let the user know
+                            error += e + ';\n';
+                        }
+                    });
+
+                    if (error) {//Show them the errors
+                        alert(error);
+                    }
+
+                    jS.calc();
+                },
+
+                /**
+                 * creates a new column and then applies an array's values to each of it's new values
+                 * TODO: needs refactored to use jS.spreadsheets
+                 * @param {Array} columnArray values to import
+                 * @methodOf jS
+                 * @name importColumn
+                 */
+                importColumn:function (columnArray) {
+                    jS.controlFactory.addColumn();
+
+                    var error = "";
+                    jS.obj.table().find('tr').each(function (i) {
+                        var o = $(this).find('td:last');
+                        try {
+                            //To test this, we need to first make sure it's a string, so converting is done by adding an empty character.
+                            if ((columnArray[i] + '').charAt(0) == "=") {
+                                o.data('formula', columnArray[i]);
+                            } else {
+                                o.html(columnArray[i]);
+                            }
+                        } catch (e) {
+                            //We want to make sure that is something bad happens, we let the user know
+                            error += e + ';\n';
+                        }
+                    });
+
+                    if (error) {//Show them the errors
+                        alert(error);
+                    }
+
+                    //Let's recalculate the sheet just in case
+                    jS.calc();
+                },
+
+
+                /**
+                 * Sync's the called parent's controls so that they fit correctly within the parent
+                 * @function sheetSyncSize
+                 * @methodOf jS
+                 * @name sheetSyncSize
+                 */
+                sheetSyncSize:function () {
+                    var h = s.parent[0].clientHeight;
+                    if (!h) {
+                        h = 400; //Height really needs to be set by the parent
+                        s.parent.height(h);
+                    } else if (h < 200) {
+                        h = 200;
+                        s.parent.height(h);
+                    }
+
+                    var w = s.parent[0].clientWidth;
+                    h -= jS.obj.header().outerHeight();
+                    h -= jS.obj.tabContainer().outerHeight() + jS.s.boxModelCorrection;
+
+                    jS.obj.panes()
+                        .height(h - win.scrollBarSize.height - s.boxModelCorrection)
+                        .width(w - win.scrollBarSize.width);
+
+
+                    jS.obj.enclosures()
+                        .height(h)
+                        .width(w);
+
+                    jS.obj.scrolls()
+                        .height(h)
+                        .width(w);
+
+
+                    jS.obj.ui()
+                        .height(h)
+                        .width(w);
+                },
+
+                /**
+                 * changes a cell's style and makes it undoable/redoable
+                 * @param style
+                 * @param value
+                 * @param cells
+                 */
+                cellChangeStyle:function (style, value, cells) {
+                    cells = cells || jS.highlighted(true);
+                    if (cells.length < 1) {
+                        return;
+                    }
+
+                    jS.setDirty(this);
+                    var i = cells.length - 1;
+
+                    if ( i >= 0) {
+                        jS.undo.createCells(cells, null, function() { //save state, make it undoable
+                            do {
+                                cells[i].td.css(style, value);
+                            } while(i--);
+
+                            jS.editedLast = cells;
+                            return cells;
+                        });
+                        return true;
+                    }
+
+                    return false;
+                },
+
+                /**
+                 * Finds a cell in a sheet from a value
+                 * @param {String} v value to look for within a cell
+                 * @methodOf jS
+                 * @name cellFind
+                 */
+                cellFind:function (v) {
+                    if (!v) {
+                        v = prompt(jS.msg.cellFind);
+                    }
+                    var trs = jS.obj.table()
+                        .children('tbody')
+                        .children('tr');
+
+                    if (v) {//We just do a simple uppercase/lowercase search.
+                        var o = trs.children('td:contains("' + v + '")');
+
+                        if (o.length < 1) {
+                            o = trs.children('td:contains("' + v.toLowerCase() + '")');
+                        }
+
+                        if (o.length < 1) {
+                            o = trs.children('td:contains("' + v.toUpperCase() + '")');
+                        }
+
+                        o = o.eq(0);
+                        if (o.length > 0) {
+                            jS.cellEdit(o);
+                        } else {
+                            alert(jS.msg.cellNoFind);
+                        }
+                    }
+                },
+
+                /**
+                 * Sets active bar
+                 * @param {String} type "col" || "row" || "all"
+                 * @param {Number} begin start highlighting from
+                 * @param {Number} end end highlighting to
+                 * @methodOf jS
+                 * @name cellSetActiveBar
+                 */
+                cellSetActiveBar:function (type, begin, end) {
+                    var size = jS.sheetSize(),
+                        first = math.min(begin, end),
+                        last = math.max(begin, end),
+                        start = {},
+                        stop = {},
+                        setActive = function (before) {
+                            switch (s.cellSelectModel) {
+                                case 'oo': //follow cursor behavior
+                                    this.row = (before ? start.row : stop.row);
+                                    this.col = (before ? start.col : stop.col);
+                                    this.td = jS.getTd(jS.i, this.row, this.col);
+                                    if (!this.td.is(jS.cellLast.td)) {
+                                        jS.cellEdit(this.td, null, true);
+                                    }
+                                    break;
+                                default: //stay at initial cell
+                                    this.row = (before ? stop.row : start.row);
+                                    this.col = (before ? stop.col : start.col);
+                                    this.td = jS.getTd(jS.i, this.row, this.col);
+                                    if (!this.td.is(jS.cellLast.td[0])) {
+                                        jS.cellEdit(this.td, null, true);
+                                    }
+                                    break;
+                            }
+                        },
+                        obj = $([]),
+                        scrolledArea  = jS.scrolledTo(),
+                        sheet = jS.obj.table(),
+                        col,
+                        row;
+
+                    switch (type) {
+                        case 'top':
+                            start.row = scrolledArea.end.row;
+                            start.col = first;
+                            stop.row = scrolledArea.end.row;
+                            stop.col = last;
+
+                            jS.highlightedLast.start.row = 1;
+                            jS.highlightedLast.start.col = first;
+                            jS.highlightedLast.end.row = size.rows;
+                            jS.highlightedLast.end.col = last;
+
+                            col = last;
+
+                            do {
+                                obj = obj.add(jS.col(sheet[0], col));
+                            } while(col-- > first);
+                            break;
+                        case 'left':
+                            start.row = first;
+                            start.col = scrolledArea.end.col;
+                            stop.row = last;
+                            stop.col = scrolledArea.end.col;
+
+                            jS.highlightedLast.start.row = first;
+                            jS.highlightedLast.start.col = 1;
+                            jS.highlightedLast.end.row = last;
+                            jS.highlightedLast.end.col = size.cols;
+
+                            row = last;
+
+                            do {
+                                obj = obj.add(jS.getTd(jS.i, row, 1)[0].parentNode);
+                            } while(row-- > first);
+                            break;
+                        case 'corner': //all
+                            start.row = 1;
+                            start.col = 1;
+                            stop.col = size.cols;
+                            stop.row = size.rows;
+
+                            obj = obj.add(sheet);
+                            break;
+                    }
+
+                    setActive(begin > end);
+
+                    jS.themeRoller.cell.setHighlighted(obj);
+                },
+
+                /**
+                 * gets a range of selected cells, then returns it
+                 * @param {Object} e jQuery event, optional, when in use, is during mouse down
+                 * @param {String} v Value to preserve and return
+                 * @param newFn
+                 * @param notSetFormula
+                 * @returns {String}
+                 * @methodOf jS
+                 * @name getTdRange
+                 */
+                getTdRange:function (e, v, newFn, notSetFormula) {
+                    jS.cellLast.isEdit = true;
+
+                    var range = function (loc) {
+                            if (loc.first.col > loc.last.col ||
+                                loc.first.row > loc.last.row
+                                ) {
+                                return {
+                                    first:jSE.parseCellName(loc.last.col, loc.last.row),
+                                    last:jSE.parseCellName(loc.first.col, loc.first.row)
+                                };
+                            } else {
+                                return {
+                                    first:jSE.parseCellName(loc.first.col, loc.first.row),
+                                    last:jSE.parseCellName(loc.last.col, loc.last.row)
+                                };
+                            }
+                        },
+                        label = function (loc) {
+                            var rangeLabel = range(loc),
+                                v2 = v + '';
+                            v2 = (v2.match(/=/) ? v2 : '=' + v2); //make sure we can use this value as a formula
+
+                            if (newFn || v2.charAt(v2.length - 1) != '(') { //if a function is being sent, make sure it can be called by wrapping it in ()
+                                v2 = v2 + (newFn ? newFn : '') + '(';
+                            }
+
+                            var formula,
+                                lastChar = '';
+                            if (rangeLabel.first != rangeLabel.last) {
+                                formula = rangeLabel.first + ':' + rangeLabel.last;
+                            } else {
+                                formula = rangeLabel.first;
+                            }
+
+                            if (v2.charAt(v2.length - 1) == '(') {
+                                lastChar = ')';
+                            }
+
+                            return v2 + formula + lastChar;
+                        },
+                        newVal = '',
+                        loc,
+                        sheet,
+                        cells;
+
+                    if (e) { //if from an event, we use mousemove method
+                        loc = {
+                            first:jS.getTdLocation([e.target])
+                        };
+
+                        sheet = jS.obj.table().mousemove(function (e) {
+                            loc.last = jS.getTdLocation([e.target]);
+
+                            newVal = label(loc);
+
+                            if (!notSetFormula) {
+                                jS.obj.formula().val(newVal);
+                                jS.obj.inPlaceEdit().val(newVal);
+                            }
+                        });
+
+                        $doc.one('mouseup', function () {
+                            sheet.unbind('mousemove');
+                            return newVal;
+                        });
+                    } else {
+                        cells = jS.highlighted().not(jS.obj.tdActive());
+
+                        if (cells.length) {
+                            var loc = { //tr/td column and row index
+                                first:jS.getTdLocation(cells.first()),
+                                last:jS.getTdLocation(cells.last())
+                            };
+
+                            newVal = label(loc);
+
+                            if (!notSetFormula) {
+                                jS.obj.formula().val(newVal);
+                                jS.obj.inPlaceEdit().val(newVal);
+                            }
+
+                            return newVal;
+                        } else {
+                            return '';
+                        }
+                    }
+                },
+
+                /**
+                 * Gets the td element within a spreadsheet instance
+                 * @param {Number} tableIndex table index
+                 * @param {Number} rowIndex row index
+                 * @param {Number} colIndex column index
+                 * @returns {Element}
+                 * @methodOf
+                 * @name getTd
+                 */
+                getTd:function (tableIndex, rowIndex, colIndex) {
+                    var table = jS.obj.tables()[tableIndex], tbody, row, td;
+                    if (
+                        !table || !(tbody = table.children[1]) || !(row = tbody.children[rowIndex]) || !(td = row.children[colIndex])
+                        ) {
+                        return $('<td />');
+                    }
+                    return $(td);
+                },
+
+                /**
+                 * Gets the td row and column index as an object {row, col}
+                 * @param td
+                 * @returns {Object}
+                 * @methodOf jS
+                 * @name getTdLocation
+                 */
+                getTdLocation:function (td) {
+                    var result = {col:0, row:0};
+                    td = td || '';
+                    if (!td && !td[0]) return result;
+
+                    td = td[0] || td;
+
+                    if (td.cellIndex == u || td.parentNode == u || td.parentNode.rowIndex == u) return result;
+
+                    return {
+                        col:parseInt(td.cellIndex),
+                        row:parseInt(td.parentNode.rowIndex)
+                    };
+                },
+
+                /**
+                 * Get a td from a pixel location
+                 * @param {Number} left pixels from left
+                 * @param {Number} top pixels from top
+                 * @param {Boolean} isBar
+                 * @returns {Element|Boolean} Boolean if not found
+                 * @methodOf jS
+                 * @name getTdFromXY
+                 */
+                getTdFromXY:function (left, top, isBar) {
+                    var pane = jS.obj.pane(),
+                        paneOffset = pane.offset();
+
+                    top += paneOffset.top;
+                    left += paneOffset.left;
+
+                    //here we double check that the coordinates are inside that of the pane, if so then we can continue
+                    if (
+                        (
+                            top >= paneOffset.top &&
+                                top <= paneOffset.top + pane.height()
+                            )
+                            &&
+                            (
+                                left >= paneOffset.left &&
+                                    left <= paneOffset.left + pane.width()
+                                )
+                        ) {
+                        var td = $.nearest({x:left, y:top}, jS.obj.table().children('tbody').children('tr').children('td'));
+
+                        //I use this snippet to help me know where the point was positioned
+                        /*var o = $('<div class="ui-widget-content" style="position: absolute;">TESTING TESTING</div>')
+                         .css('top', top + 'px')
+                         .css('left', left + 'px')
+                         .appendTo('body');*/
+
+                        if (td.type == 'cell') {
+                            return td;
+                        }
+
+                        if (isBar && td.type == 'bar') {
+                            return td;
+                        }
+
+                        return false;
+                    }
+                    return false;
+                },
+
+                /**
+                 * Get the bar index from an Element
+                 * @memberOf jS
+                 * @namespace
+                 * @name getBarIndex
+                 */
+                getBarIndex:{
+
+                    /**
+                     * get index from bar left element
+                     * TODO: Needs to use object's index to be faster
+                     * @param o
+                     * @returns {Number}
+                     * @methodOf jS.getBarIndex
+                     * @name left
+                     */
+                    left:function (o) {
+                        o = o || {};
+                        if (!o.parentNode || isNaN(o.parentNode.rowIndex)) {
+                            return -1;
+                        } else {
+                            return o.parentNode.rowIndex;
+                        }
+                    },
+
+                    /**
+                     * get index from bar top element
+                     * TODO: Needs to use object's index to be faster
+                     * @param o
+                     * @returns {Number}
+                     * @methodOf hS.getBarIndex
+                     * @name top
+                     */
+                    top:function (o) {
+                        o = o || {};
+                        if (isNaN(o.cellIndex)) {
+                            return -1;
+                        } else {
+                            return o.cellIndex;
+                        }
+                    },
+                    corner:function () {
+                        return 0;
+                    }
+                },
+
+                /**
+                 * Time manager for measuring execution speed
+                 * @namespace
+                 * @name time
+                 * @memberOf jS
+                 */
+                time:{
+                    now:new Date(),
+                    last:new Date(),
+                    diff:function () {
+                        return math.abs(math.ceil(this.last.getTime() - this.now.getTime()) / 1000).toFixed(5);
+                    },
+                    set:function () {
+                        this.last = this.now;
+                        this.now = new Date();
+                    },
+                    get:function () {
+                        return this.now.getHours() + ':' + this.now.getMinutes() + ':' + this.now.getSeconds();
+                    }
+                },
+
+                /**
+                 * The log prints: {Current Time}, {Seconds from last log};{msg}
+                 * @param msg
+                 * @memberOf jS
+                 * @name log
+                 */
+                log:function (msg) {  //
+                    jS.time.set();
+                    console.log(jS.time.get() + ', ' + jS.time.diff() + '; ' + msg);
+                },
+
+                /**
+                 * Changed tracker per sheet
+                 * @memberOf jS
+                 * @name changed
+                 */
+                changed:[],
+
+                /**
+                 * Changed = needs to be calculated
+                 * @methodOf jS
+                 * @name isChanged
+                 */
+                isChanged:function () {
+                    return jS.changed[jS.i];
+                },
+
+                /**
+                 * Sets changed
+                 * @param {Boolean} changed changed state
+                 * @name setChanged
+                 * @methodOf jS
+                 */
+                setChanged:function (changed) {
+                    jS.changed[jS.i] = changed;
+                },
+
+                /**
+                 * Dirty = changed needs saved
+                 * @memberOf jS
+                 */
+                isDirty:false,
+
+                /**
+                 * Dirty manager
+                 * @param dirty
+                 * @methodOf jS
+                 * @name setDirty
+                 */
+                setDirty:function (dirty) {
+                    jS.dirty = dirty;
+                },
+
+                /**
+                 * @param v
+                 * @methodOf jS
+                 * @name appendToFormula
+                 */
+                appendToFormula:function (v) {
+                    var formula = jS.obj.formula(),
+                        fV = formula.val();
+
+                    if (fV.charAt(0) != '=') {
+                        fV = '=' + fV;
+                    }
+
+                    formula.val(fV + v);
+                },
+
+                /**
+                 *
+                 */
+                undo:{
+                    manager:(
+                        window.UndoManager
+                            ? new UndoManager()
+                            : {
+                                undo: emptyFN,
+                                redo: emptyFN,
+                                register: emptyFN,
+                                notLoaded: true
+                            }
+                    ),
+                    cells:[],
+                    id:0,
+                    createCells: function(cells, id, fn) {
+                        if (this.manager.notLoaded) {
+                            this.createCells = function(cells, id, fn) {
+                                return fn();
+                            };
+                            return this.createCells(cells, id, fn);
+                        }
+                        if (id == u) {
+                            jS.undo.id++;
+                            id = jS.undo.id;
+                        }
+
+                        var before = new jSCellRange(cells).clone().cells,
+                            after = (fn ? new jSCellRange(fn()).clone().cells : before);
+
+                        before.id = id;
+                        after.id = id;
+
+                        jS.undo.manager.register(u, jS.undo.removeCells, [before, id], 'Remove Cells', u, jS.undo.createCells, [after, id], 'Create Cells');
+
+                        if (id != jS.undo.id || !fn) {
+                            jS.undo.draw(after);
+                        }
+                    },
+                    removeCells: function(cells, id) {
+                        var i = 0, index = -1;
+                        if (cells.id === id) {
+                            index = i;
+                        }
+
+                        if (index !== -1) {
+                            //jS.undo.cells.splice(index, 1);
+                        }
+                        jS.undo.draw(cells);
+                    },
+                    draw: function(clones) {
+                        var i;
+                        for (i = 0; i < clones.length; i++) {
+                            var clone = clones[i],
+                                loc = jS.getTdLocation(clone.td),
+                                cell = jS.spreadsheets[clone.sheet][loc.row][loc.col];
+
+                            cell.value = clone.value;
+                            cell.formula = clone.formula;
+                            cell.td = clone.td;
+                            cell.dependencies = clone.dependencies;
+                            cell.needsUpdated = clone.needsUpdated;
+                            cell.calcCount = clone.calcCount;
+                            cell.sheet = clone.sheet;
+                            cell.calcLast = clone.calcLast;
+                            cell.html = clone.html;
+                            cell.state = clone.state;
+                            cell.jS = clone.jS;
+                            cell.calcDependenciesLast = clone.calcDependenciesLast;
+                            cell.td.attr('style', clone.style);
+                            cell.td.attr('class', clone.cl);
+
+                            jS.updateCellValue.apply(cell);
+                        }
+                    }
+                },
+
+                /**
+                 * get cols associated with a sheet/table within an instance
+                 * @param {jQuery|HTMLElement} o table
+                 * @returns {Element}
+                 * @name cols
+                 * @methodOf jS
+                 */
+                cols:function (o) {
+                    o = o || jS.obj.table()[0];
+
+                    //table / colgroup / col
+                    if (!o) return [];
+                    if (!o.colgroup) return [];
+                    if (!o.colgroup.children) return [];
+
+                    return o.colgroup.children
+                },
+
+                tables:function (o) {
+                    o = o || jS.obj.tables();
+                    o = o.clone();
+                    o.find('.' + jS.cl.barTopParent).remove();
+                    o.find('.' + jS.cl.barLeft).remove();
+                    o.children('colgroup').children('col:first').remove();
+                    o = jS.sheetDecorateRemove(false, o);
+                    return o;
+                },
+
+                /**
+                 * get col associated with a sheet/table within an instance
+                 * @param {jQuery|HTMLElement} o table
+                 * @param {Number} i, Index of column
+                 * @returns {Element}
+                 * @methodOf jS
+                 * @name col
+                 */
+                col:function (o, i) {
+                    o = o || jS.obj.table()[0];
+
+                    var cols = jS.cols(o);
+
+                    if (i === u) {
+                        i = cols.length - 1;
+                    }
+
+                    return cols[i];
+                },
+
+                /**
+                 * get cells of a table row
+                 * @param {HTMLElement} table
+                 * @param {Index} row Index of row
+                 * @returns {Element}
+                 * @methodOf jS
+                 * @name rowTds
+                 */
+                rowTds:function (table, row) {
+                    table = table || jS.obj.table();
+
+                    var rows = jS.rows(table);
+
+                    if (row == u) {
+                        row = rows.length - 1;
+                    }
+
+
+                    if (!rows[row]) return {}; //tr
+                    if (!rows[row].children) return {}; //td
+
+                    return rows[row].children;
+                },
+
+                /**
+                 * Get rows of a sheet/table
+                 * @param {HTMLElement} table
+                 * @returns {Element}
+                 * @methodOf jS
+                 * @name rows
+                 */
+                rows:function (table) {
+                    table = table || jS.obj.table()[0];
+                    if (!table) return {}; //table
+                    if (!table.tbody) return {}; //tbody
+                    if (!table.tbody.children) return {}; //tr
+
+                    return table.tbody.children;
+                },
+
+                /**
+                 * Get all the td objects that are currently highlighted
+                 * @returns {jQuery|HTMLElement|Array}
+                 */
+                highlighted:function(cells) {
+                    var highlighted = jS.highlightedLast.obj || $([]),
+                        obj = [],
+                        tag,
+                        i;
+
+                    if (!(tag = highlighted) || !highlighted.length || !(tag = tag[0]) || !tag.tagName) {
+                        return cells ? obj : $(obj);
+                    }
+
+                    switch (tag.tagName) {
+                        case 'TD':
+                            i = highlighted.length - 1;
+                            do {
+                                obj.unshift(cells ? highlighted[i].jSCell : highlighted[i]);
+                            } while (i-- > 0);
+                        case 'TR':
+                            i = highlighted.length - 1;
+                            do {
+                                if (highlighted[i].tds) {
+                                    obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds);
+                                }
+                            } while(i-- > 0);
+                            break;
+                        case 'COL':
+                            highlighted = highlighted.filter('col');
+                            i = highlighted.length - 1;
+                            do {
+                                if (highlighted[i].tds) {
+                                    obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds)
+                                }
+                            } while(i-- > 0);
+                            break;
+                        case 'TABLE':
+                            obj = (cells ? tag.jSCells : tag.tds);
+                            break;
+                    }
+
+                    return cells ? obj : $(obj);
+                },
+
+                /**
+                 *
+                 * @param {jQuery|HTMLElement} o table
+                 * @returns {Object} {cols, rows}
+                 * @methodOf jS
+                 * @name sheetSize
+                 */
+                sheetSize:function (o) {
+                    o = o || jS.obj.table()[0];
+                    //table / tbody / tr / td
+
+                    var lastRow = jS.rowTds(o),
+                        loc = jS.getTdLocation(lastRow[lastRow.length - 1]);
+                    return {
+                        cols:loc.col,
+                        rows:loc.row
+                    };
+                },
+
+                /**
+                 * Toggles from editable to viewable and back
+                 * TODO: refactor, not working
+                 * @param replacementTables
+                 * @methodOf jS
+                 * @name toggleState
+                 */
+                toggleState:function (replacementTables) {
+                    if (s.allowToggleState) {
+                        var tables = replacementTables || jS.tables().detach();
+                        if (s.editable) {
+                            jS.evt.cellEditAbandon();
+                            jS.trigger('sheetSave', [tables]);
+                        }
+                        jS.setDirty(false);
+                        jS.setChanged(true);
+                        s.editable = !s.editable;
+
+                        jS.kill();
+
+                        s.parent
+                            .html(tables)
+                            .sheet(s);
+                        s = null;
+                    }
+                },
+
+                /**
+                 * Turns a cell into a forumla variable so it can be accessed by a name
+                 * @param ref
+                 * @methodOf jS
+                 * @name setCellRef
+                 */
+                setCellRef:function (ref) {
+                    var td = jS.obj.tdActive(),
+                        loc = jS.getTdLocation(td),
+                        cellRef = (ref ? ref : prompt(jS.msg.setCellRef));
+
+                    if (cellRef) { //TODO: need to update value when cell is updated
+                        jS.s.formulaVariables[cellRef] = jS.updateCellValue(jS.i, loc.row, loc.col);
+                    }
+                }
+            };
 		jS.setBusy(true);
 		s.parent.data('sheetInstance', jS);
 		s.parent[0].jS = jS;
 
 		//got tired of ie crashing when console not available
-		if (!window.console) window.console = {log:function () {
-		}};
-
-		var win = window,
-			$win = $(win),
-			doc = document,
-			$doc = $(doc),
-			$body = $('body'),
-			emptyFN = function () {
-			},
-			u = undefined,
-			math = Math,
-			jSCellRange = function(cells) {
-				this.cells = cells || [];
-			};
-
-		jSCellRange.prototype = {
-			clone: function() {
-				var clones = [];
-				for(var i = 0; i < this.cells.length;i++) {
-					var cell = this.cells[i],
-						clone = {
-							value:cell.value,
-							formula:cell.formula,
-							td: cell.td,
-							dependencies: cell.dependencies,
-							needsUpdated: cell.needsUpdated,
-							calcCount: cell.calcCount,
-							sheet: cell.sheet,
-							calcLast: cell.calcLast,
-							html: cell.html,
-							state: cell.state,
-							jS: cell.jS,
-							calcDependenciesLast: cell.calcDependenciesLast,
-							calcLast: cell.calcLast,
-							style: cell.style || cell.td.attr('style') || '',
-							cl: cell.cl || cell.td.attr('class') || ''
-						};
-					clones.push(clone);
-				}
-				return new jSCellRange(clones);
-			}
-		};
+		if (!window.console) window.console = {log:function () {}};
 
 		if (!win.scrollBarSize) {
 			win.scrollBarSize = $.sheet.getScrollBarSize();
