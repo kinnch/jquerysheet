@@ -21,10 +21,12 @@
 
 		$(function() {
 			function test(string, expected) {
-				var arr = tsv.parse(':::::' + string), same = true;
+				var arr = tsv.parse(':::::' + string),
+                        same = true;
+                console.log({output: arr});
 				$.each(arr, function(i) {
 					$.each(arr[i], function(j) {
-						if (expected[i] == undefined || expected[i][j] == undefined || arr[i][j] != expected[i][j]) {
+						if (expected[i] != undefined && expected[i][j] != undefined && arr[i][j] != expected[i][j]) {
                             console.log({expected: expected[i][j], got: arr[i][j]});
 							same = false;
 						}
@@ -52,6 +54,18 @@
                         [""]
                     ]);
 			test("• No new test cases were created.  Confirmed the new style appeared everywhere in application.  Did adhoc testing for functionality\n• Going to be assigned to Natalia\n\n• A tab has been added to the 'Quirks Mode Fix' doc called 'Tab Confirmation'.  I started mapping the tabs, but Andrew is going to provide a list of all the tab updates\n\t\t\t\"• Had a review with Sameer.  \n• Started QA Review Doc\n• all features aren't finalized yet\"\n• Need to format spreadsheet and add to test suite\n\t\t", [[]]);
+
+
+            //here is the one that is failing
+            test("Test\t1\t1\t1\t1\n\t2\t2\t2\t2\n\t3\t3\t3\t3\n\t4\t4\t4\t4\n\t5\t5\t5\t5",
+                    [
+                        ["Test", "1", "1", "1", '1'],
+                        ['', '2', '2', '2', '2'],
+                        ['', '3', '3', '3', '3'],
+                        ['', '4', '4', '4', '4'],
+                        ['', '5', '5', '5', '5']
+                    ]
+            );
 		});
 	</script>
 </head>
