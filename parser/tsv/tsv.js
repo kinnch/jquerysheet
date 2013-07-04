@@ -101,6 +101,7 @@ case 4:
 	
 break;
 case 5:
+	    //END_OF_LINE_WITH_EMPTY_NEXT_FIRST_COLUMN
 	    this.$ = [''];
 	
 break;
@@ -120,6 +121,7 @@ case 8:
     
 break;
 case 9:
+        //rows END_OF_LINE_WITH_EMPTY_NEXT_FIRST_COLUMN
         $$[$0-1].push(['']);
         this.$ = $$[$0-1];
     
@@ -143,6 +145,7 @@ case 12:
     
 break;
 case 13:
+        //rows END_OF_LINE_WITH_EMPTY_NEXT_FIRST_COLUMN row
         $$[$0].unshift('');
         $$[$0-2].push($$[$0]);
         this.$ = $$[$0-2];
@@ -187,12 +190,10 @@ case 19:
 break;
 case 20:
         //COLUMN_STRING
-        console.log('column_first');
     
 break;
 case 21:
         //row COLUMN_STRING
-        console.log('column_second');
     
 break;
 case 22:
@@ -694,7 +695,6 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0:
     //<QUOTE>(\n|"\n")
-    console.log(yy_.yytext);
     return 14;
 
 break;
@@ -711,7 +711,6 @@ case 2:
         this.begin('STRING');
         return 16;
 	} else {
-	    console.log(yy_.yytext);
 	    return 14;
 	}
 
@@ -720,7 +719,6 @@ case 3:
     //<QUOTE>(?=(\t))
 	this.popState();
 	this.begin('STRING');
-	console.log(yy_.yytext);
 	return 14;
 
 break;
@@ -754,7 +752,6 @@ case 7:
 break;
 case 8:
     //<QUOTE>([a-zA-Z0-9_]+|.)
-    console.log(yy_.yytext);
     return 14;
 
 break;
@@ -783,8 +780,7 @@ case 12:
 
 break;
 case 13:
-    //<STRING>(.)
-    console.log(yy_.yytext);
+    //<STRING>([a-zA-Z0-9_ ]+|.)
     return 14;
 
 break;
@@ -818,12 +814,7 @@ case 19:
 
 break;
 case 20:
-    //(.)
-    console.log(yy_.yytext);
-    console.log(parser);
-    if (yy_.yytext == '22') {
-        (function(){})();
-    }
+    //([a-zA-Z0-9_ ]+|.)
 	this.begin('STRING');
 	return 14;
 

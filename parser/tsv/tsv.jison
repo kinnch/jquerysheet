@@ -12,7 +12,6 @@
 /* quote handling */
 <QUOTE>(\n|"\n") {
     //<QUOTE>(\n|"\n")
-    console.log(yytext);
     return 'CHAR';
 }
 <QUOTE>([\'\"])(?=<<EOF>>) {
@@ -27,7 +26,6 @@
         this.begin('STRING');
         return 'QUOTE_OFF';
 	} else {
-	    console.log(yytext);
 	    return 'CHAR';
 	}
 }
@@ -35,7 +33,6 @@
     //<QUOTE>(?=(\t))
 	this.popState();
 	this.begin('STRING');
-	console.log(yytext);
 	return 'CHAR';
 }
 <BOF>([\'\"]) {
@@ -64,7 +61,6 @@
 }
 <QUOTE>([a-zA-Z0-9_ ]+|.) {
     //<QUOTE>([a-zA-Z0-9_]+|.)
-    console.log(yytext);
     return 'CHAR';
 }
 /* end quote handling */
@@ -92,8 +88,7 @@
 	return 'COLUMN_STRING';
 }
 <STRING>([a-zA-Z0-9_ ]+|.) {
-    //<STRING>(.)
-    console.log(yytext);
+    //<STRING>([a-zA-Z0-9_ ]+|.)
     return 'CHAR';
 }
 <BOF> {
@@ -120,12 +115,7 @@
     return 'END_OF_LINE';
 }
 ([a-zA-Z0-9_ ]+|.) {
-    //(.)
-    console.log(yytext);
-    console.log(parser);
-    if (yytext == '22') {
-        (function(){})();
-    }
+    //([a-zA-Z0-9_ ]+|.)
 	this.begin('STRING');
 	return 'CHAR';
 }
@@ -243,11 +233,9 @@ row :
     //scenario where we have 2 values separated by a column, in this case the column is ignored
     | COLUMN_STRING {
         //COLUMN_STRING
-        console.log('column_first');
     }
     | row COLUMN_STRING {
         //row COLUMN_STRING
-        console.log('column_second');
     }
     | row COLUMN_STRING string {
         //row COLUMN_STRING string
