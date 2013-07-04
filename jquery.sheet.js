@@ -931,7 +931,8 @@ jQuery.sheet = {
 		//3rd party
 		colorPicker:{
 			css:'plugins/jquery.colorPicker.css',
-			script:'plugins/jquery.colorPicker.min.js'},
+			script:'plugins/jquery.colorPicker.min.js'
+		},
 
 		elastic:{script:'plugins/jquery.elastic.min.js'},
 
@@ -5777,7 +5778,7 @@ jQuery.sheet = {
                                 clearHighlightedModel = function() {};//jS.themeRoller.cell.clearHighlighted;
                                 break;
                             case 'oo':
-                                selectModel = function (target) {;
+                                selectModel = function (target) {
                                     if (jS.isCell(target)) {
                                         jS.cellEdit($(target));
                                     }
@@ -7989,7 +7990,7 @@ jQuery.sheet = {
                             i = highlighted.length - 1;
                             do {
                                 if (highlighted[i].tds) {
-                                    obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds)
+                                    obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds);
                                 }
                             } while(i-- > 0);
                             break;
