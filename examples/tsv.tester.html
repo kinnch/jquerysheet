@@ -21,7 +21,7 @@
 
 		$(function() {
 			function test(string, expected) {
-				var arr = tsv.parse(':::::' + string),
+				var arr = tsv.parse(string),
                         same = true;
                 console.log({output: arr});
 				$.each(arr, function(i) {
@@ -57,10 +57,10 @@
 
 
             //here is the one that is failing
-            test("Test\t1\t1\t1\t1\n\t2\t2\t2\t2\n\t3\t3\t3\t3\n\t4\t4\t4\t4\n\t5\t5\t5\t5",
+            test("Test\t1\t1\t1\t1\n\t22\t2\t2\t2\n\t3\t3\t3\t3\n\t4\t4\t4\t4\n\t5\t5\t5\t5",
                     [
                         ["Test", "1", "1", "1", '1'],
-                        ['', '2', '2', '2', '2'],
+                        ['', '22', '2', '2', '2'],
                         ['', '3', '3', '3', '3'],
                         ['', '4', '4', '4', '4'],
                         ['', '5', '5', '5', '5']
