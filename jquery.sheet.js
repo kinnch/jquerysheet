@@ -3294,7 +3294,7 @@ jQuery.sheet = {
 
                     if (loc.row == 0 && loc.col == 0) return false; //at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
 
-                    var row = tsv.parse(':::::' + val);
+                    var row = tsv.parse(val);
 
                     //Single cell value
                     if (!$.isArray(row)) {
