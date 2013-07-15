@@ -411,10 +411,7 @@ jQuery.fn.extend({
 					},
 					endOfNumber: false,
 					encode:function (val) {
-						if (!this.endOfNumber) {
-							var radix = globalize.culture().numberFormat['.'];
-							this.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
-						}
+
 						switch (typeof val) {
 							case 'object':
 								//check if it is a date
@@ -423,10 +420,6 @@ jQuery.fn.extend({
 								}
 
 								return val;
-							case 'number':
-								return globalize.format(val, "n10").replace(this.endOfNumber, function (orig, radix, num) {
-									return (num ? radix : '') + (num || '');
-								});
 						}
 
 						if (!val) {
@@ -435,12 +428,12 @@ jQuery.fn.extend({
 						if (!val.replace) {
 							return val || '';
 						}
-						var num = $.trim(val) * 1;
+						/*var num = $.trim(val) * 1;
 						if (!isNaN(num)) {
 							return globalize.format(num, "n10").replace(this.endOfNumber, function (orig, radix, num) {
 								return (num ? radix : '') + (num || '');
 							});
-						}
+						}*/
 
 						return val
 							.replace(/&/gi, '&amp;')
@@ -584,7 +577,16 @@ jQuery.fn.extend({
 							var num = globalize.parseFloat(this.value);
 							this.valueOverride = num;
 							this.td.html(globalize.format(num, 'c'));
-						}
+						},
+                        number: function() {
+                            if (!settings.endOfNumber) {
+                                var radix = globalize.culture().numberFormat['.'];
+                                settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+                            }
+                            return globalize.format(this.value, "n10").replace(settings.endOfNumber, function (orig, radix, num) {
+                                return (num ? radix : '') + (num || '');
+                            });
+                        }
 					}
 				},
 				events = jQuery.sheet.events;
@@ -1630,6 +1632,7 @@ jQuery.sheet = {
                         td:$td,
                         dependencies: [],
                         formula:td.getAttribute('data-formula') || '',
+                        cellType:td.getAttribute('data-celltype') || null,
                         value:td.textContent || td.innerText || '',
                         calcCount:calcCount || 0,
                         calcLast:calcLast || -1,
@@ -4702,6 +4705,7 @@ jQuery.sheet = {
 
                                         td
                                             .removeAttr('data-formula')
+                                            .removeAttr('data-celltype')
                                             .html('')
                                             .hide();
                                     }
@@ -5952,16 +5956,17 @@ jQuery.sheet = {
                     }
 
                     var i = cells.length - 1,
-                        remove = cells[i].type == type;
+                        remove = cells[i].cellType == type;
 
                     if (i >= 0) {
                         do {
                             if (remove) {
-                                cells[i].type = null;
+                                cells[i].cellType = null;
                             } else {
-                                cells[i].type = type;
+                                cells[i].cellType = type;
                             }
-                            jS.updateCellDependencies.apply(cells[i]);
+                            cells[i].calcLast = 0;
+                            jS.updateCellValue.apply(cells[i]);
                         } while(i--);
                     }
                 },
@@ -6102,8 +6107,8 @@ jQuery.sheet = {
                             }
                             jS.callStack--;
                             jS.filterValue.apply(cell);
-                        } else if (cell.type && s.cellTypeHandlers[cell.type]) {
-                            s.cellTypeHandlers[cell.type].apply(cell);
+                        } else if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
+                            s.cellTypeHandlers[cell.cellType].apply(cell);
                         } else {
                             if (cell.value != u && cell.value.charAt) {
                                 fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];

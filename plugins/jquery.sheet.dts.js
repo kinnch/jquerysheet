@@ -105,6 +105,7 @@
 							if (column['class']) td.attr('class', column['class'] || '');
 							if (column['style']) td.attr('style', column['style'] || '');
 							if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
+							if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
 							if (column['value']) td.html(column['value'] || '');
 						}
 					}
@@ -222,11 +223,13 @@
 							column = columns[m];
 							var td = $(doc.createElement('td')).appendTo(tr),
 								formula = column.getElementsByTagName('formula')[0],
+								cellType = column.getElementsByTagName('cellType')[0],
 								value = column.getElementsByTagName('value')[0],
 								style = column.getElementsByTagName('style')[0],
 								cl = column.getElementsByTagName('class')[0];
 
 							if (formula) td.attr('data-formula', '=' + (formula.textContent || formula.text));
+                            if (cellType) td.attr('data-celltype', cellType.textContent || cellType.text);
 							if (value) td.html(value.textContent || value.text);
 							if (style) td.attr('style', style.textContent || style.text);
 							if (cl) td.attr('class', cl.textContent || cl.text);
@@ -377,6 +380,7 @@
 								}
 
 								if (cell['formula']) jsonColumn['formula'] = cell['formula'];
+                                if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
 								if (cell['value']) jsonColumn['value'] = cell['value'];
 								if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
 
@@ -494,6 +498,7 @@
 								xmlColumn += '<column>';
 
 								if (cell.formula) xmlColumn += '<formula>' + cell.formula + '</formula>';
+								if (cell.cellType) xmlColumn += '<cellType>' + cell.cellType + '</cellType>';
 								if (cell.value) xmlColumn += '<value>' + cell.value + '</value>';
 								if (attr['style']) xmlColumn += '<style>' + attr['style'].value + '</style>';
 								if (cl) xmlColumn += '<class>' + cl + '</class>';
