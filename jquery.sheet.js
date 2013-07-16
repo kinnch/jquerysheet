@@ -563,6 +563,11 @@ jQuery.fn.extend({
 						}
 					},
 					cellTypeHandlers: {
+                        percent: function() {
+                            var num = globalize.parseFloat(this.value);
+                            this.valueOverride = num;
+                            this.td.html(globalize.format(num, 'p'));
+                        },
 						date: function() {
 							var date = globalize.parseDate(this.value);
 							this.valueOverride = date;
