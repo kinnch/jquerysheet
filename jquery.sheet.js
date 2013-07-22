@@ -2881,12 +2881,14 @@ jQuery.sheet = {
                     styleUpdater: function (style){
                         if (style.styleSheet) {
                             style.css = function (css) {
+                                this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disablednever becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
                                 if (!this.styleSheet.disabled) {
                                     this.styleSheet.cssText = css;
                                 }
                             };
                             style.touch = function () {};
                             style.styleString = function() {
+                                this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disablednever becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
                                 if (!this.styleSheet.disabled) {
                                     return this.styleSheet.cssText;
                                 }
