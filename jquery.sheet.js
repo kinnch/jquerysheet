@@ -579,7 +579,8 @@ jQuery.fn.extend({
 							this.td.html(globalize.format(date, 't'));
 						},
 						currency: function() {
-							var num = globalize.parseFloat(this.value);
+                            var num = (this.value.indexOf ? this.value : this.value + ''); //cast to string if needed
+							num = globalize.parseFloat(num);
 							this.valueOverride = num;
 							this.td.html(globalize.format(num, 'c'));
 						},
@@ -588,7 +589,7 @@ jQuery.fn.extend({
                                 var radix = globalize.culture().numberFormat['.'];
                                 settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
                             }
-                            return globalize.format(this.value, "n10").replace(settings.endOfNumber, function (orig, radix, num) {
+                            return globalize.format(this.value + '', "n10").replace(settings.endOfNumber, function (orig, radix, num) {
                                 return (num ? radix : '') + (num || '');
                             });
                         }
@@ -6114,6 +6115,10 @@ jQuery.sheet = {
                             }
                             jS.callStack--;
                             jS.filterValue.apply(cell);
+
+                            if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
+                                s.cellTypeHandlers[cell.cellType].apply(cell);
+                            }
                         } else if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
                             s.cellTypeHandlers[cell.cellType].apply(cell);
                         } else {
