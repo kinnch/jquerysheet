@@ -1071,7 +1071,7 @@ jQuery.sheet = {
         scrollTester.appendChild(scrollStyle);
 
         if (scrollStyle.styleSheet && !scrollStyle.styleSheet.disabled) {
-            scrollStyle.styleSheet.cssText = '#scrollTester:nth-child(1) { display: none; }';
+            scrollStyle.styleSheet.cssText = '#scrollTester div:nth-child(2) { display: none; }';
         } else {
             scrollStyle.innerHTML = '#scrollTester div:nth-child(2) { display: none; }';
         }
