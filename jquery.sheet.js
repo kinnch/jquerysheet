@@ -1059,7 +1059,24 @@ jQuery.sheet = {
 	nthCss:function (elementName, parentSelectorString, me, indexes, min, css) {
 		//the initial call overwrites this function so that it doesn't have to check if it is IE or not
 
-		if (me.styleSheet) {//this is where we check IE8 compatibility
+        var scrollTester = document.createElement('div'),
+            scrollItem1 = document.createElement('div'),
+            scrollItem2 = document.createElement('div'),
+            scrollStyle = document.createElement('style');
+
+        document.body.appendChild(scrollTester);
+        scrollTester.setAttribute('id', 'scrollTester');
+        scrollTester.appendChild(scrollItem1);
+        scrollTester.appendChild(scrollItem2);
+        scrollTester.appendChild(scrollStyle);
+
+        if (scrollStyle.styleSheet && !scrollStyle.styleSheet.disabled) {
+            scrollStyle.styleSheet.cssText = '#scrollTester:nth-child(1) { display: none; }';
+        } else {
+            scrollStyle.innerHTML = '#scrollTester div:nth-child(2) { display: none; }';
+        }
+
+		if ($(scrollItem2).is(':visible')) {//this is where we check IE8 compatibility
             this.max = 60;
 			this.nthCss = function (elementName, parentSelectorString, me, indexes, min, css) {
 				var style = [],
@@ -1097,6 +1114,8 @@ jQuery.sheet = {
 				return '';
 			};
 		}
+
+        document.body.removeChild(scrollTester);
 
 		//this looks like a nested call, but will only trigger once, since the function is overwritten from the above
 		return this.nthCss(elementName, parentSelectorString, me, indexes, min, css);
@@ -1843,7 +1862,7 @@ jQuery.sheet = {
 
                         switch (type) {
                             case "row":
-                                if ($.sheet.max <= sheetSize.rows) {
+                                if ($.sheet.max && $.sheet.max <= sheetSize.rows) {
                                     alert(jS.msg.maxRowsBrowserLimitation);
                                     return false;
                                 }
@@ -1909,7 +1928,7 @@ jQuery.sheet = {
                                 };
                                 break;
                             case "col":
-                                if ($.sheet.max <= sheetSize.cols) {
+                                if ($.sheet.max && $.sheet.max <= sheetSize.cols) {
                                     alert(jS.msg.maxColsBrowserLimitation);
                                     return false;
                                 }
