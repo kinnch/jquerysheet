@@ -377,7 +377,8 @@ jQuery.fn.extend({
 	 *
 	 */
 	sheet:function (settings) {
-		settings = settings || {};
+		var n = isNaN,
+        settings = settings || {};
 		jQuery(this).each(function () {
 			var globalize = Globalize,
 				me = jQuery(this),
@@ -565,8 +566,16 @@ jQuery.fn.extend({
 					cellTypeHandlers: {
                         percent: function() {
                             var num = globalize.parseFloat(this.value);
-                            this.valueOverride = num;
-                            this.td.html(globalize.format(num, 'p'));
+
+                            if (n(num)) { //failure
+                                this.valueOverride = 0;
+                                this.td.html(globalize.format(0, 'p'));
+
+                            } else { //success
+                                this.valueOverride = num;
+                                this.td.html(globalize.format(num, 'p'));
+                            }
+
                         },
 						date: function() {
 							var date = globalize.parseDate(this.value);
@@ -581,17 +590,31 @@ jQuery.fn.extend({
 						currency: function() {
                             var num = (this.value.indexOf ? this.value : this.value + ''); //cast to string if needed
 							num = globalize.parseFloat(num);
-							this.valueOverride = num;
-							this.td.html(globalize.format(num, 'c'));
+
+                            if (n(num)) { //failure
+                                this.valueOverride = 0;
+                                this.td.html(globalize.format(0, 'c'));
+
+                            } else { //success
+                                this.valueOverride = num;
+                                this.td.html(globalize.format(num, 'c'));
+                            }
 						},
                         number: function() {
                             if (!settings.endOfNumber) {
                                 var radix = globalize.culture().numberFormat['.'];
                                 settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
                             }
-                            return globalize.format(this.value + '', "n10").replace(settings.endOfNumber, function (orig, radix, num) {
-                                return (num ? radix : '') + (num || '');
-                            });
+
+                            if (n(this.value)) { //failure
+                                this.valueOverride = 0;
+                                this.td.html(0);
+
+                            } else { //success
+                                this.td.html(globalize.format(this.value + '', "n10").replace(settings.endOfNumber, function (orig, radix, num) {
+                                    return (num ? radix : '') + (num || '');
+                                }));
+                            }
                         }
 					}
 				},
@@ -1037,6 +1060,7 @@ jQuery.sheet = {
 		//the initial call overwrites this function so that it doesn't have to check if it is IE or not
 
 		if (me.styleSheet) {//this is where we check IE8 compatibility
+            this.max = 60;
 			this.nthCss = function (elementName, parentSelectorString, me, indexes, min, css) {
 				var style = [],
 					index = indexes.length;
@@ -1111,6 +1135,7 @@ jQuery.sheet = {
             emptyFN = function () {},
             u = undefined,
             math = Math,
+            n = isNaN,
             jSCellRange = function(cells) {
                 this.cells = cells || [];
             },
@@ -1523,7 +1548,9 @@ jQuery.sheet = {
                     notFoundRow:"Row not found",
                     notFoundSheet:"Sheet not found",
                     setCellRef:"Enter the name you would like to reference the cell by.",
-                    sheetTitleDefault:"Spreadsheet {index}"
+                    sheetTitleDefault:"Spreadsheet {index}",
+                    maxRowsBrowserLimitation:"You've reached the maximum amount of rows this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+",
+                    maxColsBrowserLimitation:"You've reached the maximum amount of columns this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+"
                 },
 
                 /**
@@ -1753,7 +1780,7 @@ jQuery.sheet = {
                             qty = prompt(jS.msg.addRowMulti);
                         }
                         if (qty) {
-                            if (!isNaN(qty)) {
+                            if (!n(qty)) {
                                 jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'row', skipFormulaReparse);
                                 jS.trigger('sheetAddRow', [i, isBefore, qty]);
                             }
@@ -1774,7 +1801,7 @@ jQuery.sheet = {
                             qty = prompt(jS.msg.addColumnMulti);
                         }
                         if (qty) {
-                            if (!isNaN(qty)) {
+                            if (!n(qty)) {
                                 jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'col', skipFormulaReparse);
                                 jS.trigger('sheetAddColumn', [i, isBefore, qty]);
                             }
@@ -1816,6 +1843,10 @@ jQuery.sheet = {
 
                         switch (type) {
                             case "row":
+                                if ($.sheet.max <= sheetSize.rows) {
+                                    alert(jS.msg.maxRowsBrowserLimitation);
+                                    return false;
+                                }
                                 o = {
                                     el:function () {
                                         //table / tbody / tr / td
@@ -1878,6 +1909,10 @@ jQuery.sheet = {
                                 };
                                 break;
                             case "col":
+                                if ($.sheet.max <= sheetSize.cols) {
+                                    alert(jS.msg.maxColsBrowserLimitation);
+                                    return false;
+                                }
                                 o = {
                                     el:function () {
                                         var tdStart = jS.rowTds(sheet, 1)[i],
@@ -4491,7 +4526,7 @@ jQuery.sheet = {
                  * @name renameSheet
                  */
                 renameSheet:function (i) {
-                    if (isNaN(i)) return false;
+                    if (n(i)) return false;
 
                     if (i > -1)
                         jS.sheetTab();
@@ -4504,7 +4539,7 @@ jQuery.sheet = {
                  * @name switchSheet
                  */
                 switchSheet:function (i) {
-                    if (isNaN(i)) return false;
+                    if (n(i)) return false;
 
                     if (i == -1) {
                         jS.addSheet();
@@ -4833,7 +4868,7 @@ jQuery.sheet = {
                             return true;
                         }
                     } else {
-                        if ((isNumber = !isNaN(newV)) || newV.length > 0) {
+                        if ((isNumber = !n(newV)) || newV.length > 0) {
                             if (isNumber && newV != '') {
                                 newV *= 1;
 
@@ -6252,7 +6287,7 @@ jQuery.sheet = {
                             case 'number':
                                 return num;
                             case 'string':
-                                if (!isNaN(num)) {
+                                if (!n(num)) {
                                     return num * 1;
                                 }
                             case 'object':
@@ -6268,7 +6303,7 @@ jQuery.sheet = {
                         switch (type1 = (typeof num1)) {
                             case 'number':break;
                             case 'string':
-                                if (!isNaN(num1)) {
+                                if (!n(num1)) {
                                     num1 *= 1;
                                 }
                                 break;
@@ -6284,7 +6319,7 @@ jQuery.sheet = {
                         switch (type2 = (typeof num2)) {
                             case 'number':break;
                             case 'string':
-                                if (!isNaN(num2)) {
+                                if (!n(num2)) {
                                     num2 *= 1;
                                 }
                                 break;
@@ -7690,7 +7725,7 @@ jQuery.sheet = {
                      */
                     left:function (o) {
                         o = o || {};
-                        if (!o.parentNode || isNaN(o.parentNode.rowIndex)) {
+                        if (!o.parentNode || n(o.parentNode.rowIndex)) {
                             return -1;
                         } else {
                             return o.parentNode.rowIndex;
@@ -7707,7 +7742,7 @@ jQuery.sheet = {
                      */
                     top:function (o) {
                         o = o || {};
-                        if (isNaN(o.cellIndex)) {
+                        if (n(o.cellIndex)) {
                             return -1;
                         } else {
                             return o.cellIndex;
