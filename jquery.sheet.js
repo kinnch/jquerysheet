@@ -627,7 +627,7 @@ jQuery.fn.extend({
 			if (!jQuery.sheet.instance.length) jQuery.sheet.instance = $([]);
 
 			jS = jQuery.sheet.createInstance(jQuery, jQuery.extend(defaults, settings), jQuery.sheet.instance.length);
-			jQuery.sheet.instance.pushStack(jS);
+            jQuery.sheet.instance = jQuery.sheet.instance.add(jS);
 		});
 		return this;
 	},
