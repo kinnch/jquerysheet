@@ -567,11 +567,7 @@ jQuery.fn.extend({
                         percent: function() {
                             var num = globalize.parseFloat(this.value);
 
-                            if (n(num)) { //failure
-                                this.valueOverride = 0;
-                                this.td.html(globalize.format(0, 'p'));
-
-                            } else { //success
+                            if (!n(num)) {//success
                                 this.valueOverride = num;
                                 this.td.html(globalize.format(num, 'p'));
                             }
@@ -591,11 +587,7 @@ jQuery.fn.extend({
                             var num = (this.value.indexOf ? this.value : this.value + ''); //cast to string if needed
 							num = globalize.parseFloat(num);
 
-                            if (n(num)) { //failure
-                                this.valueOverride = 0;
-                                this.td.html(globalize.format(0, 'c'));
-
-                            } else { //success
+                            if (!n(num)) {//success
                                 this.valueOverride = num;
                                 this.td.html(globalize.format(num, 'c'));
                             }
@@ -606,11 +598,7 @@ jQuery.fn.extend({
                                 settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
                             }
 
-                            if (n(this.value)) { //failure
-                                this.valueOverride = 0;
-                                this.td.html(0);
-
-                            } else { //success
+                            if (!n(this.value)) {//success
                                 this.td.html(globalize.format(this.value + '', "n10").replace(settings.endOfNumber, function (orig, radix, num) {
                                     return (num ? radix : '') + (num || '');
                                 }));
@@ -6318,21 +6306,33 @@ jQuery.sheet = {
                     },
 
                     performMath: function (mathType, num1, num2) {
-                        var type1, type2, value, output = function(val) {return val;};
+                        var type1,
+                            type2,
+                            type1IsNumber = true,
+                            type2IsNumber = true,
+                            errors = [],
+                            value,
+                            output = function(val) {return val;};
+
                         switch (type1 = (typeof num1)) {
                             case 'number':break;
                             case 'string':
                                 if (!n(num1)) {
                                     num1 *= 1;
+                                } else {
+                                    type1IsNumber = false;
                                 }
                                 break;
                             case 'object':
                                 if (num1.getMonth) {
                                     num1 = dates.toCentury(num1);
                                     output = dates.get;
+                                } else {
+                                    type1IsNumber = false;
                                 }
                                 break;
                             default:
+                                type1IsNumber = false;
                         }
 
                         switch (type2 = (typeof num2)) {
@@ -6340,14 +6340,31 @@ jQuery.sheet = {
                             case 'string':
                                 if (!n(num2)) {
                                     num2 *= 1;
+                                } else {
+                                    type2IsNumber = false;
                                 }
                                 break;
                             case 'object':
                                 if (num2.getMonth) {
                                     num2 = dates.toCentury(num2);
+                                } else {
+                                    type2IsNumber = false;
                                 }
                                 break;
                             default:
+                                type2IsNumber = false;
+                        }
+
+                        if (!type1IsNumber) {
+                            errors.push('not a number: ' + num1);
+                        }
+
+                        if (!type2IsNumber) {
+                            errors.push('not a number: ' + num2);
+                        }
+
+                        if (errors.length) {
+                            throw new Error(errors.join(';') + ';');
                         }
 
                         switch (mathType) {
