@@ -627,7 +627,7 @@ jQuery.fn.extend({
 			if (!jQuery.sheet.instance.length) jQuery.sheet.instance = $([]);
 
 			jS = jQuery.sheet.createInstance(jQuery, jQuery.extend(defaults, settings), jQuery.sheet.instance.length);
-			jQuery.sheet.instance = jQuery.sheet.instance.add(jS);
+			jQuery.sheet.instance.pushStack(jS);
 		});
 		return this;
 	},
@@ -1249,7 +1249,7 @@ jQuery.sheet = {
                             tds:function () {
                                 var tds = $([]);
                                 for (var i in this.td[jS.i]) {
-                                    tds = tds.add(this.td[jS.i][i]);
+                                    tds.pushStack(this.td[jS.i][i]);
                                 }
                                 return tds;
                             }
@@ -1264,7 +1264,7 @@ jQuery.sheet = {
                             tds:function () {
                                 var tds = $([]);
                                 for (var i in this.td[jS.i]) {
-                                    tds = tds.add(this.td[jS.i][i]);
+                                    tds.pushStack(this.td[jS.i][i]);
                                 }
                                 return tds;
                             }
@@ -1422,7 +1422,7 @@ jQuery.sheet = {
                         return jS.controls.bar.y.scroll[jS.i] || $([]);
                     },
                     scrollStyles:function() {
-                        return $(this.scrollStyleX()).add(this.scrollStyleY());
+                        return $([this.scrollStyleX(), this.scrollStyleY()]);
                     },
                     scroll:function () {
                         return jS.controls.scroll[jS.i] || $([]);
@@ -2327,7 +2327,7 @@ jQuery.sheet = {
                         for (var msg in menuItems) {
                             if (menuItems[msg]) {
                                 if ($.isFunction(menuItems[msg])) {
-                                    buttons = buttons.add(
+                                    buttons.pushStack(
                                         $(doc.createElement('div'))
                                             .text(msg)
                                             .data('msg', msg)
@@ -2343,7 +2343,7 @@ jQuery.sheet = {
                                             }, function() {
                                                 $(this).removeClass('ui-state-highlight');
                                             })
-                                        );
+                                    );
 
                                 } else if (menuItems[msg] == 'line') {
                                     $(doc.createElement('hr')).appendTo(menu);
@@ -5164,7 +5164,7 @@ jQuery.sheet = {
                         col,
                         cell,
                         i = jS.i,
-                        o = {cell: $([]), td: $([])};
+                        o = {cell: [], td: []};
 
 
                     if (ordered) {
@@ -5183,8 +5183,8 @@ jQuery.sheet = {
                         col = grid.end.col;
                         do {
                             cell = jS.spreadsheets[i][row][col];
-                            o.cell = o.cell.add(cell);
-                            o.td = o.td.add(cell.td);
+                            o.cell.push(cell);
+                            o.td.push(cell.td[0]);
                         } while (col-- > grid.start.col);
                     } while (row-- > grid.start.row);
 
