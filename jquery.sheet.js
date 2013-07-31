@@ -1557,7 +1557,8 @@ jQuery.sheet = {
                     setCellRef:"Enter the name you would like to reference the cell by.",
                     sheetTitleDefault:"Spreadsheet {index}",
                     maxRowsBrowserLimitation:"You've reached the maximum amount of rows this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+",
-                    maxColsBrowserLimitation:"You've reached the maximum amount of columns this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+"
+                    maxColsBrowserLimitation:"You've reached the maximum amount of columns this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+",
+                    maxSizeBrowserLimitationOnOpen:"The spreadsheet you are loading is larger than the maximum size of cells this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+. You can an proceed, but the spreadsheet may not work as intended."
                 },
 
                 /**
@@ -1850,10 +1851,19 @@ jQuery.sheet = {
 
                         switch (type) {
                             case "row":
-                                if ($.sheet.max && $.sheet.max <= sheetSize.rows) {
-                                    alert(jS.msg.maxRowsBrowserLimitation);
-                                    return false;
-                                }
+	                            if ($.sheet.max) {
+		                            //if current size is less than max, but the qty needed is more than the max
+		                            if ($.sheet.max > sheetSize.rows && $.sheet.max <= sheetSize.rows + qty) {
+			                            qty = $.sheet.max - sheetSize.rows;
+
+			                        //if current size is more than max
+		                            } else if ($.sheet.max && $.sheet.max <= sheetSize.rows + qty) {
+			                            if (!jS.isBusy()) {
+			                                alert(jS.msg.maxRowsBrowserLimitation);
+			                            }
+			                            return false;
+		                            }
+	                            }
                                 o = {
                                     el:function () {
                                         //table / tbody / tr / td
@@ -1916,10 +1926,19 @@ jQuery.sheet = {
                                 };
                                 break;
                             case "col":
-                                if ($.sheet.max && $.sheet.max <= sheetSize.cols) {
-                                    alert(jS.msg.maxColsBrowserLimitation);
-                                    return false;
-                                }
+	                            if ($.sheet.max) {
+		                            //if current size is less than max, but the qty needed is more than the max
+		                            if ($.sheet.max > sheetSize.cols && $.sheet.max <= sheetSize.cols + qty) {
+			                            qty = $.sheet.max - sheetSize.cols;
+
+			                            //if current size is more than max
+		                            } else if ($.sheet.max && $.sheet.max <= sheetSize.cols + qty) {
+			                            if (!jS.isBusy()) {
+			                                alert(jS.msg.maxColsBrowserLimitation);
+			                            }
+			                            return false;
+		                            }
+	                            }
                                 o = {
                                     el:function () {
                                         var tdStart = jS.rowTds(sheet, 1)[i],
@@ -7226,7 +7245,8 @@ jQuery.sheet = {
                         var header = jS.controlFactory.header(),
                             ui = jS.controlFactory.ui(),
                             tabContainer = jS.controlFactory.tabContainer(),
-                            i = tables.length - 1;
+                            i = tables.length - 1,
+	                        size;
 
                         jS.sheetCount = tables.length - 1;
 
@@ -7245,6 +7265,15 @@ jQuery.sheet = {
                             .append(tabContainer);
 
                         for (i = 0; i < tables.length; i++) {
+	                        if ($.sheet.max) {
+	                            size = jS.tableSize(tables[i]);
+		                        if (size.rows > $.sheet.max || size.cols > $.sheet.max) {
+			                        jS.trigger('sheetMaxSize', [tables[i], i]);
+			                        if (!confirm(jS.msg.maxSizeBrowserLimitationOnOpen)) {
+				                        continue;
+			                        }
+		                        }
+	                        }
                             jS.controlFactory.sheetUI(ui, tables[i], i);
                             jS.sheetCount++;
                             jS.calc(i);
@@ -8108,6 +8137,28 @@ jQuery.sheet = {
                         rows:loc.row
                     };
                 },
+
+				/**
+				 *
+				 * @param {jQuery|HTMLElement} o table
+				 * @returns {Object} {cols, rows}
+				 * @methodOf jS
+				 * @name tableSize
+				 */
+				tableSize:function (table) {
+					table = table || jS.obj.table()[0];
+					//table / tbody / tr / td
+
+					var trs = (table.children[0].nodeName != "TBODY" ? table.children[1] : table.children[0]).children,
+						tds = trs[trs.length - 1].children,
+						td = tds[tds.length - 1],
+						loc = jS.getTdLocation(td);
+
+					return {
+						cols:loc.col,
+						rows:loc.row
+					};
+				},
 
                 /**
                  * Toggles from editable to viewable and back
