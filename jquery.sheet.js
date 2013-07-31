@@ -570,6 +570,8 @@ jQuery.fn.extend({
                             if (!n(num)) {//success
                                 this.valueOverride = num;
                                 this.td.html(globalize.format(num, 'p'));
+                            } else {
+	                            this.td.html(this.valueOverride || this.value);
                             }
 
                         },
@@ -590,6 +592,8 @@ jQuery.fn.extend({
                             if (!n(num)) {//success
                                 this.valueOverride = num;
                                 this.td.html(globalize.format(num, 'c'));
+                            } else {
+	                            this.td.html(this.valueOverride || this.value);
                             }
 						},
                         number: function() {
@@ -602,6 +606,8 @@ jQuery.fn.extend({
                                 this.td.html(globalize.format(this.value + '', "n10").replace(settings.endOfNumber, function (orig, radix, num) {
                                     return (num ? radix : '') + (num || '');
                                 }));
+                            } else {
+	                            this.td.html(this.valueOverride || this.value);
                             }
                         }
 					}
