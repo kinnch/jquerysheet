@@ -4992,19 +4992,12 @@ jQuery.sheet = {
                  * @param {Object} loc {row: int, col: int}
                  * @param {Object} offset {row: int,col: int} offsets increment
                  * @param {Boolean} isBefore inserted before location
+                 * @param {Boolean} wasDeleted
                  * @methodOf jS
                  * @name offsetFormulas
                  */
-                offsetFormulas:function (loc, offset, isBefore) {
+                offsetFormulas:function (loc, offset, isBefore, wasDeleted) {
                     var size = jS.sheetSize(),
-                    //shifted range is the range of cells that are moved
-                        shiftedRange = {
-                            first:loc,
-                            last:{
-                                row:size.rows,
-                                col:size.cols
-                            }
-                        },
                     //effected range is the entire spreadsheet
                         affectedRange = {
                             first:{
@@ -5024,7 +5017,7 @@ jQuery.sheet = {
                     jS.cycleCells(function () {
                         var cell = this;
                         if (this.formula && typeof this.formula == 'string' && jS.isFormulaEditable(this.td)) {
-                            this.formula = jS.reparseFormula(this.formula, offset, loc, isBefore);
+                            this.formula = jS.reparseFormula(this.formula, offset, loc, isBefore, wasDeleted);
 
                             this.td.data('formula', '=' + this.formula);
                         }
@@ -5048,11 +5041,12 @@ jQuery.sheet = {
                  * @param {Object} offset {row: int,col: int} offsets increment
                  * @param {Object} loc
                  * @param {Boolean} isBefore
+                 * @param {Boolean} wasDeleted
                  * @returns {String}
                  * @methodOf jS
                  * @name reparseFormula
                  */
-                reparseFormula:function (formula, offset, loc, isBefore) {
+                reparseFormula:function (formula, offset, loc, isBefore, wasDeleted) {
                     return formula.replace(jSE.regEx.cell, function (ignored, col, row, pos) {
                         if (col == "SHEET") return ignored;
                         offset = offset || {loc: 0, row: 0};
@@ -5063,41 +5057,87 @@ jQuery.sheet = {
                             },
                             moveCol,
                             moveRow,
-                            override = {col: col, row: row};
+                            override = {
+                                row: row,
+                                col: col,
+                                use: false
+                            };
 
                         if (loc) {
-                            if (oldLoc.col == loc.col || col == '#REF!') {
-                                override.col = '#REF!';
-                                override.use = true;
-                            }
-                            if (oldLoc.row == loc.row || row == '#REF!') {
-                                override.row = '#REF!';
-                                override.use = true;
-                            }
-                            if (override.use) {
-                                return override.col + override.row;
-                            }
-                            if (isBefore) {
-                                if (oldLoc.col > loc.col) {
-                                    moveCol = true;
+                            if (wasDeleted) {
+                                if (isBefore) {
+                                    if (oldLoc.col && oldLoc.col == loc.col - 1) {
+                                        override.col = '#REF!';
+                                        override.use = true;
+                                    }
+                                    if (oldLoc.row && oldLoc.row == loc.row - 1) {
+                                        override.row = '#REF!';
+                                        override.use = true;
+                                    }
+
+                                    if (oldLoc.col >= loc.col) {
+                                        moveCol = true;
+                                    }
+                                    if (oldLoc.row >= loc.row) {
+                                        moveRow = true;
+                                    }
+                                } else {
+                                    if (loc.col && oldLoc.col == loc.col) {
+                                        override.col = '#REF!';
+                                        override.use = true;
+                                    }
+                                    if (loc.row && oldLoc.row == loc.row) {
+                                        override.row = '#REF!';
+                                        override.use = true;
+                                    }
+
+                                    if (loc.col && oldLoc.col > loc.col) {
+                                        moveCol = true;
+                                    }
+                                    if (loc.row && oldLoc.row > loc.row) {
+                                        moveRow = true;
+                                    }
                                 }
-                                if (oldLoc.row > loc.row) {
-                                    moveRow = true;
+
+                                if (override.use) {
+                                    return override.col + override.row;
+                                }
+
+                                if (moveCol) {
+                                    oldLoc.col += offset.col;
+                                    return jS.makeFormula(oldLoc);
+                                }
+
+                                if (moveRow) {
+                                    oldLoc.row += offset.row;
+                                    return jS.makeFormula(oldLoc);
                                 }
                             } else {
-                                if (oldLoc.col > loc.col) {
-                                    moveCol = true;
+                                if (isBefore) {
+                                    if (loc.col && oldLoc.col >= loc.col) {
+                                        moveCol = true;
+                                    }
+                                    if (loc.row && oldLoc.row >= loc.row) {
+                                        moveRow = true;
+                                    }
+                                } else {
+                                    if (loc.col && oldLoc.col > loc.col) {
+                                        moveCol = true;
+                                    }
+                                    if (loc.row && oldLoc.row > loc.row) {
+                                        moveRow = true;
+                                    }
                                 }
-                                if (oldLoc.row > loc.row) {
-                                    moveRow = true;
+
+                                if (moveCol) {
+                                    oldLoc.col += offset.col;
+                                    return jS.makeFormula(oldLoc);
                                 }
-                            }
 
-                            if (moveCol || moveRow) {
-                                if (moveCol) oldLoc.col += offset.col;
-                                if (moveRow) oldLoc.row += offset.row;
-
-                                return jS.makeFormula(oldLoc);
+                                if (moveRow) {
+                                    oldLoc.row += offset.row;
+                                    return jS.makeFormula(oldLoc);
+                                }
                             }
                         } else {
                             return jS.makeFormula(oldLoc, offset);
@@ -5105,6 +5145,10 @@ jQuery.sheet = {
 
                         return ignored;
                     });
+                },
+
+                formulaIsGreater: function() {
+
                 },
 
                 /**
@@ -6952,12 +6996,15 @@ jQuery.sheet = {
                     jS.setChanged(true);
 
                     jS.offsetFormulas({
-                        row:start,
-                        col:0
-                    }, {
-                        row:-qty,
-                        col:0
-                    });
+                            row:start,
+                            col:0
+                        }, {
+                            row:-qty,
+                            col:0
+                        },
+                        null,
+                        true
+                    );
 
                     jS.setDirty(true);
 
@@ -7028,12 +7075,15 @@ jQuery.sheet = {
                     jS.setChanged(true);
 
                     jS.offsetFormulas({
-                        row:0,
-                        col:start
-                    }, {
-                        row:0,
-                        col:-qty
-                    });
+                            row:0,
+                            col:start
+                        }, {
+                            row:0,
+                            col:-qty
+                        },
+                        null,
+                        true
+                    );
 
                     jS.setDirty(true);
 
