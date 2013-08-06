@@ -1144,7 +1144,8 @@ jQuery.sheet = {
             $win = $(win),
             doc = document,
             $doc = $(doc),
-            $body = $('body'),
+            body = doc.body,
+            $body = $(body),
             emptyFN = function () {},
             u = undefined,
             math = Math,
@@ -1575,7 +1576,7 @@ jQuery.sheet = {
                 kill:function () {
                     $doc.unbind('keydown');
                     jS.obj.fullScreen().remove();
-                    jS.obj.inPlaceEdit().trigger('destroy');
+                    jS.obj.inPlaceEdit().destroy();
                     s.parent
                         .trigger('sheetKill')
                         .removeClass(jS.cl.uiParent)
@@ -3249,7 +3250,8 @@ jQuery.sheet = {
 
                         if (!td.length) return;
 
-                        jS.obj.inPlaceEdit().trigger('destroy');
+                        (jS.obj.inPlaceEdit().destroy || emptyFN)();
+
                         var formula = jS.obj.formula(),
                             val = formula.val(),
                             textarea,
@@ -3259,8 +3261,8 @@ jQuery.sheet = {
                         if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
 
                         textarea = doc.createElement('textarea');
-                        pane.inPlaceEdit = textarea;
                         $textarea = $(textarea);
+                        pane.inPlaceEdit = textarea;
                         textarea.i = jS.i;
                         textarea.value = formula[0].value;
                         textarea.className = jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit;
@@ -3268,7 +3270,7 @@ jQuery.sheet = {
                         textarea.goToTd = function() {
                             this.offset = td.offset();
                             if (!this.offset.left && !this.offset.right) {
-                                $textarea.hide();
+                                $(textarea).hide();
                             } else {
                                 this.setAttribute('style',
                                     'left:' + (this.offset.left - 1) + 'px;' +
@@ -3281,23 +3283,31 @@ jQuery.sheet = {
                         };
                         textarea.goToTd();
                         textarea.onkeydown = jS.evt.inPlaceEdit.keydown;
-                        textarea.onkeyup = function() { formula[0].value = textarea.value; };
-                        textarea.onchange = function() { formula[0].value = textarea.value; };
+                        textarea.onchange =
+                        textarea.onkeyup =
+                            function() { formula[0].value = textarea.value; };
+
                         textarea.onfocus = function () { jS.setNav(false); };
-                        textarea.onfocusout = function () { jS.setNav(true); };
-                        textarea.onblur = function () { jS.setNav(true); };
-                        $body.append(textarea);
 
+                        textarea.onblur =
+                        textarea.onfocusout =
+                            function () { jS.setNav(true); };
 
-                        jS.controls.inPlaceEdit[jS.i] = $textarea
-                            .bind('paste', jS.evt.pasteOverCells)
-                            .focus()
-                            .bind('destroy', function () {
-                                pane.inPlaceEdit = null;
-                                jS.cellLast.isEdit = (textarea.value != val);
-                                $textarea.remove();
-                                jS.controls.inPlaceEdit[textarea.i] = false;
-                            });
+                        textarea.onpaste = jS.evt.pasteOverCells;
+
+                        textarea.destroy = function () {
+                            pane.inPlaceEdit = null;
+                            jS.cellLast.isEdit = (textarea.value != val);
+                            textarea.parentNode.removeChild(textarea);
+                            jS.controls.inPlaceEdit[textarea.i] = false;
+                        };
+
+                        body.appendChild(textarea);
+
+                        textarea.onfocus();
+
+                        jS.controls.inPlaceEdit[jS.i] = textarea;
+
 
                         if (!noSelect) {
                             $textarea.select();
@@ -3305,7 +3315,7 @@ jQuery.sheet = {
 
                         //Make the textarea resizable automatically
                         if ($.fn.elastic) {
-                            $textarea.elastic();
+                            $(textarea).elastic();
                         }
                     },
 
@@ -3844,7 +3854,7 @@ jQuery.sheet = {
                      * @name cellEditDone
                      */
                     cellEditDone:function (force) {
-                        jS.obj.inPlaceEdit().trigger('destroy');
+                        (jS.obj.inPlaceEdit().destroy || emptyFN)();
                         if (jS.cellLast.isEdit || force) {
                             var formula = jS.obj.formula(),
                                 td = jS.obj.tdActive();
@@ -3892,7 +3902,7 @@ jQuery.sheet = {
                      * @name cellEditAbandon
                      */
                     cellEditAbandon:function (skipCalc) {
-                        jS.obj.inPlaceEdit().trigger('destroy');
+                        (jS.obj.inPlaceEdit().destroy || emptyFN)();
                         jS.themeRoller.bar.clearActive();
                         jS.themeRoller.cell.clearHighlighted(null, true);
 
