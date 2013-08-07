@@ -57,7 +57,7 @@
 
                 $('#sheetFromDts')
                     .html(tables)
-                    .height($(window).height() - 30)
+                    .height($('#sheet').height())
                     .sheet();
 
                 $.each($.sheet.instance, function (i) {
