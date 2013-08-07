@@ -630,10 +630,10 @@ jQuery.fn.extend({
 				if (settings[events[i]]) me.bind(events[i], settings[events[i]]);
 			}
 
-			if (!jQuery.sheet.instance.length) jQuery.sheet.instance = $([]);
+			if (!jQuery.sheet.instance.length) jQuery.sheet.instance = [];
 
 			jS = jQuery.sheet.createInstance(jQuery, jQuery.extend(defaults, settings), jQuery.sheet.instance.length);
-            jQuery.sheet.instance = jQuery.sheet.instance.add(jS);
+            jQuery.sheet.instance.push(jS);
 		});
 		return this;
 	},
@@ -1576,7 +1576,7 @@ jQuery.sheet = {
                 kill:function () {
                     $doc.unbind('keydown');
                     jS.obj.fullScreen().remove();
-                    jS.obj.inPlaceEdit().destroy();
+                    (jS.obj.inPlaceEdit().destroy || emptyFN)();
                     s.parent
                         .trigger('sheetKill')
                         .removeClass(jS.cl.uiParent)
@@ -1766,9 +1766,10 @@ jQuery.sheet = {
                  * @name setNav
                  */
                 setNav:function (nav) {
-                    $.sheet.instance.each(function () {
-                        this.nav = false;
-                    });
+                    var instance = $.sheet.instance;
+                    for(var i = 0; i < instance.length; i++) {
+                        (instance[i] || {}).nav = false;
+                    }
 
                     jS.nav = nav;
                 },
@@ -2397,7 +2398,9 @@ jQuery.sheet = {
                          * @name top
                          */
                         top:function (e, i, target) {
-                            if (jS.isBusy()) return false;
+                            if (jS.isBusy()) {
+                                return false;
+                            }
                             var menu = jS.obj.barMenuTop().hide();
 
                             if (!menu.length) {
@@ -2461,10 +2464,14 @@ jQuery.sheet = {
                          * @name left
                          */
                         left:function (e, i) {
-                            if (jS.isBusy()) return false;
+                            if (jS.isBusy()) {
+                                return false;
+                            }
                             jS.obj.barMenuLeft().hide();
 
-                            if (i) jS.obj.barHandleFreezeLeft().remove();
+                            if (i) {
+                                jS.obj.barHandleFreezeLeft().remove();
+                            }
                             var menu;
 
                             menu = jS.obj.barMenuLeft();
@@ -2667,9 +2674,10 @@ jQuery.sheet = {
                                 }
                             });
 
-                            $.sheet.instance.each(function () {
-                                this.nav = false;
-                            });
+                            var instance = $.sheet.instance;
+                            for(var i = 0; i < instance.length; i++) {
+                                (instance || {}).nav = false;
+                            }
 
                             jS.setNav(true);
 
@@ -2764,18 +2772,11 @@ jQuery.sheet = {
                      * @name scrollUI
                      */
                     scrollUI:function (enclosure, pane, sheet) {
-                        var scrollOuter = doc.createElement('div'),
-                            scrollInner = doc.createElement('div'),
+                        var scrollOuter = pane.scrollOuter = doc.createElement('div'),
+                            scrollInner = pane.scrollInner = doc.createElement('div'),
                             scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
                             scrollStyleY = pane.scrollStyleY = doc.createElement('style'),
-                            $scrollOuter = $(scrollOuter),
-                            $scrollInner = $(scrollInner),
                             $pane = $(pane);
-
-                        pane.scrollUI = {
-                            scrollOuter: scrollOuter,
-                            scrollInner: scrollInner
-                        };
 
                         scrollOuter.setAttribute('class', jS.cl.scroll);
                         scrollOuter.appendChild(scrollInner);
@@ -2823,9 +2824,6 @@ jQuery.sheet = {
                             }
                         };
 
-                        pane.appendChild(scrollStyleX);
-                        pane.appendChild(scrollStyleY);
-
                         scrollStyleY.updateStyle = function (indexes, style) {
                             indexes = indexes || [];
 
@@ -2846,6 +2844,9 @@ jQuery.sheet = {
                                 jS.obj.barHelper().remove();
                             }
                         };
+
+                        pane.appendChild(scrollStyleX);
+                        pane.appendChild(scrollStyleY);
 
                         jS.controlFactory.styleUpdater(scrollStyleX);
                         jS.controlFactory.styleUpdater(scrollStyleY);
@@ -2873,13 +2874,11 @@ jQuery.sheet = {
                             enclosureWidth = enclosure.clientWidth + 'px';
                             enclosureHeight = enclosure.clientHeight + 'px';
 
-                            $scrollInner
-                                .css('width', sheetWidth)
-                                .css('height', sheetWidth);
+                            scrollInner.style.width = sheetWidth;
+                            scrollInner.style.height = sheetWidth;
 
-                            $scrollOuter
-                                .css('width', enclosureWidth)
-                                .css('height' + enclosureHeight);
+                            scrollOuter.style.width = enclosureWidth;
+                            scrollOuter.style.height = enclosureHeight;
 
                             jS.evt.scroll.start('x', pane, sheet, scrollStyleX);
                             jS.evt.scroll.start('y', pane, sheet, scrollStyleY);
@@ -3049,7 +3048,6 @@ jQuery.sheet = {
                         jS.readOnly[i] = table.className.match('readonly');
 
                         var enclosure = jS.controlFactory.enclosure(table),
-                            $enclosure = $(enclosure),
                             pane = enclosure.pane,
                             $pane = $(pane),
                             paneContextmenuEvent = function (e) {
@@ -3187,7 +3185,8 @@ jQuery.sheet = {
                      */
                     enclosure:function (table) {
                         var pane = doc.createElement('div'),
-                            enclosure = doc.createElement('div');
+                            enclosure = doc.createElement('div'),
+                            $enclosure = $(enclosure);
 
                         enclosure.scollUI = jS.controlFactory.scrollUI(enclosure, pane, table);
                         enclosure.appendChild(enclosure.scollUI);
@@ -3207,7 +3206,7 @@ jQuery.sheet = {
 
                         jS.controls.pane[jS.i] = pane;
                         jS.controls.panes = jS.obj.panes().add(pane);
-                        jS.controls.enclosure[jS.i] = $(enclosure);
+                        jS.controls.enclosure[jS.i] = $enclosure;
                         jS.controls.enclosures = jS.obj.enclosures().add(enclosure);
 
                         return enclosure;
@@ -4287,8 +4286,7 @@ jQuery.sheet = {
 
                             pane = pane || jS.obj.pane();
                             var me = jS.evt.scroll,
-                                scrollUI = pane.scrollUI,
-                                outer = scrollUI.scrollOuter,
+                                outer = pane.scrollOuter,
                                 axis = me.axis[axisName];
 
                             me.size = jS.sheetSize(pane.table);
@@ -7593,7 +7591,7 @@ jQuery.sheet = {
                                     break;
                             }
                         },
-                        obj = $([]),
+                        obj = [],
                         scrolledArea  = jS.scrolledTo(),
                         sheet = jS.obj.table(),
                         col,
@@ -7614,7 +7612,7 @@ jQuery.sheet = {
                             col = last;
 
                             do {
-                                obj = obj.add(jS.col(sheet[0], col));
+                                obj.push(jS.col(sheet[0], col));
                             } while(col-- > first);
                             break;
                         case 'left':
@@ -7631,7 +7629,7 @@ jQuery.sheet = {
                             row = last;
 
                             do {
-                                obj = obj.add(jS.getTd(jS.i, row, 1)[0].parentNode);
+                                obj.push(jS.getTd(jS.i, row, 1)[0].parentNode);
                             } while(row-- > first);
                             break;
                         case 'corner': //all
@@ -7640,13 +7638,13 @@ jQuery.sheet = {
                             stop.col = size.cols;
                             stop.row = size.rows;
 
-                            obj = obj.add(sheet);
+                            obj.push(sheet);
                             break;
                     }
 
                     setActive(begin > end);
 
-                    jS.themeRoller.cell.setHighlighted(obj);
+                    jS.themeRoller.cell.setHighlighted($(obj));
                 },
 
                 /**
@@ -8425,15 +8423,16 @@ jQuery.sheet = {
 	 */
 	killAll:function () { /* removes all sheets */
 		if (jQuery.sheet) {
-			if (jQuery.sheet.instance) {
-				jQuery.sheet.instance.each(function () {
-					if (this.kill) {
-						this.kill();
+            var instance = jQuery.sheet.instance;
+			if (instance) {
+				for (var i = 0; i< instance.length; i++) {
+					if (instance[i] && instance[i].kill) {
+                        instance[i].kill();
 					}
-				});
-				jQuery.sheet.instance = $([]);
-			}
-		}
+				}
+				jQuery.sheet.instance = [];
+            }
+        }
 	},
 
 	/**
@@ -8466,9 +8465,9 @@ jQuery.sheet = {
 	 * @name switchSheetLocker
 	 */
 	switchSheetLocker:function (I) {
-		jQuery.sheet.instance.each(function () {
+        jQuery.each(jQuery.sheet.instance, function () {
 			this.s.parent.bind('sheetSwitch', function (e, jS, i) {
-				jQuery.sheet.instance.each(function () {
+                jQuery.each(jQuery.sheet.instance, function () {
 					this.setActiveSheet(i);
 				});
 			});
