@@ -2628,10 +2628,10 @@ jQuery.sheet = {
                             formula.className = jS.cl.formula;
                             formula.onkeydown = jS.evt.formula.keydown;
                             formula.onkeyup = function () {
-                                jS.obj.inPlaceEdit().val(this.value);
+                                jS.obj.inPlaceEdit().value = this.value;
                             };
                             formula.onchange = function () {
-                                jS.obj.inPlaceEdit().val(this.value);
+                                jS.obj.inPlaceEdit().value = this.value;
                             };
                             formula.onpaste = jS.evt.pasteOverCells;
                             formula.onfocus = function () {
