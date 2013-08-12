@@ -2681,7 +2681,7 @@ jQuery.sheet = {
 
                             jS.setNav(true);
 
-                            $doc.keydown(jS.evt.doc.keydown);
+                            doc.onkeydown = jS.evt.doc.keydown;
                         }
 
                         return header;
