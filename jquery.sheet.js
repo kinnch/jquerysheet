@@ -3728,6 +3728,7 @@ jQuery.sheet = {
                             e = e || win.event;
                             if (jS.readOnly[jS.i]) return false;
                             if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+                            var td = jS.cellLast.td;
 
                             if (jS.nav) {
                                 switch (e.keyCode) {
@@ -3761,7 +3762,7 @@ jQuery.sheet = {
                                         if (e.ctrlKey) {
                                             return jS.evt.formula.If(!jS.evt.pasteOverCells(e), e);
                                         } else {
-                                            jS.obj.tdActive().trigger('cellEdit');
+                                            td.trigger('cellEdit');
                                             return true;
                                         }
                                         break;
@@ -3770,7 +3771,7 @@ jQuery.sheet = {
                                             jS.evt.doc.redo(e);
                                             return false;
                                         } else {
-                                            jS.obj.tdActive().trigger('cellEdit');
+                                            td.trigger('cellEdit');
                                             return true;
                                         }
                                         break;
@@ -3779,7 +3780,7 @@ jQuery.sheet = {
                                             jS.evt.doc.undo(e);
                                             return false;
                                         } else {
-                                            jS.obj.tdActive().trigger('cellEdit');
+                                            td.trigger('cellEdit');
                                             return true;
                                         }
                                         break;
@@ -3790,7 +3791,7 @@ jQuery.sheet = {
                                         if (e.ctrlKey) {
                                             return jS.evt.formula.If(jS.evt.doc.findCell(e), e);
                                         } else {
-                                            jS.obj.tdActive().trigger('cellEdit');
+                                            td.trigger('cellEdit');
                                             return true;
                                         }
                                         break;
@@ -3803,7 +3804,7 @@ jQuery.sheet = {
                                         return true;
                                         break;
                                     default:
-                                        jS.obj.tdActive().trigger('cellEdit');
+                                        td.trigger('cellEdit');
                                         return true;
                                         break;
                                 }
