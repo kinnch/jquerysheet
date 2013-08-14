@@ -1579,7 +1579,8 @@ jQuery.sheet = {
 
                     jS.obj.menus().remove();
 
-                    for (var i in $.sheet.events) {
+                    var max = $.sheet.events.length;
+                    for (var i = 0; i < max; i++) {
                         s.parent.unbind($.sheet.events[i]);
                     }
 
