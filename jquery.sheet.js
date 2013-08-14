@@ -293,8 +293,6 @@ jQuery.fn.extend({
 	 *
 	 * calcOff {Boolean} default false, turns turns off ability to calculate
 	 *
-	 * log {Boolean} turns on/off debug mode
-	 *
 	 * lockFormulas {Boolean} default false, turns on/off the ability to edit formulas
 	 *
 	 * colMargin {Number} default 18, size of height of new cells, and width of cell bars
@@ -342,8 +340,6 @@ jQuery.fn.extend({
 	 *
 	 * minSize {Object} default {rows: 1, cols: 1}, the minimum size of a spreadsheet
 	 *
-	 * alertFormulaErrors {Boolean} default false, if true triggers jS.alertFormulaError, which alerts the end user of an error via an alert
-	 *
 	 * error {Function} default function(e) { return e.error; }, is triggered on errors from the formula engine
 	 *
 	 * encode {Function} default is a special characters handler for strings only, is a 1 way encoding of the html if entered manually by the editor.  If you want to use html with a function, return an object rather than a string
@@ -389,11 +385,10 @@ jQuery.fn.extend({
 					freezableCells:true,
 					allowToggleState:true,
 					menuLeft:null,
-					newColumnWidth:120,
+                    menuRight:null,
+                    newColumnWidth:120,
 					title:null,
-					menuRight:null,
 					calcOff:false,
-					log:false,
 					lockFormulas:false,
 					parent:me,
 					colMargin:18,
@@ -406,7 +401,6 @@ jQuery.fn.extend({
 					resizableSheet:true,
 					autoFiller:true,
 					minSize:{rows:1, cols:1},
-					alertFormulaErrors:false,
 					error:function (e) {
 						return e.error;
 					},
@@ -1603,7 +1597,7 @@ jQuery.sheet = {
                 trigger:function (eventType, extraParameters) {
                     //wrapper for $ trigger of parent, in case of further mods in the future
                     extraParameters = extraParameters || [];
-                    s.parent.trigger(eventType, [jS].concat(extraParameters));
+                    return s.parent.trigger(eventType, [jS].concat(extraParameters));
                 },
 
                 /**
@@ -1793,7 +1787,7 @@ jQuery.sheet = {
                      */
                     addRowMulti:function (i, qty, isBefore, skipFormulaReparse) {
                         if (!qty) {
-                            qty = prompt(jS.msg.addRowMulti);
+                            qty = jS.trigger('prompt', jS.msg.addRowMulti);
                         }
                         if (qty) {
                             if (!n(qty)) {
@@ -1814,7 +1808,7 @@ jQuery.sheet = {
                      */
                     addColumnMulti:function (i, qty, isBefore, skipFormulaReparse) {
                         if (!qty) {
-                            qty = prompt(jS.msg.addColumnMulti);
+                            qty = jS.trigger('prompt', jS.msg.addColumnMulti);
                         }
                         if (qty) {
                             if (!n(qty)) {
@@ -1867,7 +1861,7 @@ jQuery.sheet = {
 			                        //if current size is more than max
 		                            } else if ($.sheet.max && $.sheet.max <= sheetSize.rows + qty) {
 			                            if (!jS.isBusy()) {
-			                                alert(jS.msg.maxRowsBrowserLimitation);
+                                            jS.trigger('alert', jS.msg.maxRowsBrowserLimitation);
 			                            }
 			                            return false;
 		                            }
@@ -1942,7 +1936,7 @@ jQuery.sheet = {
 			                            //if current size is more than max
 		                            } else if ($.sheet.max && $.sheet.max <= sheetSize.cols + qty) {
 			                            if (!jS.isBusy()) {
-			                                alert(jS.msg.maxColsBrowserLimitation);
+                                            jS.trigger('alert', jS.msg.maxColsBrowserLimitation);
 			                            }
 			                            return false;
 		                            }
@@ -4177,7 +4171,6 @@ jQuery.sheet = {
                         if (jS.isBusy()) return false;
 
                         jS.controlFactory.inPlaceEdit(null, true);
-                        //jS.log('click, in place edit activated');
                     },
 
                     cellEdit: function(e) {
@@ -6778,20 +6771,6 @@ jQuery.sheet = {
                 },
 
                 /**
-                 *
-                 * @param {String} msg
-                 * @methodOf jS
-                 * @name alertFormulaError
-                 */
-                alertFormulaError:function (msg) {
-                    alert(
-                        'cell:' + row + ' ;' + col + '\n' +
-                        'value: "' + cell.formula + '"\n' +
-                        'error: \n' + e
-                    );
-                },
-
-                /**
                  * Date of last calculation
                  * @memberOf jS
                  * @name calcLast
@@ -6814,14 +6793,12 @@ jQuery.sheet = {
                     tableIndex = tableIndex || jS.i;
                     if (jS.readOnly[tableIndex] || jS.isChanged() === false) return; //readonly is no calc at all
 
-                    jS.log('Calculation Started');
                     jS.calcLast = new Date();
                     jSE.calc(tableIndex, jS.spreadsheetsToArray()[tableIndex], jS.updateCellValue);
                     jS.trigger('sheetCalculation', [
                         {which:'speadsheet'}
                     ]);
                     jS.setChanged(false);
-                    jS.log('Calculation Ended');
                 },
 
                 /**
@@ -7116,7 +7093,7 @@ jQuery.sheet = {
                         sheetTab = jS.obj.table().attr('title');
                         sheetTab = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
                     } else if (jS.isSheetEditable() && s.editableNames) { //ensure that the sheet is editable, then let them change the sheet's name
-                        var newTitle = prompt(jS.msg.newSheetTitle, jS.sheetTab(true));
+                        var newTitle = jS.trigger('prompt', jS.msg.newSheetTitle, jS.sheetTab(true));
                         if (!newTitle) { //The user didn't set the new tab name
                             sheetTab = jS.obj.table().attr('title');
                             newTitle = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
@@ -7239,21 +7216,22 @@ jQuery.sheet = {
                 autoFillerGoToTd:function (td, h, w) {
                     if (!s.autoFiller) return;
 
-                    td = td || jS.obj.tdActive();
+                    $td = td || jS.obj.tdActive();
+                    var td = $td[0];
 
-                    if (td[0] && td[0].type == 'cell') { //ensure that it is a usable cell
-                        h = h || td[0].clientHeight;
-                        w = w || td[0].clientWidth;
-                        if (!h || !w) {
+                    if (td && td.type == 'cell') { //ensure that it is a usable cell
+                        h = h || td.clientHeight;
+                        w = w || td.clientWidth;
+                        if (!td.offsetHeight || !td.offsetWidth) {
                             jS.autoFillerHide();
                             return;
                         }
 
-                        var tdPos = td.position();
+                        var tdPos = $td.position();
                         jS.obj.autoFiller()
                             .show()
-                            .css('top', ((tdPos.top + (h || td.height()) - 3) + 'px'))
-                            .css('left', ((tdPos.left + (w || td.width()) - 3) + 'px'));
+                            .css('top', ((tdPos.top + (h || $td.height()) - 3) + 'px'))
+                            .css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'));
                     }
                 },
 
@@ -7305,7 +7283,7 @@ jQuery.sheet = {
                  * @name openSheet
                  */
                 openSheet:function (tables) {
-                    if (jS.isDirty ? confirm(jS.msg.openSheet) : true) {
+                    if (jS.isDirty ? jS.trigger('confirm', jS.msg.openSheet) : true) {
                         jS.setBusy(true);
                         var header = jS.controlFactory.header(),
                             ui = jS.controlFactory.ui(),
@@ -7388,73 +7366,6 @@ jQuery.sheet = {
                         .sheet(s);
                 },
 
-                /**
-                 * creates a new row and then applies an array's values to each of it's new values, not currently working
-                 * TODO: Needs refactored to use jS.spreadsheets
-                 * @param {Array} rowArray values to import
-                 * @methodOf jS
-                 * @name importRow
-                 */
-                importRow:function (rowArray) {
-                    jS.controlFactory.addRow();
-
-                    var error = "";
-                    jS.obj.table().find('tr:last td').each(function (i) {
-                        $(this).removeData('formula');
-                        try {
-                            //To test this, we need to first make sure it's a string, so converting is done by adding an empty character.
-                            if ((rowArray[i] + '').charAt(0) == "=") {
-                                $(this).data('formula', rowArray[i]);
-                            } else {
-                                $(this).html(rowArray[i]);
-                            }
-                        } catch (e) {
-                            //We want to make sure that is something bad happens, we let the user know
-                            error += e + ';\n';
-                        }
-                    });
-
-                    if (error) {//Show them the errors
-                        alert(error);
-                    }
-
-                    jS.calc();
-                },
-
-                /**
-                 * creates a new column and then applies an array's values to each of it's new values
-                 * TODO: needs refactored to use jS.spreadsheets
-                 * @param {Array} columnArray values to import
-                 * @methodOf jS
-                 * @name importColumn
-                 */
-                importColumn:function (columnArray) {
-                    jS.controlFactory.addColumn();
-
-                    var error = "";
-                    jS.obj.table().find('tr').each(function (i) {
-                        var o = $(this).find('td:last');
-                        try {
-                            //To test this, we need to first make sure it's a string, so converting is done by adding an empty character.
-                            if ((columnArray[i] + '').charAt(0) == "=") {
-                                o.data('formula', columnArray[i]);
-                            } else {
-                                o.html(columnArray[i]);
-                            }
-                        } catch (e) {
-                            //We want to make sure that is something bad happens, we let the user know
-                            error += e + ';\n';
-                        }
-                    });
-
-                    if (error) {//Show them the errors
-                        alert(error);
-                    }
-
-                    //Let's recalculate the sheet just in case
-                    jS.calc();
-                },
-
 
                 /**
                  * Sync's the called parent's controls so that they fit correctly within the parent
@@ -7532,7 +7443,7 @@ jQuery.sheet = {
                  */
                 cellFind:function (v) {
                     if (!v) {
-                        v = prompt(jS.msg.cellFind);
+                        v = jS.trigger('prompt', jS.msg.cellFind);
                     }
                     var trs = jS.obj.table()
                         .children('tbody')
@@ -7553,7 +7464,7 @@ jQuery.sheet = {
                         if (o.length > 0) {
                             jS.cellEdit(o);
                         } else {
-                            alert(jS.msg.cellNoFind);
+                            jS.trigger('alert', jS.msg.cellNoFind);
                         }
                     }
                 },
@@ -7905,17 +7816,6 @@ jQuery.sheet = {
                 },
 
                 /**
-                 * The log prints: {Current Time}, {Seconds from last log};{msg}
-                 * @param msg
-                 * @memberOf jS
-                 * @name log
-                 */
-                log:function (msg) {  //
-                    jS.time.set();
-                    console.log(jS.time.get() + ', ' + jS.time.diff() + '; ' + msg);
-                },
-
-                /**
                  * Changed tracker per sheet
                  * @memberOf jS
                  * @name changed
@@ -8261,7 +8161,7 @@ jQuery.sheet = {
                 setCellRef:function (ref) {
                     var td = jS.obj.tdActive(),
                         loc = jS.getTdLocation(td),
-                        cellRef = (ref ? ref : prompt(jS.msg.setCellRef));
+                        cellRef = (ref ? ref : jS.trigger('prompt', jS.msg.setCellRef));
 
                     if (cellRef) { //TODO: need to update value when cell is updated
                         jS.s.formulaVariables[cellRef] = jS.updateCellValue(jS.i, loc.row, loc.col);
@@ -8302,10 +8202,6 @@ jQuery.sheet = {
 
 
 		// Drop functions if they are not needed & save time in recursion
-		if (!s.log) {
-			jS.log = emptyFN;
-		}
-
 		if (!$.nearest) {
 			jS.nearest = emptyFN;
 		}
@@ -8338,8 +8234,6 @@ jQuery.sheet = {
 			jSE.chart = emptyFN;
 		}
 
-		//jS.log('Startup');
-
 		$win
 			.resize(function () {
 				if (jS && !jS.isBusy()) { //We check because jS might have been killed
@@ -8365,10 +8259,6 @@ jQuery.sheet = {
 			}
 		}
 
-		if (!s.alertFormulaErrors) {
-			jS.alertFormulaError = emptyFN;
-		}
-
 		s.title = s.title || s.parent.attr('title') || '';
 
 		jS.s = s;
@@ -8380,6 +8270,17 @@ jQuery.sheet = {
 		}
 
 		jS.setBusy(false);
+
+        s.parent
+            .bind('alert', function(e, jS, msg) {
+                alert(msg);
+            })
+            .bind('prompt', function(e, jS, msg) {
+                return prompt(msg);
+            })
+            .bind('confirm', function(e, jS, msg) {
+                return confirm(msg);
+            });
 
 		return jS;
 	},
@@ -9759,7 +9660,6 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 			select.setAttribute('id', id);
 			select.className = 'jSDropdown';
 			select.cell = cell;
-			select.type = 'dropdown';
 
 			select.onmouseup = function() {
 				jS.cellEdit($td);
@@ -9775,7 +9675,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 				if (v[i]) {
 					var opt = document.createElement('option');
 					opt.setAttribute('value', v[i]);
-					opt.text = v[i];
+					opt.text = opt.innerText = v[i];
 					select.appendChild(opt);
 				}
 			}
@@ -9836,7 +9736,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 						input.setAttribute('checked', 'true');
 						input.onchange();
 					}
-					label.textContent = v[i];
+					label.textContent = label.innerText = v[i];
 					radio.appendChild(input);
 					radio.input = input;
 					label.onclick = function () {
@@ -9901,7 +9801,7 @@ var jFN = jQuery.sheet.fn = {//fn = standard functions used in cells
 			html.className='SCheckbox';
 			html.appendChild(checkbox);
 			label = document.createElement('span');
-			label.textContent = v;
+			label.textContent = label.innerText = v;
 			html.appendChild(label);
 			html.appendChild(document.createElement('br'));
 			html.onmousedown = function () {
