@@ -1597,7 +1597,7 @@ jQuery.sheet = {
                 trigger:function (eventType, extraParameters) {
                     //wrapper for $ trigger of parent, in case of further mods in the future
                     extraParameters = extraParameters || [];
-                    return s.parent.trigger(eventType, [jS].concat(extraParameters));
+                    return s.parent.triggerHandler(eventType, [jS].concat(extraParameters));
                 },
 
                 /**
@@ -6224,7 +6224,6 @@ jQuery.sheet = {
                                 cell.result = formulaParser.parse(cell.formula);
                             } catch (e) {
                                 cell.result = e.toString();
-                                jS.alertFormulaError(cell.value);
                             }
                             jS.callStack--;
                             jS.filterValue.apply(cell);
@@ -8275,8 +8274,8 @@ jQuery.sheet = {
             .bind('alert', function(e, jS, msg) {
                 alert(msg);
             })
-            .bind('prompt', function(e, jS, msg) {
-                return prompt(msg);
+            .bind('prompt', function(e, jS, msg, fn) {
+                return prompt(msg, fn);
             })
             .bind('confirm', function(e, jS, msg) {
                 return confirm(msg);
