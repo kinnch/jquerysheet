@@ -7222,7 +7222,7 @@ jQuery.sheet = {
                     if (td && td.type == 'cell') { //ensure that it is a usable cell
                         h = h || td.clientHeight;
                         w = w || td.clientWidth;
-                        if (!td.offsetHeight || !td.offsetWidth) {
+                        if (!td.offsetHeight || !td.offsetWidth || !td.clientHeight || !td.clientWidth) {
                             jS.autoFillerHide();
                             return;
                         }
