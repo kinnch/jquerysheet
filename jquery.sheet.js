@@ -4907,11 +4907,11 @@ jQuery.sheet = {
                             if (isNumber && newV != '') {
                                 newV *= 1;
 
-                                if (!goUp) {
-                                    newV += cells.length - 1;
+                                if (goUp) {
+                                    newV -= cells.length - 1;
                                 }
                                 fn = function() {
-                                    newV--;
+                                   newV++;
                                 };
                             }
                         }
