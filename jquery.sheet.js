@@ -3336,9 +3336,9 @@ jQuery.sheet = {
                                 var loc = jS.getTdLocation(td);
                                 jS.cellSetActive(td, loc, true, jS.autoFillerNotGroup, function () {
                                     var highlighted = jS.highlighted(),
-                                        hLoc = jS.getTdLocation(highlighted.first());
+                                        hLoc = jS.getTdLocation(highlighted.last());
                                     jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
-                                    jS.autoFillerGoToTd(highlighted.last());
+                                    jS.autoFillerGoToTd(td);
                                     jS.autoFillerNotGroup = false;
                                 });
                             }
@@ -4919,7 +4919,7 @@ jQuery.sheet = {
                         do {
                             s.parent.one('sheetPreCalculation', function () {
                                 cells[i].formula = '';
-                                cells[i].value = newV;
+                                cells[i].value = newV + '';
                                 cells[i].td.removeData('formula');
                             });
 
