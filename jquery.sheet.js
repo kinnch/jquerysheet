@@ -1568,7 +1568,7 @@ jQuery.sheet = {
                  * @name kill
                  */
                 kill:function () {
-                    $doc.unbind('keydown');
+                    doc.onkeydown = null;
                     jS.obj.fullScreen().remove();
                     (jS.obj.inPlaceEdit().destroy || emptyFN)();
                     s.parent
@@ -3045,7 +3045,7 @@ jQuery.sheet = {
 
                         jS.tuneTableForSheetUse(table);
 
-                        jS.readOnly[i] = table.className.match('readonly');
+                        jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
 
                         var enclosure = jS.controlFactory.enclosure(table),
                             pane = enclosure.pane,
@@ -3188,8 +3188,8 @@ jQuery.sheet = {
                             enclosure = doc.createElement('div'),
                             $enclosure = $(enclosure);
 
-                        enclosure.scollUI = jS.controlFactory.scrollUI(enclosure, pane, table);
-                        enclosure.appendChild(enclosure.scollUI);
+                        enclosure.scrollUI = jS.controlFactory.scrollUI(enclosure, pane, table);
+                        enclosure.appendChild(enclosure.scrollUI);
 
                         pane.setAttribute('class', jS.cl.pane + ' ' + jS.cl.uiPane);
                         enclosure.appendChild(pane);
@@ -7265,19 +7265,38 @@ jQuery.sheet = {
                         jS.obj.formula().val('');
                     }
 
-                    jS.obj.enclosures()
-                        .hide();
+                    //the below use of _scrollLeft and _scrollTop are protected from IE, which makes those attributes go away after something is hidden, thus forgetting where you are scrolled to when you change sheets
+                    //IE, stop flossin' me
+                    var enclosures = jS.obj.enclosures(),
+                        j = enclosures.length - 1,
+                        enclosure;
+
+                    if (j > 0) {
+                        do {
+                            if (i != j) {
+                                enclosure = enclosures[j];
+                                enclosure._scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
+                                enclosure._scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
+                                enclosure.style.display = "none";
+                            }
+                        } while (j-- > 1);
+                    }
 
                     jS.i = i;
 
-                    var enclosure = jS.obj.enclosure()
-                        .show()[0];
+                    enclosure = enclosures[i];
+                    enclosure.style.display = "";
 
                     jS.themeRoller.tab.setActive();
 
-                    jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/) != null;
+                    jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
 
                     enclosure.pane.resizeScroll(true);
+
+                    enclosure.scrollUI.scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
+                    enclosure.scrollUI.scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
+                    enclosure._scrollLeft = enclosure._scrollTop = null;
+                    enclosure.scrollUI.onscroll();
                 },
 
                 /**
