@@ -2857,9 +2857,14 @@ jQuery.sheet = {
                             enclosureHeight,
                             firstRow = sheet.tbody.children[0];
 
-                        pane.resizeScroll = function () {
-                            xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.styleString());
-                            yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.styleString());
+                        pane.resizeScroll = function (justTouch) {
+                            if (justTouch) {
+                                xStyle = scrollStyleX.styleString();
+                                yStyle = scrollStyleY.styleString();
+                            } else {
+                                xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.styleString());
+                                yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.styleString());
+                            }
 
                             scrollStyleX.updateStyle(null, ' ');
                             scrollStyleY.updateStyle(null, ' ');
@@ -2944,14 +2949,14 @@ jQuery.sheet = {
                     styleUpdater: function (style){
                         if (style.styleSheet) {
                             style.css = function (css) {
-                                this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disablednever becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
+                                this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
                                 if (!this.styleSheet.disabled) {
                                     this.styleSheet.cssText = css;
                                 }
                             };
                             style.touch = function () {};
                             style.styleString = function() {
-                                this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disablednever becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
+                                this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
                                 if (!this.styleSheet.disabled) {
                                     return this.styleSheet.cssText;
                                 }
@@ -7265,20 +7270,20 @@ jQuery.sheet = {
 
                     jS.i = i;
 
-                    jS.obj.enclosure()
-                        .show();
+                    var enclosure = jS.obj.enclosure()
+                        .show()[0];
 
                     jS.themeRoller.tab.setActive();
 
-                    jS.readOnly[i] = jS.obj.table().hasClass('readonly');
+                    jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/) != null;
 
-                    jS.obj.pane().resizeScroll();
+                    enclosure.pane.resizeScroll(true);
                 },
 
                 /**
                  * opens a spreadsheet into the active sheet instance
                  * @param tables
-                 * @returns {Boolean} if set to true, foces bars on left and top not be reloaded
+                 * @returns {Boolean} if set to true, forces bars on left and top not be reloaded
                  * @methodOf jS
                  * @name openSheet
                  */
@@ -8293,26 +8298,51 @@ jQuery.sheet = {
 		 * creates a spreadsheet object from a size given
 		 * @methodOf
 		 * @param {Object} size {rows: int, cols: int}
+         * @param {Number} columnWidth, column width as number
+         * @param {Number} rowHeight, row height as number
 		 * @return {jQuery|HTMLElement}
 		 */
-		fromSize:function (size) {
+		fromSize:function (size, columnWidth, rowHeight) {
 			var doc = document;
+            //set defaults;
 			size = size || {rows:25, cols:10};
+            columnWidth = columnWidth || 120;
+            rowHeight = rowHeight || 15;
 
 			//Create elements before loop to make it faster.
 			var table = doc.createElement('table'),
-				tbody = doc.createElement('tbody'),
-				tr;
+                colGroup = doc.createElement('colgroup'),
+				tBody = doc.createElement('tbody'),
+                colStyle = 'width:' + columnWidth + 'px;',
+                rowStyle = 'height:' + rowHeight + 'px;',
+				tr,
+                col,
+                i,
+                j;
 
-			table.appendChild(tbody);
-			for (var i = size.rows; i >= 1; i--) {
+            i = size.cols;
+
+            do {
+                col = doc.createElement('col');
+                col.setAttribute('style', colStyle)
+                colGroup.appendChild(col);
+            } while (i--);
+
+            i = size.rows;
+			do {
 				tr = doc.createElement('tr');
-				tr.setAttribute('style', 'height:15px;');
-				for (var j = size.cols; j >= 1; j--) {
+				tr.setAttribute('style', rowStyle);
+
+                j = size.cols;
+                do {
 					tr.appendChild(doc.createElement('td'));
-				}
-				tbody.appendChild(tr);
-			}
+				} while (j-- > 1);
+
+                tBody.appendChild(tr);
+			} while (i-- > 1);
+
+            table.appendChild(colGroup);
+            table.appendChild(tBody);
 
 			return table;
 		}
