@@ -7588,7 +7588,7 @@ jQuery.sheet = {
                             stop.col = size.cols;
                             stop.row = size.rows;
 
-                            obj.push(sheet);
+                            obj.push(sheet[0]);
                             break;
                     }
 
