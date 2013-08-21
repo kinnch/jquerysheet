@@ -287,9 +287,9 @@ jQuery.fn.extend({
 	 *
 	 * title {String|Function}, title of spreadsheet, if function, expects string and is sent jS
 	 *
-	 * menuRight {String|Function}, default '', if function expects string and is sent jS. If ul object as string, will attempt to create menu
+	 * menuRight {String|Function}, default '', 'this' is jQuery.sheet instance. If ul object, will attempt to create menu
 	 *
-	 * menuLeft {String|Function}, default '', if function expects string and is sent jS. If ul object as string, will attempt to create menu
+	 * menuLeft {String|Function}, default '', 'this' is jQuery.sheet instance. If ul object, will attempt to create menu
 	 *
 	 * calcOff {Boolean} default false, turns turns off ability to calculate
 	 *
@@ -619,6 +619,10 @@ jQuery.fn.extend({
 					if (settings[events[i]]) me.unbind(events[i]);
 				}
 			}
+
+            if ((this.className || '').match(/\bnotEditable\b/i) != null) {
+                settings['editable'] = false;
+            }
 
 			for (var i in events) {
 				if (settings[events[i]]) me.bind(events[i], settings[events[i]]);
@@ -2562,7 +2566,7 @@ jQuery.sheet = {
                         //Sheet Menu Control
                         function makeMenu(menu) {
                             if ($.isFunction(menu)) {
-                                menu = $(menu(jS));
+                                menu = $(menu.call(jS));
                             } else {
                                 menu = $(menu);
                             }
@@ -3078,10 +3082,7 @@ jQuery.sheet = {
                         pane.appendChild(table);
 
                         if (jS.isSheetEditable()) {
-                            var autoFiller = jS.controlFactory.autoFiller();
-                            if (autoFiller) {
-                                pane.appendChild(autoFiller);
-                            }
+                            jS.controlFactory.autoFiller(pane);
                         }
 
                         jS.sheetTab(true);
@@ -3323,13 +3324,16 @@ jQuery.sheet = {
                      * @returns {*|jQuery|null}
                      * @methodOf jS.controlFactory
                      * @name autoFiller
+                     * @param {HTMLElement} pane
                      */
-                    autoFiller:function () {
-                        if (!s.autoFiller) return null;
+                    autoFiller:function (pane) {
+                        if (!s.autoFiller) return false;
 
                         var autoFiller = doc.createElement('div'),
                             handle = doc.createElement('div'),
                             cover = doc.createElement('div');
+
+                        autoFiller.i = jS.i;
 
                         autoFiller.className = jS.cl.autoFiller + ' ' + jS.cl.uiAutoFiller;
                         handle.className = jS.cl.autoFillerHandle;;
@@ -3349,8 +3353,9 @@ jQuery.sheet = {
                             }
                         };
 
-                        jS.controls.autoFiller[jS.i] = $(autoFiller);
-                        return autoFiller;
+                        pane.autoFiller = jS.controls.autoFiller[jS.i] = $(autoFiller);
+                        pane.appendChild(autoFiller);
+                        return true;
                     }
                 },
 
@@ -6796,7 +6801,7 @@ jQuery.sheet = {
                  */
                 calc:function (tableIndex) {
                     tableIndex = tableIndex || jS.i;
-                    if (jS.readOnly[tableIndex] || jS.isChanged() === false) return; //readonly is no calc at all
+                    if (jS.readOnly[tableIndex] || jS.isChanged(tableIndex) === false) return; //readonly is no calc at all
 
                     jS.calcLast = new Date();
                     jSE.calc(tableIndex, jS.spreadsheetsToArray()[tableIndex], jS.updateCellValue);
@@ -7271,6 +7276,8 @@ jQuery.sheet = {
                         j = enclosures.length - 1,
                         enclosure;
 
+                    jS.autoFillerHide();
+
                     if (j > 0) {
                         do {
                             if (i != j) {
@@ -7279,7 +7286,7 @@ jQuery.sheet = {
                                 enclosure._scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
                                 enclosure.style.display = "none";
                             }
-                        } while (j-- > 1);
+                        } while (j-- > 0);
                     }
 
                     jS.i = i;
@@ -7313,7 +7320,8 @@ jQuery.sheet = {
                             ui = jS.controlFactory.ui(),
                             tabContainer = jS.controlFactory.tabContainer(),
                             i = tables.length - 1,
-	                        size;
+	                        size,
+                            stack = [];
 
                         jS.sheetCount = tables.length - 1;
 
@@ -7343,7 +7351,9 @@ jQuery.sheet = {
 	                        }
                             jS.controlFactory.sheetUI(ui, tables[i], i);
                             jS.sheetCount++;
-                            jS.calc(i);
+
+                            stack.push(jS.calc);
+
                             jS.trigger('sheetOpened', [i]);
                         }
 
@@ -7371,6 +7381,10 @@ jQuery.sheet = {
 
                         jS.setDirty(false);
                         jS.setBusy(false);
+
+                        while (stack.length) {
+                            stack.pop()(jS.i = stack.length);
+                        }
 
                         jS.trigger('sheetAllOpened');
                         return true;
@@ -7850,9 +7864,10 @@ jQuery.sheet = {
                  * Changed = needs to be calculated
                  * @methodOf jS
                  * @name isChanged
+                 * @param tableIndex
                  */
-                isChanged:function () {
-                    return jS.changed[jS.i];
+                isChanged:function (tableIndex) {
+                    return jS.changed[tableIndex || jS.i];
                 },
 
                 /**

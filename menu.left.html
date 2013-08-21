@@ -25,48 +25,48 @@
 			<li>
 				<a menu="menuEditRow_menuInstance">Row</a>
 				<ul>
-					<li><a onclick="sheetInstance.controlFactory.addRow(); return false;" title="Adds an additional row to bottom of the spreadsheet.">Add Row</a></li>
-					<li><a onclick="sheetInstance.controlFactory.addRowMulti(); return false;" title="Adds an additional rows to bottom of the spreadsheet.">Add Multi-Rows</a></li>
-					<li><a onclick="sheetInstance.deleteRow(); return false;" title="Delets the current rows that are associated with highlighted cells.">Delete Row(s)</a></li>
-					<li><a onclick="sheetInstance.controlFactory.addRow(sheetInstance.cellLast.row, true); return false;" title="Inserts an additional row after currently selected row.">Insert Row Before</a></li>
-					<li><a onclick="sheetInstance.controlFactory.addRow(sheetInstance.cellLast.row); return false;" title="Inserts an additional row after currently selected row.">Insert Row After</a></li>
-					<li><a onclick="sheetInstance.toggleHide.rowShowAll();" title="Show all the hidden rows.">Show All</a></li>
-					<li><a onclick="sheetInstance.toggleHide.row();" title="Hides or shows the currently selected row.">Toggle Hide Row</a></li>
+					<li><a onclick="this.jS.controlFactory.addRow(); return false;" title="Adds an additional row to bottom of the spreadsheet.">Add Row</a></li>
+					<li><a onclick="this.jS.controlFactory.addRowMulti(); return false;" title="Adds an additional rows to bottom of the spreadsheet.">Add Multi-Rows</a></li>
+					<li><a onclick="this.jS.deleteRow(); return false;" title="Delets the current rows that are associated with highlighted cells.">Delete Row(s)</a></li>
+					<li><a onclick="this.jS.controlFactory.addRow(this.jS.cellLast.row, true); return false;" title="Inserts an additional row after currently selected row.">Insert Row Before</a></li>
+					<li><a onclick="this.jS.controlFactory.addRow(this.jS.cellLast.row); return false;" title="Inserts an additional row after currently selected row.">Insert Row After</a></li>
+					<li><a onclick="this.jS.toggleHide.rowShowAll();" title="Show all the hidden rows.">Show All</a></li>
+					<li><a onclick="this.jS.toggleHide.row();" title="Hides or shows the currently selected row.">Toggle Hide Row</a></li>
 				</ul>
 			</li>
 			<li>
 				<a menu="menuEditColumn_menuInstance">Column</a>
 				<ul>
-					<li><a onclick="sheetInstance.controlFactory.addColumn(); return false;" title="Adds an additional column to the right of the spreadsheet.">Add Column</a></li>
-					<li><a onclick="sheetInstance.controlFactory.addColumnMulti(); return false;" title="Adds an additional columns to the right of the spreadsheet.">Add Multi-Columns</a></li>
-					<li><a onclick="sheetInstance.deleteColumn(); return false;" title="Deletes the current columns that are associated with highlighted cells.">Delete Column(s)</a></li>
-					<li><a onclick="sheetInstance.controlFactory.addColumn(sheetInstance.cellLast.col, true); return false;" title="Inserts an additional column after currently selected column.">Insert Column Before</a></li>
-					<li><a onclick="sheetInstance.controlFactory.addColumn(sheetInstance.cellLast.col); return false;" title="Inserts an additional column after currently selected column.">Insert Column After</a></li>
-					<li><a onclick="sheetInstance.fillUpOrDown(); return false;" title="Fill down current cell value.">Fill Down</a></li>
-					<li><a onclick="sheetInstance.fillUpOrDown(true); return false;" title="Fill up current cell value.">Fill Up</a></li>
-					<li><a onclick="sheetInstance.toggleHide.columnShowAll();" title="Show all the hidden columns.">Show All</a></li>
-					<li><a onclick="sheetInstance.toggleHide.column();" title="Hides or shows the currently selected column.">Toggle Hide Column</a></li>
+					<li><a onclick="this.jS.controlFactory.addColumn(); return false;" title="Adds an additional column to the right of the spreadsheet.">Add Column</a></li>
+					<li><a onclick="this.jS.controlFactory.addColumnMulti(); return false;" title="Adds an additional columns to the right of the spreadsheet.">Add Multi-Columns</a></li>
+					<li><a onclick="this.jS.deleteColumn(); return false;" title="Deletes the current columns that are associated with highlighted cells.">Delete Column(s)</a></li>
+					<li><a onclick="this.jS.controlFactory.addColumn(this.jS.cellLast.col, true); return false;" title="Inserts an additional column after currently selected column.">Insert Column Before</a></li>
+					<li><a onclick="this.jS.controlFactory.addColumn(this.jS.cellLast.col); return false;" title="Inserts an additional column after currently selected column.">Insert Column After</a></li>
+					<li><a onclick="this.jS.fillUpOrDown(); return false;" title="Fill down current cell value.">Fill Down</a></li>
+					<li><a onclick="this.jS.fillUpOrDown(true); return false;" title="Fill up current cell value.">Fill Up</a></li>
+					<li><a onclick="this.jS.toggleHide.columnShowAll();" title="Show all the hidden columns.">Show All</a></li>
+					<li><a onclick="this.jS.toggleHide.column();" title="Hides or shows the currently selected column.">Toggle Hide Column</a></li>
 				</ul>
 			</li>
 			<li>
 				<a menu="menuEditSheet_menuInstance">Sheet</a>
 				<ul>
-					<li><a onclick="sheetInstance.addSheet(); return false;" title="Add new spreadsheet.">Add Spreadsheet</a></li>
-					<li><a onclick="sheetInstance.deleteSheet(); return false;" title="Delete the current spreadsheet.">Delete Spreadsheet</a></li>
-					<li><a onclick="sheetInstance.calc(); return false;" title="Recompiles the current sheet">Refresh Calculations</a></li>
-					<li><a onclick="sheetInstance.sheetTitle(); return false;" title="Change the title of the sheet.">Title</a></li>
-                    <li><a onclick="sheetInstance.toggleState(); return false;">Toggle Edit & ReadOnly</a></li>
+					<li><a onclick="this.jS.addSheet(); return false;" title="Add new spreadsheet.">Add Spreadsheet</a></li>
+					<li><a onclick="this.jS.deleteSheet(); return false;" title="Delete the current spreadsheet.">Delete Spreadsheet</a></li>
+					<li><a onclick="this.jS.calc(); return false;" title="Recompiles the current sheet">Refresh Calculations</a></li>
+					<li><a onclick="this.jS.sheetTitle(); return false;" title="Change the title of the sheet.">Title</a></li>
+                    <li><a onclick="this.jS.toggleState(); return false;">Toggle Edit & ReadOnly</a></li>
 				</ul>
 			</li>
-			<li><a onclick="sheetInstance.getTdRange(null, sheetInstance.obj.formula().val()); return false;">Get Cell Range</a></li>
+			<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val()); return false;">Get Cell Range</a></li>
 			<li>
 				<a href="#">Wrap Cell Range</a>
 				<ul>
-					<li><a onclick="sheetInstance.getTdRange(null, sheetInstance.obj.formula().val(), 'SUM'); return false;" title="Wrap with SUM">SUM()</a></li>
-					<li><a onclick="sheetInstance.getTdRange(null, sheetInstance.obj.formula().val(), 'CEILING'); return false;" title="Wrap with CEILING">CEILING()</a></li>
-					<li><a onclick="sheetInstance.getTdRange(null, sheetInstance.obj.formula().val(), 'COUNT'); return false;" title="Wrap with COUNT">COUNT()</a></li>
-					<li><a onclick="sheetInstance.getTdRange(null, sheetInstance.obj.formula().val(), 'MAX'); return false;" title="Wrap with MAX">MAX()</a></li>
-					<li><a onclick="sheetInstance.getTdRange(null, sheetInstance.obj.formula().val(), 'MIN'); return false;" title="Wrap with MIN">MIN()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'SUM'); return false;" title="Wrap with SUM">SUM()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'CEILING'); return false;" title="Wrap with CEILING">CEILING()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'COUNT'); return false;" title="Wrap with COUNT">COUNT()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'MAX'); return false;" title="Wrap with MAX">MAX()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'MIN'); return false;" title="Wrap with MIN">MIN()</a></li>
 				</ul>
 			</li>
 		</ul>
@@ -74,10 +74,10 @@
 	<li>
 		<a href="#">View</a>
 		<ul>
-			<li><a onclick="$(sheetInstance.tables()).viewSource(true); return false;" title="Shows the HTML that makes up the current spreadsheet.">Pretty Source</a></li>
-			<li><a onclick="$(sheetInstance.tables()).viewSource(); return false;" title="Shows the compact HTML that makes up the current spreadsheet.">Compact Source</a></li>
-			<li><a onclick="$($.sheet.dts.fromTables.xml(sheetInstance)).viewSource(true); return false;">As XML</a></li>
-			<li><a onclick="$.print(JSON.stringify($.sheet.dts.fromTables.json(sheetInstance))); return false;">As JSON</a></li>
+			<li><a onclick="$(this.jS.tables()).viewSource(true); return false;" title="Shows the HTML that makes up the current spreadsheet.">Pretty Source</a></li>
+			<li><a onclick="$(this.jS.tables()).viewSource(); return false;" title="Shows the compact HTML that makes up the current spreadsheet.">Compact Source</a></li>
+			<li><a onclick="$($.sheet.dts.fromTables.xml(this.jS)).viewSource(true); return false;">As XML</a></li>
+			<li><a onclick="$.print(JSON.stringify($.sheet.dts.fromTables.json(this.jS))); return false;">As JSON</a></li>
 			<li>
 				<a menu="menuViewFunctionReference_menuInstance">Function Reference</a>
 				<ul>
@@ -140,39 +140,39 @@
 					</li>
 				</ul>
 			</li>
-			<li><a onclick="sheetInstance.toggleFullScreen();">Toggle Full Screen</a></li>
+			<li><a onclick="this.jS.toggleFullScreen();">Toggle Full Screen</a></li>
 		</ul>
 	</li>
 	<li>
 		<a href="#">Format</a>
 		<ul>
-            <li><a onclick="sheetInstance.cellTypeToggle('percent')">Percent</a></li>
-            <li><a onclick="sheetInstance.cellTypeToggle('number')">Number</a></li>
-			<li><a onclick="sheetInstance.cellTypeToggle('date')">Date</a></li>
-			<li><a onclick="sheetInstance.cellTypeToggle('time')">Time</a></li>
-			<li><a onclick="sheetInstance.cellTypeToggle('currency')">Currency</a></li>
-            <li><a onclick="sheetInstance.cellTypeToggle(null)">Remove Format</a></li>
+            <li><a onclick="this.jS.cellTypeToggle('percent')">Percent</a></li>
+            <li><a onclick="this.jS.cellTypeToggle('number')">Number</a></li>
+			<li><a onclick="this.jS.cellTypeToggle('date')">Date</a></li>
+			<li><a onclick="this.jS.cellTypeToggle('time')">Time</a></li>
+			<li><a onclick="this.jS.cellTypeToggle('currency')">Currency</a></li>
+            <li><a onclick="this.jS.cellTypeToggle(null)">Remove Format</a></li>
 		</ul>
 	</li>
 	<li>
 		<a href="#">Style</a>
 		<ul>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleBold'); return false;">Bold</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleItalics'); return false;">Italics</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleUnderline', 'styleLineThrough'); return false;">Underline</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleLineThrough', 'styleUnderline'); return false;">Strikethrough</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleLeft', 'styleCenter styleRight'); return false;">Left</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleCenter', 'styleLeft styleRight'); return false;">Center</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleRight', 'styleLeft styleCenter'); return false;">Right</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleUpper', 'styleCapital styleLower'); return false;">Uppercase</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleCapital', 'styleUpper styleLower'); return false;">Capitalize</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleLower', 'styleCapital styleUpper'); return false;">Lowercase</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleTop', 'styleMiddle styleBottom'); return false;">Top</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleMiddle', 'styleTop styleBottom'); return false;">Middle</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleBottom', 'styleTop styleMiddle'); return false;">Bottom</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.fontReSize('up'); return false;">Font Size +</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.fontReSize('down'); return false;">Font Size -</a></li>
-			<li><a class="cellStyleToggle" onclick="sheetInstance.cellStyleToggle('styleWrap'); return false;">Wrap</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleBold'); return false;">Bold</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleItalics'); return false;">Italics</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleUnderline', 'styleLineThrough'); return false;">Underline</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLineThrough', 'styleUnderline'); return false;">Strikethrough</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLeft', 'styleCenter styleRight'); return false;">Left</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleCenter', 'styleLeft styleRight'); return false;">Center</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleRight', 'styleLeft styleCenter'); return false;">Right</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleUpper', 'styleCapital styleLower'); return false;">Uppercase</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleCapital', 'styleUpper styleLower'); return false;">Capitalize</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLower', 'styleCapital styleUpper'); return false;">Lowercase</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleTop', 'styleMiddle styleBottom'); return false;">Top</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleMiddle', 'styleTop styleBottom'); return false;">Middle</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleBottom', 'styleTop styleMiddle'); return false;">Bottom</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.fontReSize('up'); return false;">Font Size +</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.fontReSize('down'); return false;">Font Size -</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleWrap'); return false;">Wrap</a></li>
 		</ul>
 	</li>
 </ul>
