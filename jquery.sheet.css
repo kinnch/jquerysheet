@@ -65,6 +65,7 @@
 .jSTdMenu div
 {
 	border-width: 0px ! important;
+    cursor: pointer;
 }
 .jSMenu {
 	padding: 3px;

@@ -268,8 +268,8 @@
 		fromTables: {
 			/**
 			 * Create a table from json
-			 * @param {Object} jS, required, the jQuery.sheet instance
-			 * @param {Boolean} doNotTrim, cut down on added json by trimming to only edited area
+			 * @param {Object} jS required, the jQuery.sheet instance
+			 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
 			 * @returns {Array}  - schema:
 			 * [{ // sheet 1, can repeat
 			 *  "title": "Title of spreadsheet",
@@ -407,8 +407,8 @@
 
 			/**
 			 * Create a table from xml
-			 * @param {Object} jS, required, the jQuery.sheet instance
-			 * @param {Boolean} doNotTrim, cut down on added json by trimming to only edited area
+			 * @param {Object} jS the jQuery.sheet instance
+			 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
 			 * @returns {String} - schema:
 			 * &lt;spreadsheets&gt;
 			 *     &lt;spreadsheet title="spreadsheet title"&gt;

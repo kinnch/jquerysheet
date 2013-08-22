@@ -14,10 +14,14 @@
         $(function() {
             $('<div />').load('../examples/inputs.html #sheetParent table', function() {
 
+                var $output = $('#output');
 	            var output = function(i) {
-		            if (!i) $('#output').children().remove();
 
-		            $('#output')
+		            if (!i) {
+                        $output.children().remove();
+                    }
+
+                    $output
 				            .append($('<tr></tr>')
 				            .append($('<td></td>').text(this.name))
 				            .append($('<td></td>').text(this.value))

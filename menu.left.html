@@ -2,24 +2,24 @@
 	<li>
 		<a href="#">File</a>
 		<ul>
-			<li><a onclick="sheetInstance.newSheet(); return false;" title="Creates a new spreadsheet.">New</a></li>
+			<li><a onclick="this.jS.newSheet(); return false;" title="Creates a new spreadsheet.">New</a></li>
 		</ul>
 	</li>
 	<li>
 		<a href="#">Edit</a>
 		<ul>
-            <li><a onclick="sheetInstance.undo.manager.undo(); return false;">Undo</a></li>
-            <li><a onclick="sheetInstance.undo.manager.redo(); return false;">Redo</a></li>
+            <li><a onclick="this.jS.undo.manager.undo(); return false;">Undo</a></li>
+            <li><a onclick="this.jS.undo.manager.redo(); return false;">Redo</a></li>
             <li><a class="jSCut">Cut</a></li>
             <li><a class="jSCopy">Copy</a></li>
             <li><a class="jSPaste">Paste</a></li>
-            <li><a onclick="sheetInstance.merge(); return false;">Merge</a></li>
-            <li><a onclick="sheetInstance.unmerge(); return false;">Un-Merge</a></li>
-            <li><a onclick="sheetInstance.cellFind(); return false;">Find</a></li>
+            <li><a onclick="this.jS.merge(); return false;">Merge</a></li>
+            <li><a onclick="this.jS.unmerge(); return false;">Un-Merge</a></li>
+            <li><a onclick="this.jS.cellFind(); return false;">Find</a></li>
 			<li>
 				<a href="#">Cell</a>
 				<ul>
-					<li><a onclick="sheetInstance.setCellRef(); return false;">Set Reference</a></li>
+					<li><a onclick="this.jS.setCellRef(); return false;">Set Reference</a></li>
 				</ul>
 			</li>
 			<li>
@@ -27,7 +27,7 @@
 				<ul>
 					<li><a onclick="this.jS.controlFactory.addRow(); return false;" title="Adds an additional row to bottom of the spreadsheet.">Add Row</a></li>
 					<li><a onclick="this.jS.controlFactory.addRowMulti(); return false;" title="Adds an additional rows to bottom of the spreadsheet.">Add Multi-Rows</a></li>
-					<li><a onclick="this.jS.deleteRow(); return false;" title="Delets the current rows that are associated with highlighted cells.">Delete Row(s)</a></li>
+					<li><a onclick="this.jS.deleteRow(); return false;" title="Deletes the current rows that are associated with highlighted cells.">Delete Row(s)</a></li>
 					<li><a onclick="this.jS.controlFactory.addRow(this.jS.cellLast.row, true); return false;" title="Inserts an additional row after currently selected row.">Insert Row Before</a></li>
 					<li><a onclick="this.jS.controlFactory.addRow(this.jS.cellLast.row); return false;" title="Inserts an additional row after currently selected row.">Insert Row After</a></li>
 					<li><a onclick="this.jS.toggleHide.rowShowAll();" title="Show all the hidden rows.">Show All</a></li>
@@ -49,12 +49,12 @@
 				</ul>
 			</li>
 			<li>
-				<a menu="menuEditSheet_menuInstance">Sheet</a>
+				<a>Sheet</a>
 				<ul>
 					<li><a onclick="this.jS.addSheet(); return false;" title="Add new spreadsheet.">Add Spreadsheet</a></li>
 					<li><a onclick="this.jS.deleteSheet(); return false;" title="Delete the current spreadsheet.">Delete Spreadsheet</a></li>
-					<li><a onclick="this.jS.calc(); return false;" title="Recompiles the current sheet">Refresh Calculations</a></li>
-					<li><a onclick="this.jS.sheetTitle(); return false;" title="Change the title of the sheet.">Title</a></li>
+					<li><a onclick="this.jS.calc(); return false;" title="Re-Calculates the current sheet">Refresh Calculations</a></li>
+					<li><a onclick="this.jS.sheetTab(); return false;" title="Change the title of the sheet.">Title</a></li>
                     <li><a onclick="this.jS.toggleState(); return false;">Toggle Edit & ReadOnly</a></li>
 				</ul>
 			</li>
@@ -79,7 +79,7 @@
 			<li><a onclick="$($.sheet.dts.fromTables.xml(this.jS)).viewSource(true); return false;">As XML</a></li>
 			<li><a onclick="$.print(JSON.stringify($.sheet.dts.fromTables.json(this.jS))); return false;">As JSON</a></li>
 			<li>
-				<a menu="menuViewFunctionReference_menuInstance">Function Reference</a>
+				<a>Function Reference</a>
 				<ul>
 					<li>
 						<a href="#">Math & Standard</a>
@@ -160,7 +160,7 @@
 			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleBold'); return false;">Bold</a></li>
 			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleItalics'); return false;">Italics</a></li>
 			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleUnderline', 'styleLineThrough'); return false;">Underline</a></li>
-			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLineThrough', 'styleUnderline'); return false;">Strikethrough</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLineThrough', 'styleUnderline'); return false;">Strike Through</a></li>
 			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLeft', 'styleCenter styleRight'); return false;">Left</a></li>
 			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleCenter', 'styleLeft styleRight'); return false;">Center</a></li>
 			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleRight', 'styleLeft styleCenter'); return false;">Right</a></li>

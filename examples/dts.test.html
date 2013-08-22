@@ -24,7 +24,8 @@
                     json,
                     xml,
                     tables,
-		            trim = false;
+		            trim = false,
+                    $dtsValue = $('#dtsValue');
 
                 switch (dtsType) {
                     case "json": trim = true;
@@ -32,7 +33,7 @@
 	                    json = $.sheet.dts.fromTables.json(jS, trim);
 	                    tables = $.sheet.dts.toTables.json(json);
 
-	                    $('#dtsValue').val(JSON.stringify(json));
+                        $dtsValue.val(JSON.stringify(json));
 	                    break;
                     case "xml":
 		                trim = true;
@@ -40,7 +41,7 @@
 	                    xml = $.sheet.dts.fromTables.xml(jS, trim);
 	                    tables = $.sheet.dts.toTables.xml(xml);
 
-                        $('#dtsValue').val(xml);
+                        $dtsValue.val(xml);
 		                break;
                 }
 

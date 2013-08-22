@@ -14,9 +14,11 @@
 		$(function() {
 			var times = 0;
 			$('<div />').load('financial.html #sheetParent table', function() {
-				var html = $(this).html();
+				var html = $(this).html(),
+                    parent = $('#sheetParent');
+
 				for (var i = 0; i < 5; i++) {
-					$('#sheetParent')
+                    parent
 						.html(html)
 						.sheet();
 
@@ -24,7 +26,7 @@
 					times++;
 				}
 
-                $('#sheetParent')
+                parent
                     .html(html)
                     .sheet();
 
