@@ -12,9 +12,22 @@
 	<script type="text/javascript">
 		$.sheet.preLoad('../');
 		$(function() {
-			$('#sheetParent')
-					.html($.sheet.makeTable.fromSize({cols: 50, rows: 1000}))
-					.sheet();
+            if (confirm('There are ' + (1000 * 26) + ' cells in this spreadsheet, each with a formula (RAND()*PI()).  This particular spreadsheet is usually used to find what makes jQuery.sheet slow, and make it faster.  It may take some time, proceed?')) {
+                var table = $.sheet.makeTable({cols: 26, rows: 1000}),
+                        tds = table.getElementsByTagName('td'),
+                        i = tds.length - 1;
+
+                do {
+                    tds[i].setAttribute('data-formula', 'RAND()*PI()');
+                } while (i-- > 1);
+
+
+                $('#sheetParent')
+                    .html(table)
+                    .sheet();
+            } else {
+                $('#sheetParent').html('Refresh page to begin loading spreadsheet');
+            }
 		});
 	</script>
 </head>

@@ -130,7 +130,7 @@
             });
 
             test('Shift formulas down between dependency and dependent', function() {
-                me.html($.sheet.makeTable.fromSize({rows: 2, cols: 2})).sheet();
+                me.html($.sheet.makeTable({rows: 2, cols: 2})).sheet();
                 jS = me.getSheet();
                 setValue(0, 2, 2, '100');
                 setFormula(0, 1, 1, 'B2');
@@ -202,7 +202,7 @@
             });
 
             test('Insert row after a dependency the is positioned after the row and dependency', function() {
-                me.html($.sheet.makeTable.fromSize({rows: 25, cols: 5})).sheet();
+                me.html($.sheet.makeTable({rows: 25, cols: 5})).sheet();
                 jS = me.getSheet();
 
                 setValue(0, 5, 1, 100);

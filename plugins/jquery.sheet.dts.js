@@ -12,14 +12,11 @@
 (function($, doc) {
 	/**
 	 * @namespace
-	 * @name dts
-	 * @type {Object}
 	 * @memberOf jQuery.sheet
 	 */
 	jQuery.sheet.dts = {
 		/**
 		 * @memberOf jQuery.sheet.dts
-		 * @name toTables
 		 * @namespace
 		 */
 		toTables: {
@@ -63,8 +60,7 @@
 			 *  ]
 			 * }]
 			 * @returns {*|jQuery|HTMLElement} a simple html table
-			 * @methodOf jQuery.sheet.dts.toTables
-			 * @name json
+			 * @memberOf jQuery.sheet.dts.toTables
 			 */
 			json: function(json) {
 
@@ -174,8 +170,7 @@
 			 *     &lt;/spreadsheet&gt;
 			 * &lt;/spreadsheets&gt;
 			 * @returns {*|jQuery|HTMLElement} a simple html table
-			 * @name xml
-			 * @methodOf jQuery.sheet.dts.toTables
+			 * @memberOf jQuery.sheet.dts.toTables
 			 */
 			xml: function(xml) {
 				xml = $.parseXML(xml);
@@ -262,7 +257,6 @@
 
 		/**
 		 * @namespace
-		 * @name fromTables
 		 * @memberOf jQuery.sheet.dts
 		 */
 		fromTables: {
@@ -306,8 +300,7 @@
 			 *      }
 			 *  ]
 			 * }]
-			 * @methodOf jQuery.sheet.dts.fromTables
-			 * @name json
+			 * @memberOf jQuery.sheet.dts.fromTables
 			 */
 			json: function(jS, doNotTrim) {
 				doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
@@ -444,8 +437,7 @@
 			 *         &lt;/rows&gt;
 			 *     &lt;/spreadsheet&gt;
 			 * &lt;/spreadsheets&gt;
-			 * @methodOf jQuery.sheet.dts.fromTables
-			 * @name xml
+			 * @memberOf jQuery.sheet.dts.fromTables
 			 */
 			xml: function(jS, doNotTrim) {
 				doNotTrim = (doNotTrim == undefined ? false : doNotTrim);

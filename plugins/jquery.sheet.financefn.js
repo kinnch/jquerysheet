@@ -8,149 +8,161 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-var jSF = jQuery.sheet.financefn = {
-	NPV: function(rate) {
-		rate = rate * 1;
-		var factor = 1;
-		var sum = 0;
-		
-		for(var i = 1; i < arguments.length; i++) {
-			var factor = factor * (1 + rate);
-			sum += arguments[i] / factor;
-		}
-		
-		return {
-			value: sum,
-			html: Globalize.format( sum, "c" )
-		};
-	},
-	PV: function(rate, nper, pmt, fv, type) {
-		this.html = [];
-		fv = fv || 0;
-		type = type || 0;
+(function(jFN){
+    var nAN = NaN,
+        math = Math;
 
-		var pv;
-		if (rate != 0) {
-			pv = (-pmt * (1 + rate * type) * ((Math.pow(1 + rate, nper) - 1) / rate) - fv) / Math.pow(1 + rate, nper);
-		} else {
-			pv = -fv - pmt * nper;
-		}
+    var jSF = jQuery.sheet.financefn = {
+        NPV: function(rate) {
+            rate = rate * 1;
+            var factor = 1;
+            var sum = 0;
 
-		return {
-			value: pv,
-			html: Globalize.format( pv, "c" )
-		};
-	},
-	RATE: function(nper, pmt, pv, fv, type, estimate) {
-		this.html = [];
-		fv = fv || 0;
-		type = type || 0;
-		estimate = estimate || 0.1;
+            for(var i = 1; i < arguments.length; i++) {
+                var factor = factor * (1 + rate);
+                sum += arguments[i] / factor;
+            }
 
-		var rate = estimate, y = 0, f = 0,
-			FINANCIAL_MAX_ITERATIONS = 128,
-			FINANCIAL_PRECISION = 1.0e-08;
-		if (Math.abs(rate) < FINANCIAL_PRECISION) {
-			y = pv * (1 + nper * rate) + pmt * (1 + rate * type) * nper + fv;
-		} else {
-			f = Math.exp(nper * Math.log(1 + rate));
-			y = pv * f + pmt * (1 / rate + type) * (f - 1) + fv;
-		}
-		var y0 = pv + pmt * nper + fv,
-			y1 = pv * f + pmt * (1 / rate + type) * (f - 1) + fv;
+            return {
+                value: sum,
+                html: Globalize.format( sum, "c" )
+            };
+        },
+        PV: function(rate, nper, pmt, fv, type) {
+            this.html = [];
+            fv = fv || 0;
+            type = type || 0;
 
-		// find root by secant method
-		var i = 0, x0 = 0,
-			x1 = rate;
-		while ((Math.abs(y0 - y1) > FINANCIAL_PRECISION) && (i < FINANCIAL_MAX_ITERATIONS)) {
-			rate = (y1 * x0 - y0 * x1) / (y1 - y0);
-			x0 = x1;
-			x1 = rate;
+            var pv;
+            if (rate != 0) {
+                pv = (-pmt * (1 + rate * type) * ((Math.pow(1 + rate, nper) - 1) / rate) - fv) / Math.pow(1 + rate, nper);
+            } else {
+                pv = -fv - pmt * nper;
+            }
 
-			if (Math.abs(rate) < FINANCIAL_PRECISION) {
-				y = pv * (1 + nper * rate) + pmt * (1 + rate * type) * nper + fv;
-			} else {
-				f = Math.exp(nper * Math.log(1 + rate));
-				y = pv * f + pmt * (1 / rate + type) * (f - 1) + fv;
-			}
+            return {
+                value: pv,
+                html: Globalize.format( pv, "c" )
+            };
+        },
+        RATE: function(nper, pmt, pv, fv, type, estimate) {
+            this.html = [];
+            fv = fv || 0;
+            type = type || 0;
+            estimate = estimate || 0.1;
 
-			y0 = y1;
-			y1 = y;
-			++i;
-		}
+            var rate = estimate, y = 0, f = 0,
+                FINANCIAL_MAX_ITERATIONS = 128,
+                FINANCIAL_PRECISION = 1.0e-08;
+            if (Math.abs(rate) < FINANCIAL_PRECISION) {
+                y = pv * (1 + nper * rate) + pmt * (1 + rate * type) * nper + fv;
+            } else {
+                f = Math.exp(nper * Math.log(1 + rate));
+                y = pv * f + pmt * (1 / rate + type) * (f - 1) + fv;
+            }
+            var y0 = pv + pmt * nper + fv,
+                y1 = pv * f + pmt * (1 / rate + type) * (f - 1) + fv;
 
-		return {
-			value: rate,
-			html: Globalize.format( rate, "p" )
-		};
-	},
-	IPMT: function(rate, per, nper, pv, fv, type) {
-		this.html = [];
-		var pmt = jFN.PMT(rate, nper, pv, fv, type).value,
-			fv = jFN.FV(rate, per - 1, pmt, pv, type).value,
-			result = fv * rate;
+            // find root by secant method
+            var i = 0, x0 = 0,
+                x1 = rate;
+            while ((Math.abs(y0 - y1) > FINANCIAL_PRECISION) && (i < FINANCIAL_MAX_ITERATIONS)) {
+                rate = (y1 * x0 - y0 * x1) / (y1 - y0);
+                x0 = x1;
+                x1 = rate;
 
-		// account for payments at beginning of period versus end.
-		if (type) {
-			result /= (1 + rate);
-		}
+                if (Math.abs(rate) < FINANCIAL_PRECISION) {
+                    y = pv * (1 + nper * rate) + pmt * (1 + rate * type) * nper + fv;
+                } else {
+                    f = Math.exp(nper * Math.log(1 + rate));
+                    y = pv * f + pmt * (1 / rate + type) * (f - 1) + fv;
+                }
 
-		// return results to caller.
-		return {
-			value: result,
-			html: Globalize.format( result, "c" )
-		};
-	},
-	PMT: function(rate, nper, pv, fv, type){
-		this.html = [];
-		fv = fv || 0;
-		type = type || 0;
+                y0 = y1;
+                y1 = y;
+                ++i;
+            }
 
-		// pmt = rate / ((1 + rate)^N - 1) * -(pv * (1 + r)^N + fv)
-		var pmt = rate / (Math.pow(1 + rate, nper) - 1)
-			* -(pv * Math.pow(1 + rate, nper) + fv);
+            return {
+                value: rate,
+                html: Globalize.format( rate, "p" )
+            };
+        },
+        IPMT: function(rate, per, nper, pv, fv, type) {
+            this.html = [];
+            var pmt = jFN.PMT(rate, nper, pv, fv, type).value,
+                fv = jFN.FV(rate, per - 1, pmt, pv, type).value,
+                result = fv * rate;
 
-		// account for payments at beginning of period versus end.
-		if (type == 1) {
-			pmt = pmt / (1 + rate);
-		}
+            // account for payments at beginning of period versus end.
+            if (type) {
+                result /= (1 + rate);
+            }
 
-		// return results to caller.
-		return {
-			value: pmt,
-			html: Globalize.format( pmt, "c" )
-		};
-	},
-	NPER: function(rate, pmt, pv, fv, type) { //Taken from LibreOffice - http://opengrok.libreoffice.org/xref/core/sc/source/core/tool/interpr2.cxx#1382 ScInterpreter::ScZZR()
-		this.html = [];
-		var log = Math.log;
-		rate = parseFloat(rate || 0);
-		pmt = parseFloat(pmt || 0);
-		pv = parseFloat(pv || 0);
-		fv = fv || 0;
-		type = type || 0;
+            // return results to caller.
+            return {
+                value: result,
+                html: Globalize.format( result, "c" )
+            };
+        },
+        PMT: function(rate, nper, pv, fv, type){
+            this.html = [];
+            fv = fv || 0;
+            type = type || 0;
 
-		if (rate == 0.0) {
-	         return (-(pv + fv)/pmt);
-		} else if (type > 0.0) {
-	         return (log(-(rate*fv-pmt*(1.0+rate))/(rate*pv+pmt*(1.0+rate)))
-                   /log(1.0+rate));
-		} else {
-		     return (log(-(rate*(fv-pmt))/(rate*(pv+pmt)))/log(1.0+rate));
-		}
-	},
-	FV: function(rate, nper, pmt, pv, type) { //not working yet
-		this.html = [];
-		pv = (pv ? pv : 0);
-		type = (type ? type : 0);
-		var result = -(
-			pv*Math.pow(1.0+rate, nper)
-			+ pmt * (1.0 + rate*type)
-				* (Math.pow(1.0+rate, nper) - 1.0) / rate
-		);
-		return {
-			value: result,
-			html: Globalize.format( result, "c" )
-		};
-	}
-}; 
+            // pmt = rate / ((1 + rate)^N - 1) * -(pv * (1 + r)^N + fv)
+            var pmt = rate / (Math.pow(1 + rate, nper) - 1)
+                * -(pv * Math.pow(1 + rate, nper) + fv);
+
+            // account for payments at beginning of period versus end.
+            if (type == 1) {
+                pmt = pmt / (1 + rate);
+            }
+
+            // return results to caller.
+            return {
+                value: pmt,
+                html: Globalize.format( pmt, "c" )
+            };
+        },
+        NPER: function(rate, pmt, pv, fv, type) { //Taken from LibreOffice - http://opengrok.libreoffice.org/xref/core/sc/source/core/tool/interpr2.cxx#1382 ScInterpreter::ScZZR()
+            this.html = [];
+            var log = Math.log,
+                result;
+            rate = parseFloat(rate || 0);
+            pmt = parseFloat(pmt || 0);
+            pv = parseFloat(pv || 0);
+            fv = fv || 0;
+            type = type || 0;
+
+            if (rate == 0.0) {
+                result = (-(pv + fv)/pmt);
+            } else if (type > 0.0) {
+                result = (log(-(rate*fv-pmt*(1.0+rate))/(rate*pv+pmt*(1.0+rate)))
+                       /log(1.0+rate));
+            } else {
+                result = (log(-(rate*(fv-pmt))/(rate*(pv+pmt)))/log(1.0+rate));
+            }
+
+            if (isNaN(result)) {
+                result = 0;
+            }
+
+            return result;
+        },
+        FV: function(rate, nper, pmt, pv, type) { //not working yet
+            this.html = [];
+            pv = (pv ? pv : 0);
+            type = (type ? type : 0);
+            var result = -(
+                pv*Math.pow(1.0+rate, nper)
+                + pmt * (1.0 + rate*type)
+                    * (Math.pow(1.0+rate, nper) - 1.0) / rate
+            );
+            return {
+                value: result,
+                html: Globalize.format( result, "c" )
+            };
+        }
+    };
+})(jQuery.sheet.fn);
