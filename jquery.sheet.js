@@ -6711,6 +6711,7 @@ jQuery = jQuery || window.jQuery;
                                 var result = $.sheet.fn[fn].apply(this, values);
                                 if (result != null) {
                                     if (result.html != u) {
+                                        this.html.length = this.html.length - 1;
                                         this.html.push(result.html);
                                     } else {
                                         this.html.push(null);
