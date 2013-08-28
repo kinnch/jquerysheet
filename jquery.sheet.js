@@ -3942,7 +3942,7 @@ jQuery = jQuery || window.jQuery;
                                         }
 
                                         s.parent.one('sheetPreCalculation', function () {
-                                            if (v.charAt(0) == '=') {
+                                            if (v.charAt(0) == '=' && jS.formulaParser) {
                                                 td.data('formula', v);
                                                 cell.value = v;
                                                 cell.formula = v;
@@ -5374,32 +5374,38 @@ jQuery = jQuery || window.jQuery;
                                         break;
                                 }
                             } while (i--);
+                        } else {
+                            var child = doc.createElement('tr');
+                            //if there aren't any children, give it at least 1
+                            child.appendChild(doc.createElement('td'));
+                            table.appendChild(child);
+                            children = table.children;
+                        }
 
-                            if (!tBody) {
-                                tBody = doc.createElement('tbody');
-                                do {
-                                    tBody.appendChild(children[0]);
-                                } while (children.length);
+                        if (!tBody) {
+                            tBody = doc.createElement('tbody');
+                            do {
+                                tBody.appendChild(children[0]);
+                            } while (children.length);
+                        }
+
+                        if (!colGroup || colGroup.children.length < 1) {
+                            colGroup = doc.createElement('colgroup');
+
+                            table.appendChild(colGroup);
+                            table.appendChild(tBody);
+
+                            firstTr = tBody.children[0];
+
+                            for (i = 0, j = firstTr.children.length; i < j; i++) {
+                                col = doc.createElement('col');
+                                colGroup.appendChild(col);
+                                col.style.width = w + 'px';
+                                col.width = w + 'px';
                             }
-
-                            if (!colGroup || colGroup.children.length < 1) {
-                                colGroup = doc.createElement('colgroup');
-
-                                table.appendChild(colGroup);
-                                table.appendChild(tBody);
-
-                                firstTr = tBody.children[0];
-
-                                for (i = 0, j = firstTr.children.length; i < j; i++) {
-                                    col = doc.createElement('col');
-                                    colGroup.appendChild(col);
-                                    col.style.width = w + 'px';
-                                    col.width = w + 'px';
-                                }
-                                for (i = 0, j = tBody.children.length; i < j; i++) {
-                                    tBody.children[i].height = h + 'px';
-                                    tBody.children[i].style.height = h + 'px';
-                                }
+                            for (i = 0, j = tBody.children.length; i < j; i++) {
+                                tBody.children[i].height = h + 'px';
+                                tBody.children[i].style.height = h + 'px';
                             }
                         }
 
@@ -6290,11 +6296,11 @@ jQuery = jQuery || window.jQuery;
                                     var formulaParser;
                                     if (jS.callStack) { //we prevent parsers from overwriting each other
                                         if (!cell.formulaParser) { //cut down on un-needed parser creation
-                                            cell.formulaParser = Formula(jS.cellHandler);
+                                            cell.formulaParser = win.Formula(jS.cellHandler);
                                         }
                                         formulaParser = cell.formulaParser
                                     } else {//use the sheet's parser if there aren't many calls in the callStack
-                                        formulaParser = jS.FormulaParser;
+                                        formulaParser = jS.formulaParser;
                                     }
 
                                     jS.callStack++;
@@ -6503,14 +6509,16 @@ jQuery = jQuery || window.jQuery;
 
                             if (!type1IsNumber) {
                                 errors.push('not a number: ' + num1);
+                                num1 = 0;
                             }
 
                             if (!type2IsNumber) {
                                 errors.push('not a number: ' + num2);
+                                num2 = 0;
                             }
 
                             if (errors.length) {
-                                throw new Error(errors.join(';') + ';');
+                                //throw new Error(errors.join(';') + ';');
                             }
 
                             switch (mathType) {
@@ -6522,6 +6530,9 @@ jQuery = jQuery || window.jQuery;
                                     break;
                                 case '/':
                                     value = num1 / num2;
+                                    if (value == Infinity || value == nAN) {
+                                        value = 0;
+                                    }
                                     break;
                                 case '*':
                                     value = num1 * num2;
@@ -6709,12 +6720,10 @@ jQuery = jQuery || window.jQuery;
                                 }
                                 this.html = html;
                                 var result = $.sheet.fn[fn].apply(this, values);
+                                this.html.length = 0;
                                 if (result != null) {
                                     if (result.html != u) {
-                                        this.html.length = this.html.length - 1;
                                         this.html.push(result.html);
-                                    } else {
-                                        this.html.push(null);
                                     }
                                     if (result.value != u) {
                                         return result.value;
@@ -6854,6 +6863,7 @@ jQuery = jQuery || window.jQuery;
                             jS.readOnly[sheetIndex]
                             || jS.isChanged(sheetIndex) === false
                             && !refreshCalculations
+                            || !jS.formulaParser
                             ) {
                             return false;
                         } //readonly is no calc at all
@@ -8246,7 +8256,12 @@ jQuery = jQuery || window.jQuery;
                         if (cellRef) { //TODO: need to update value when cell is updated
                             jS.s.formulaVariables[cellRef] = jS.updateCellValue(jS.i, loc.row, loc.col);
                         }
-                    }
+                    },
+
+                    /**
+                     * @memberOf jS
+                     */
+                    formulaParser: null
                 };
             jS.setBusy(true);
             s.parent[0].jS = jS;
@@ -8259,7 +8274,9 @@ jQuery = jQuery || window.jQuery;
             }
 
             //ready the sheet's parser;
-            jS.FormulaParser = Formula(jS.cellHandler);
+            if (win.Formula) {
+                jS.formulaParser = win.Formula(jS.cellHandler);
+            }
 
             //We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
             //$(this).html(s.loading);
@@ -10326,20 +10343,24 @@ jQuery = jQuery || window.jQuery;
         DROPDOWN:function () {
             var cell = this,
                 jS = this.jS,
-                v = arrHelpers.flatten(arguments),
+                v,
                 html = this.td.children().detach(),
-                loc = jS.getTdLocation(cell.td),
+                loc,
                 $td = $(cell.td),
-                select;
-            v = arrHelpers.unique(v);
+                select,
+                id;
 
             if (!html.length || cell.needsUpdated) {
-                var id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+                v = arrHelpers.flatten(arguments);
+                v = arrHelpers.unique(v);
+                loc = jS.getTdLocation(cell.td);
+                id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+
                 select = doc.createElement('select');
                 select.setAttribute('name', id);
                 select.setAttribute('id', id);
                 select.className = 'jSDropdown';
-                select.cell = cell;
+                select.cell = this;
 
                 select.onmouseup = function() {
                     jS.cellEdit($td);
@@ -10368,7 +10389,7 @@ jQuery = jQuery || window.jQuery;
                     });
                 }
 
-                select.value = cell.value;
+                select.value = cell.value || v[0];
                 select.onchange();
             }
             return {value:cell.value, html:select};
