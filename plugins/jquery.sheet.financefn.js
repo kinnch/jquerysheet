@@ -9,51 +9,51 @@
  *
  */
 (function(jFN){
-    var nAN = NaN,
-        math = Math;
+    var nAN = NaN;
 
     var jSF = jQuery.sheet.financefn = {
         NPV: function(rate) {
             rate = rate * 1;
-            var factor = 1;
-            var sum = 0;
+            var factor = 1,
+                sum = 0,
+                result;
 
             for(var i = 1; i < arguments.length; i++) {
                 var factor = factor * (1 + rate);
                 sum += arguments[i] / factor;
             }
 
-            return {
-                value: sum,
-                html: Globalize.format( sum, "c" )
-            };
+            result = new Number(sum);
+
+            result.html = Globalize.format( sum, "c" );
+            return result;
         },
         PV: function(rate, nper, pmt, fv, type) {
-            this.html = [];
             fv = fv || 0;
             type = type || 0;
 
-            var pv;
+            var pv,
+                result;
             if (rate != 0) {
                 pv = (-pmt * (1 + rate * type) * ((Math.pow(1 + rate, nper) - 1) / rate) - fv) / Math.pow(1 + rate, nper);
             } else {
                 pv = -fv - pmt * nper;
             }
 
-            return {
-                value: pv,
-                html: Globalize.format( pv, "c" )
-            };
+            result = new Number(pv);
+            result.html = Globalize.format( pv, "c" );
+            return result;
         },
         RATE: function(nper, pmt, pv, fv, type, estimate) {
-            this.html = [];
             fv = fv || 0;
             type = type || 0;
             estimate = estimate || 0.1;
 
             var rate = estimate, y = 0, f = 0,
                 FINANCIAL_MAX_ITERATIONS = 128,
-                FINANCIAL_PRECISION = 1.0e-08;
+                FINANCIAL_PRECISION = 1.0e-08,
+                result;
+
             if (Math.abs(rate) < FINANCIAL_PRECISION) {
                 y = pv * (1 + nper * rate) + pmt * (1 + rate * type) * nper + fv;
             } else {
@@ -83,15 +83,13 @@
                 ++i;
             }
 
-            return {
-                value: rate,
-                html: Globalize.format( rate, "p" )
-            };
+            result = new Number(rate);
+            result.html = Globalize.format( rate, "p" );
+            return result;
         },
         IPMT: function(rate, per, nper, pv, fv, type) {
-            this.html = [];
-            var pmt = jFN.PMT(rate, nper, pv, fv, type).value,
-                fv = jFN.FV(rate, per - 1, pmt, pv, type).value,
+            var pmt = jFN.PMT(rate, nper, pv, fv, type),
+                fv = jFN.FV(rate, per - 1, pmt, pv, type),
                 result = fv * rate;
 
             // account for payments at beginning of period versus end.
@@ -99,35 +97,29 @@
                 result /= (1 + rate);
             }
 
-            // return results to caller.
-            return {
-                value: result,
-                html: Globalize.format( result, "c" )
-            };
+            result = new Number(result);
+            result.html = Globalize.format( result, "c" );
+            return result;
         },
         PMT: function(rate, nper, pv, fv, type){
-            this.html = [];
             fv = fv || 0;
             type = type || 0;
 
             // pmt = rate / ((1 + rate)^N - 1) * -(pv * (1 + r)^N + fv)
-            var pmt = rate / (Math.pow(1 + rate, nper) - 1)
-                * -(pv * Math.pow(1 + rate, nper) + fv);
-
+            var pmt = (rate / (Math.pow(1 + rate, nper) - 1)
+                * -(pv * Math.pow(1 + rate, nper) + fv)),
+                result;
             // account for payments at beginning of period versus end.
             if (type == 1) {
                 pmt = pmt / (1 + rate);
             }
 
-            // return results to caller.
-            return {
-                value: pmt,
-                html: Globalize.format( pmt, "c" )
-            };
+            result = new Number(pmt);
+            result.html = Globalize.format( pmt, "c" );
+            return result;
         },
         NPER: function(rate, pmt, pv, fv, type) { //Taken from LibreOffice - http://opengrok.libreoffice.org/xref/core/sc/source/core/tool/interpr2.cxx#1382 ScInterpreter::ScZZR()
-            this.html = [];
-            var log = Math.log,
+            var log = math.log || Math.log,
                 result;
             rate = parseFloat(rate || 0);
             pmt = parseFloat(pmt || 0);
@@ -151,18 +143,16 @@
             return result;
         },
         FV: function(rate, nper, pmt, pv, type) { //not working yet
-            this.html = [];
             pv = (pv ? pv : 0);
             type = (type ? type : 0);
-            var result = -(
+            var result = new Number(-(
                 pv*Math.pow(1.0+rate, nper)
                 + pmt * (1.0 + rate*type)
                     * (Math.pow(1.0+rate, nper) - 1.0) / rate
-            );
-            return {
-                value: result,
-                html: Globalize.format( result, "c" )
-            };
+            ));
+
+            result.html = Globalize.format( result, "c" );
+            return result;
         }
     };
 })(jQuery.sheet.fn);

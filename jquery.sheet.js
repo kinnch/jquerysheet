@@ -555,71 +555,70 @@ jQuery = jQuery || window.jQuery;
                         hiddenRows:[],
                         hiddenColumns:[],
                         cellStartingHandlers: {
-                            '$':function(val, ch) {
-                                this.formula = '';
-                                this.value = val;
-                                this.valueOverride = jFN.DOLLAR.apply(this, [val.substring(1).replace(globalize.culture().numberFormat[','], ''), 2, ch || '$']).value;
-                                this.td
-                                    .removeData('formula')
-                                    .html(val);
+                            '$':function(value, ch) {
+                                return jFN.DOLLAR.call(this, val.substring(1).replace(globalize.culture().numberFormat[','], ''), 2, ch || '$');
                             },
                             '£':function(val) {
-                                jS.s.cellStartingHandlers['$'].apply(this, [val, '£']);
+                                return jS.s.cellStartingHandlers['$'].call(this, val, '£');
                             }
                         },
                         cellEndHandlers: {
-                            '%': function(val) {
-                                this.td.html(val);
-                                this.value = val;
-                                this.valueOverride = val.substring(0, this.value.length - 1) / 100;
+                            '%': function(value) {
+                                return value.substring(0, this.value.length - 1) / 100;
                             }
                         },
                         cellTypeHandlers: {
-                            percent: function() {
-                                var num = globalize.parseFloat(this.value);
+                            percent: function(value) {
+                                var num = (n(value) ? globalize.parseFloat(value) : value),
+                                    result;
 
                                 if (!n(num)) {//success
-                                    this.valueOverride = num;
-                                    this.td.html(globalize.format(num, 'p'));
-                                } else {
-                                    this.td.html(this.valueOverride || this.value);
+                                    result = new Number(num);
+                                    result.html = globalize.format(num, 'p');
+                                    return result;
                                 }
 
+                                return value;
                             },
-                            date: function() {
-                                var date = globalize.parseDate(this.value);
-                                this.valueOverride = date;
-                                this.td.html(globalize.format(date, 'd'));
+                            date: function(value) {
+                                var date = globalize.parseDate(value);
+                                date.html = globalize.format(date, 'd');
+                                return date;
                             },
-                            time: function() {
-                                var date = globalize.parseDate(this.value);
-                                this.valueOverride = date;
-                                this.td.html(globalize.format(date, 't'));
+                            time: function(value) {
+                                var date = globalize.parseDate(value);
+                                date.html = globalize.format(date, 't');
+                                return date;
                             },
-                            currency: function() {
-                                var num = (this.value.indexOf ? this.value : this.value + ''); //cast to string if needed
-                                num = globalize.parseFloat(num);
+                            currency: function(value) {
+                                var num = (n(value) ? globalize.parseFloat(value) : value),
+                                    result;
 
                                 if (!n(num)) {//success
-                                    this.valueOverride = num;
-                                    this.td.html(globalize.format(num, 'c'));
-                                } else {
-                                    this.td.html(this.valueOverride || this.value);
+                                    result = new Number(num);
+                                    result.html = globalize.format(num, 'c');
+                                    return result;
                                 }
+
+                                return num;
                             },
-                            number: function() {
+                            number: function(value) {
+                                var radix, result;
                                 if (!settings.endOfNumber) {
-                                    var radix = globalize.culture().numberFormat['.'];
+                                    radix = globalize.culture().numberFormat['.'];
                                     settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
                                 }
 
-                                if (!n(this.value)) {//success
-                                    this.td.html(globalize.format(this.value + '', "n10").replace(settings.endOfNumber, function (orig, radix, num) {
-                                        return (num ? radix : '') + (num || '');
-                                    }));
-                                } else {
-                                    this.td.html(this.valueOverride || this.value);
+                                if (!n(value)) {//success
+                                    result = new Number(value);
+                                    result.html = globalize.format(value + '', "n10")
+                                        .replace(settings.endOfNumber, function (orig, radix, num) {
+                                            return (num ? radix : '') + (num || '');
+                                        });
+                                    return result;
                                 }
+
+                                return value;
                             }
                         }
                     };
@@ -6314,22 +6313,23 @@ jQuery = jQuery || window.jQuery;
                                     cell.result = e.toString();
                                 }
                                 jS.callStack--;
-                                jS.filterValue.apply(cell);
 
                                 if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
-                                    s.cellTypeHandlers[cell.cellType].apply(cell);
+                                    cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.result);
                                 }
+                                jS.filterValue.apply(cell);
                             } else if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
-                                s.cellTypeHandlers[cell.cellType].apply(cell);
+                                cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
+                                jS.filterValue.apply(cell);
                             } else {
                                 if (cell.value != u && cell.value.charAt) {
                                     fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
                                     if (fn) {
-                                        fn.apply(cell, [cell.value]);
+                                        cell.valueOverride = fn.call(cell, cell.value);
                                     } else {
                                         fn = jS.s.cellEndHandlers[cell.value.charAt(cell.value.length - 1)];
                                         if (fn) {
-                                            fn.apply(cell, [cell.value]);
+                                            cell.valueOverride = fn.call(cell, cell.value);
                                         }
                                     }
                                 }
@@ -6468,7 +6468,7 @@ jQuery = jQuery || window.jQuery;
                                 value,
                                 output = function(val) {return val;};
 
-                            switch (type1 = (typeof num1)) {
+                            switch (type1 = (typeof num1.valueOf())) {
                                 case 'number':break;
                                 case 'string':
                                     if (!n(num1)) {
@@ -6489,7 +6489,7 @@ jQuery = jQuery || window.jQuery;
                                     type1IsNumber = false;
                             }
 
-                            switch (type2 = (typeof num2)) {
+                            switch (type2 = (typeof num2.valueOf())) {
                                 case 'number':break;
                                 case 'string':
                                     if (!n(num2)) {
@@ -8925,12 +8925,12 @@ jQuery = jQuery || window.jQuery;
          */
         ISNUMBER:function (v) {
             var result;
-            if (!isNaN(v)) {
+            if (!isNaN(v.valueOf())) {
                 result = new Boolean(true);
                 result.html = 'TRUE';
                 return result;
             }
-            result = new Boolean(true);
+            result = new Boolean(false);
             result.html = 'FALSE'
             return result;
         },
@@ -10013,7 +10013,7 @@ jQuery = jQuery || window.jQuery;
                 res,
                 cell = this;
             $.each(args, function (i) {
-                if (args[i] !== true && res == undefined) {
+                if (args[i].valueOf() !== true && res == undefined) {
                     res = jFN.FALSE();
                 }
             });
@@ -10055,7 +10055,7 @@ jQuery = jQuery || window.jQuery;
          */
         NOT:function (v) {
             var result;
-            if (!v) {
+            if (!v.valueOf()) {
                 result = new Boolean(true);
                 result.html = 'TRUE';
             } else {
@@ -11053,7 +11053,8 @@ jQuery = jQuery || window.jQuery;
         }
     };
 
-    var math = {
+
+    var math = win.math = $.extend(win.math, {
         log10:function (arg) {
             // http://kevin.vanzonneveld.net
             // +   original by: Philip Peterson
@@ -11093,7 +11094,7 @@ jQuery = jQuery || window.jQuery;
             }
             return ret;
         }
-    };
+    });
 
     $.print = function (s) {
         var w = win.open();
