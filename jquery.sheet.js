@@ -8172,6 +8172,37 @@ jQuery = jQuery || window.jQuery;
                     },
 
                     /**
+                     * Sorts what is highlighted, and updates accordingly
+                     * @param {Boolean} [reversed]
+                     * @memberOf jS
+                     */
+                    sort:function (reversed) {
+                        var selected = jS.highlighted(true),
+                            length = selected.length,
+                            i =  0,
+                            num = [],
+                            cell;
+
+                        while(i<length){
+                            num.push(selected[i].value);
+                            i++
+                        }
+                        if(reversed){
+                            num.sort(function(a,b){return a-b});
+                        }
+                        else{
+                            num.sort(function(a,b){return b-a});
+                        }
+                        while(selected.length){
+                            cell = selected.pop();
+                            cell.value = num[selected.length];
+                            cell.calcLast = 0;
+                            jS.updateCellValue.apply(cell);
+                            jS.updateCellDependencies.apply(cell);
+                        }
+                    },
+
+                    /**
                      *
                      * @param {jQuery|HTMLElement} [table]
                      * @returns {Object} {cols, rows}
