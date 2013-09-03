@@ -14,7 +14,7 @@
   * @type {Object|Function}
  */
 jQuery = jQuery || window.jQuery;
-(function($, doc, win, Date, String, Number, Math, RegExp, Error) {
+(function($, doc, win, Date, String, Number, Boolean, Math, RegExp, Error) {
     /**
      * @namespace
      * @type {Object}
@@ -3066,7 +3066,8 @@ jQuery = jQuery || window.jQuery;
                             var toggleHideStyleX = doc.createElement('style'),
                                 toggleHideStyleY = doc.createElement('style'),
                                 hiddenRows,
-                                hiddenColumns;
+                                hiddenColumns,
+                                i;
 
                             toggleHideStyleX.updateStyle = function (e) {
                                 var style = self.nthCss('col', '#' + jS.id + jS.i, jS.toggleHide.hiddenColumns[jS.i], 0) +
@@ -3085,14 +3086,14 @@ jQuery = jQuery || window.jQuery;
                                 jS.autoFillerGoToTd();
                             };
 
-                            jS.controlFactory.styleUpdater(toggleHideStyleX);
-                            jS.controlFactory.styleUpdater(toggleHideStyleY);
-
                             jS.controls.toggleHide.x[jS.i] = $(toggleHideStyleX);
                             jS.controls.toggleHide.y[jS.i] = $(toggleHideStyleY);
 
                             pane.appendChild(toggleHideStyleX);
                             pane.appendChild(toggleHideStyleY);
+
+                            jS.controlFactory.styleUpdater(toggleHideStyleX);
+                            jS.controlFactory.styleUpdater(toggleHideStyleY);
 
                             s.hiddenColumns[jS.i] = s.hiddenColumns[jS.i] || [];
                             s.hiddenRows[jS.i] = s.hiddenRows[jS.i] || [];
@@ -3105,14 +3106,20 @@ jQuery = jQuery || window.jQuery;
                             }
 
                             if (jS.s.hiddenRows[jS.i]) {
-                                for (var row in jS.s.hiddenRows[jS.i]) {
-                                    jS.toggleHide.row(jS.s.hiddenRows[jS.i][row]);
+                                i = jS.s.hiddenRows[jS.i].length - 1;
+                                if (i > -1) {
+                                    do {
+                                        jS.toggleHide.row(jS.s.hiddenRows[jS.i][i]);
+                                    } while (i--);
                                 }
                             }
 
                             if (s.hiddenColumns[jS.i]) {
-                                for (var col in s.hiddenColumns[jS.i]) {
-                                    jS.toggleHide.column(s.hiddenColumns[jS.i][col]);
+                                i = s.hiddenColumns[jS.i].length - 1;
+                                if (i > -1) {
+                                    do {
+                                        jS.toggleHide.column(s.hiddenColumns[jS.i][i]);
+                                    } while (i--);
                                 }
                             }
                         },
@@ -6456,7 +6463,22 @@ jQuery = jQuery || window.jQuery;
                                         return dates.toCentury(num);
                                     }
                             }
-                            return 0;
+                            return num;
+                        },
+
+                        /**
+                         * get a number from variable
+                         * @param {*} _num
+                         * @returns {Number}
+                         * @memberOf jS.cellHandler
+                         */
+                        numberInverted: function(_num) {
+                            var num = jS.cellHandler.number(_num),
+                                inverted = new Number(num.valueOf() * -1);
+                            if (num.html) {
+                                inverted.html = num.html;
+                            }
+                            return inverted;
                         },
 
                         /**
@@ -9227,11 +9249,17 @@ jQuery = jQuery || window.jQuery;
          */
         SUM:function () {
             var sum = 0,
-                v = arrHelpers.toNumbers(arguments);
+                v = arrHelpers.toNumbers(arguments),
+                i = v.length - 1;
 
-            for (var i in v) {
-                sum += v[i] * 1;
+            if (i < 0) {
+                return 0;
             }
+
+            do {
+                sum += v[i] * 1;
+            } while (i--);
+
             return sum;
         },
 
@@ -9290,11 +9318,18 @@ jQuery = jQuery || window.jQuery;
          */
         COUNT:function () {
             var count = 0,
-                v = arrHelpers.toNumbers(arguments);
+                v = arrHelpers.toNumbers(arguments),
+                i = v.length - 1;
 
-            for (var i in v) {
-                if (v[i] != null) count++;
+            if (i < 0) {
+                return count;
             }
+
+            do {
+                if (v[i] !== null) {
+                    count++;
+                }
+            } while (i--);
 
             return count;
         },
@@ -9306,13 +9341,18 @@ jQuery = jQuery || window.jQuery;
          */
         COUNTA:function () {
             var count = 0,
-                v = arrHelpers.flatten(arguments);
+                v = arrHelpers.flatten(arguments),
+                i = v.length - 1;
 
-            for (var i in v) {
+            if (i < 0) {
+                return count;
+            }
+
+            do {
                 if (v[i]) {
                     count++;
                 }
-            }
+            } while (i--);
 
             return count;
         },
@@ -9324,11 +9364,17 @@ jQuery = jQuery || window.jQuery;
          */
         MAX:function () {
             var v = arrHelpers.toNumbers(arguments),
-                max = v[0];
+                max = v[0],
+                i = v.length - 1;
 
-            for (var i in v) {
-                max = (v[i] > max ? v[i] : max);
+            if (i < 0) {
+                return 0;
             }
+
+            do {
+                max = (v[i] > max ? v[i] : max);
+            } while (i--);
+
             return max;
         },
 
@@ -9339,11 +9385,17 @@ jQuery = jQuery || window.jQuery;
          */
         MIN:function () {
             var v = arrHelpers.toNumbers(arguments),
-                min = v[0];
+                min = v[0],
+                i = v.length - 1;
 
-            for (var i in v) {
-                min = (v[i] < min ? v[i] : min);
+            if (i < 0) {
+                return 0;
             }
+
+            do {
+                min = (v[i] < min ? v[i] : min);
+            } while (i--);
+
             return min;
         },
 
@@ -9368,7 +9420,7 @@ jQuery = jQuery || window.jQuery;
         /**
          * string function
          * @param v
-         * @returns {XML|string|void}
+         * @returns {String}
          * @memberOf jFN
          */
         CLEAN:function (v) {
@@ -10068,15 +10120,21 @@ jQuery = jQuery || window.jQuery;
          * @memberOf jFN
          */
         OR:function () {
-            var result;
-            for(var i in arguments) {
-                if ((arguments[i] == true || arguments[i] == 1) && !result) {
-                    result = new Boolean(true);
-                    result.html = 'TRUE';
-                    return result;
-                }
-            }
+            var args = arguments,
+                result,
+                i = args.length - 1,
+                v;
 
+            if (i > -1) {
+                do {
+                    v = args[i].valueOf();
+                    if (v) {
+                        result = new Boolean(true);
+                        result.html = 'TRUE';
+                        return result;
+                    }
+                } while (i--);
+            }
             result = new Boolean(false);
             result.html = 'FALSE';
             return result;
@@ -10141,7 +10199,7 @@ jQuery = jQuery || window.jQuery;
         EQUAL: function(left, right) {
             var result;
 
-            if (left == right) {
+            if (left.valueOf() == right.valueOf()) {
                 result = new Boolean(true);
                 result.html = 'TRUE';
             } else {
@@ -10716,8 +10774,13 @@ jQuery = jQuery || window.jQuery;
         math: Math,
         toNumbers:function (arr) {
             arr = this.flatten(arr);
+            var i = arr.length - 1;
 
-            for (var i in arr) {
+            if (i < 0) {
+                return [];
+            }
+
+            do {
                 if (arr[i]) {
                     arr[i] = $.trim(arr[i]);
                     if (isNaN(arr[i])) {
@@ -10728,7 +10791,7 @@ jQuery = jQuery || window.jQuery;
                 } else {
                     arr[i] = 0;
                 }
-            }
+            } while (i--);
 
             return arr;
         },
@@ -11115,4 +11178,4 @@ jQuery = jQuery || window.jQuery;
             return -1;
         }
     }
-})(jQuery, document, window, Date, String, Number, Math, RegExp, Error);
+})(jQuery, document, window, Date, String, Number, Boolean, Math, RegExp, Error);

@@ -102,6 +102,9 @@
             return result;
         },
         PMT: function(rate, nper, pv, fv, type){
+            rate = parseFloat(rate || 0);
+            nper = parseFloat(nper || 0);
+            pv = parseFloat(pv || 0);
             fv = fv || 0;
             type = type || 0;
 
@@ -119,21 +122,28 @@
             return result;
         },
         NPER: function(rate, pmt, pv, fv, type) { //Taken from LibreOffice - http://opengrok.libreoffice.org/xref/core/sc/source/core/tool/interpr2.cxx#1382 ScInterpreter::ScZZR()
-            var log = math.log || Math.log,
+            var log,
                 result;
             rate = parseFloat(rate || 0);
             pmt = parseFloat(pmt || 0);
             pv = parseFloat(pv || 0);
-            fv = fv || 0;
-            type = type || 0;
+            fv = (fv || 0);
+            type = (type || 0);
+
+            log = function(prim) {
+                if (isNaN(prim)) {
+                    return Math.log(0);
+                }
+                var num = Math.log(prim);
+                return num;
+            }
 
             if (rate == 0.0) {
                 result = (-(pv + fv)/pmt);
             } else if (type > 0.0) {
-                result = (log(-(rate*fv-pmt*(1.0+rate))/(rate*pv+pmt*(1.0+rate)))
-                       /log(1.0+rate));
+                result = (log(-(rate*fv-pmt*(1.0+rate))/(rate*pv+pmt*(1.0+rate)))/(log(1.0+rate)));
             } else {
-                result = (log(-(rate*(fv-pmt))/(rate*(pv+pmt)))/log(1.0+rate));
+                result = (log(-(rate*fv-pmt)/(rate*pv+pmt))/(log(1.0+rate)));
             }
 
             if (isNaN(result)) {
@@ -145,13 +155,14 @@
         FV: function(rate, nper, pmt, pv, type) { //not working yet
             pv = (pv ? pv : 0);
             type = (type ? type : 0);
-            var result = new Number(-(
+            var resultPrimitive = -(
                 pv*Math.pow(1.0+rate, nper)
-                + pmt * (1.0 + rate*type)
+                    + pmt * (1.0 + rate*type)
                     * (Math.pow(1.0+rate, nper) - 1.0) / rate
-            ));
+                    ),
+                result = new Number(resultPrimitive);
 
-            result.html = Globalize.format( result, "c" );
+            result.html = Globalize.format( resultPrimitive, "c" );
             return result;
         }
     };
