@@ -1080,11 +1080,11 @@ jQuery = jQuery || window.jQuery;
             }
 
             $.each(this.dependencies, function () {
-                write.apply(this);
+                write.call(this);
             });
 
             $.each(this.optional, function () {
-                write.apply(this);
+                write.call(this);
             });
         },
 
@@ -2444,7 +2444,7 @@ jQuery = jQuery || window.jQuery;
                                                 .text(msg)
                                                 .data('msg', msg)
                                                 .click(function () {
-                                                    menuItems[$(this).data('msg')].apply(this, [jS]);
+                                                    menuItems[$(this).data('msg')].call(this, jS);
                                                     menu.hide();
                                                     return false;
                                                 })
@@ -3179,7 +3179,7 @@ jQuery = jQuery || window.jQuery;
 
                                     if (jS.isCell(e.target)) {
                                         if (e.button == 2) {
-                                            paneContextmenuEvent.apply(this, [e]);
+                                            paneContextmenuEvent.call(this, e);
                                             jS.evt.cellOnMouseDown(e);
                                             return true;
                                         }
@@ -3189,7 +3189,7 @@ jQuery = jQuery || window.jQuery;
 
                                     if (jS.isBar(e.target)) { //possibly a bar
                                         if (e.button == 2) {
-                                            paneContextmenuEvent.apply(this, [e]);
+                                            paneContextmenuEvent.call(this, e);
                                         }
                                         mouseDownEntity = e.target.entity;
                                         jS.evt.barInteraction.select(e.target);
@@ -3503,7 +3503,7 @@ jQuery = jQuery || window.jQuery;
                                                     td.removeData('formula');
                                             }
                                         });
-                                        jS.calcDependencies.apply(cell);
+                                        jS.calcDependencies.call(cell);
 
                                         if (i == 0 && j == 0) { //we have to finish the current edit
                                             firstValue = col[j];
@@ -3958,7 +3958,7 @@ jQuery = jQuery || window.jQuery;
                                                 cell.formula = '';
                                             }
                                         });
-                                        jS.calcDependencies.apply(cell);
+                                        jS.calcDependencies.call(cell);
 
                                         //formula.focus().select();
                                         jS.cellLast.isEdit = false;
@@ -4853,7 +4853,7 @@ jQuery = jQuery || window.jQuery;
                                     }
                                 });
 
-                                jS.calcDependencies.apply(cell);
+                                jS.calcDependencies.call(cell);
                             } while(i--);
 
                             td.jSCell.value = cellsValue.join(' ');
@@ -4864,7 +4864,7 @@ jQuery = jQuery || window.jQuery;
                             td.setAttribute('rowSpan', rowSpan);
                             td.setAttribute('colSpan', colSpan);
 
-                            jS.calcDependencies.apply(td.jSCell);
+                            jS.calcDependencies.call(td.jSCell);
                             jS.evt.cellEditDone();
                             jS.autoFillerGoToTd($td);
                             jS.cellSetActive($td, loc);
@@ -4905,7 +4905,7 @@ jQuery = jQuery || window.jQuery;
                                 _td.removeAttribute('rowSpan');
                                 _td.jSCell.defer = null;
 
-                                jS.calcDependencies.apply(_td.jSCell, [last]);
+                                jS.calcDependencies.call(_td.jSCell, last);
 
                                 tds.push(_td);
                             } while (j-- > loc.col);
@@ -4975,7 +4975,7 @@ jQuery = jQuery || window.jQuery;
                                             cells[i].td.data('formula', newV);
                                         });
 
-                                        jS.calcDependencies.apply(cells[i], [last]);
+                                        jS.calcDependencies.call(cells[i], last);
                                     } while (i--);
                                     return true;
                                 }
@@ -5000,7 +5000,7 @@ jQuery = jQuery || window.jQuery;
                                         cells[i].td.removeData('formula');
                                     });
 
-                                    jS.calcDependencies.apply(cells[i], [last]);
+                                    jS.calcDependencies.call(cells[i], last);
 
                                     fn();
                                 } while (i--);
@@ -5029,7 +5029,7 @@ jQuery = jQuery || window.jQuery;
                                     cell.formula = '';
                                     cell.value = '';
                                 });
-                                jS.calcDependencies.apply(cell, [last]);
+                                jS.calcDependencies.call(cell, last);
                             }
                         };
                         var cellValues = [],
@@ -5061,7 +5061,7 @@ jQuery = jQuery || window.jQuery;
 
                                 cellValues[row][col] = (value || '');
 
-                                fnEach.apply(cells[i].td, [loc, cells[i]]);
+                                fnEach.call(cells[i].td, loc, cells[i]);
                             } while (i-- > 0);
 
 
@@ -5110,7 +5110,7 @@ jQuery = jQuery || window.jQuery;
                             }
 
                             cellStack.push(function() {
-                                jS.calcDependencies.apply(cell, [last, true]);
+                                jS.calcDependencies.call(cell, last, true);
                             });
 
                         }, affectedRange.first, affectedRange.last);
@@ -5277,7 +5277,7 @@ jQuery = jQuery || window.jQuery;
                         do {
                             col = lastLoc.col;
                             do {
-                                fn.apply(jS.spreadsheets[i][row][col], [i, row, col]);
+                                fn.call(jS.spreadsheets[i][row][col], i, row, col);
                             } while (col-- > firstLoc.col);
                         } while (row-- > firstLoc.row);
                     },
@@ -6181,7 +6181,7 @@ jQuery = jQuery || window.jQuery;
                                     cells[i].cellType = type;
                                 }
                                 cells[i].calcLast = 0;
-                                jS.updateCellValue.apply(cells[i]);
+                                jS.updateCellValue.call(cells[i]);
                             } while(i--);
                         }
                     },
@@ -6276,7 +6276,7 @@ jQuery = jQuery || window.jQuery;
                         }
 
                         if (cell.defer) {//merging creates a defer property, which points the cell to another location to get the other value
-                            return jS.updateCellValue.apply(cell.defer);
+                            return jS.updateCellValue.call(cell.defer);
                         }
 
                         cell.state.push('updating');
@@ -6317,10 +6317,10 @@ jQuery = jQuery || window.jQuery;
                                 if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
                                     cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.result);
                                 }
-                                jS.filterValue.apply(cell);
+                                jS.filterValue.call(cell);
                             } else if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
                                 cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
-                                jS.filterValue.apply(cell);
+                                jS.filterValue.call(cell);
                             } else {
                                 if (cell.value != u && cell.value.charAt) {
                                     fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
@@ -6333,7 +6333,7 @@ jQuery = jQuery || window.jQuery;
                                         }
                                     }
                                 }
-                                jS.filterValue.apply(cell);
+                                jS.filterValue.call(cell);
                             }
                         }
                         cell.needsUpdated = false;
@@ -6359,9 +6359,9 @@ jQuery = jQuery || window.jQuery;
 
                                 dependantCell.calcDependenciesLast = 0;
 
-                                jS.updateCellValue.apply(dependantCell);
+                                jS.updateCellValue.call(dependantCell);
                                 if (dependantCellLoc.row > 0 && dependantCellLoc.col > 0) {
-                                    jS.updateCellDependencies.apply(dependantCell);
+                                    jS.updateCellDependencies.call(dependantCell);
                                 }
                             } while (i--);
                         }
@@ -6459,6 +6459,13 @@ jQuery = jQuery || window.jQuery;
                             return 0;
                         },
 
+                        /**
+                         * Perform math internally for parser
+                         * @param {String} mathType
+                         * @param {*} num1
+                         * @param {*} num2
+                         * @returns {*}
+                         */
                         performMath: function (mathType, num1, num2) {
                             var type1,
                                 type2,
@@ -6548,16 +6555,6 @@ jQuery = jQuery || window.jQuery;
                         },
 
                         /**
-                         * Concatenate a string
-                         * @returns {String}
-                         * @memberOf jS.cellHandler
-                         */
-                        concatenate:function () {
-                            var loc = jS.getTdLocation(this.td);
-                            return jFN.CONCATENATE.apply(this, arguments).value;
-                        },
-
-                        /**
                          * Get cell value
                          * @param {String} id example "A1"
                          * @returns {*}
@@ -6566,9 +6563,9 @@ jQuery = jQuery || window.jQuery;
                         cellValue:function (id) { //Example: A1
                             var loc = jSE.parseLocation(id), cell;
 
-                            cell = jS.cellHandler.createDependency.apply(this, [this.sheet, loc]);
+                            cell = jS.cellHandler.createDependency.call(this, this.sheet, loc);
 
-                            jS.updateCellValue.apply(cell);
+                            jS.updateCellValue.call(cell);
                             return (cell.valueOverride != u ? cell.valueOverride : cell.value);
                         },
 
@@ -6616,8 +6613,8 @@ jQuery = jQuery || window.jQuery;
                                     j = jStart;
                                     do {
                                         cell = jS.spreadsheets[this.sheet][i][j];
-                                        jS.cellHandler.createDependency.apply(this, [this.sheet, {row:i, col:j}]);
-                                        result.unshift(jS.updateCellValue.apply(cell));
+                                        jS.cellHandler.createDependency.call(this, this.sheet, {row:i, col:j});
+                                        result.unshift(jS.updateCellValue.call(cell));
                                     } while(j-- > jEnd);
                                 } while (i-- > iEnd);
                                 return result;
@@ -6634,7 +6631,7 @@ jQuery = jQuery || window.jQuery;
                          */
                         fixedCellValue:function (id) {
                             id = id.replace(/\$/g, '');
-                            return jS.cellHandler.cellValue.apply(this, [id]);
+                            return jS.cellHandler.cellValue.call(this, id);
                         },
 
                         /**
@@ -6647,7 +6644,7 @@ jQuery = jQuery || window.jQuery;
                         fixedCellRangeValue:function (start, end) {
                             start = start.replace(/\$/g, '');
                             end = end.replace(/\$/g, '');
-                            return jS.cellHandler.cellRangeValue.apply(this, [start, end]);
+                            return jS.cellHandler.cellRangeValue.call(this, start, end);
                         },
 
                         /**
@@ -6661,7 +6658,7 @@ jQuery = jQuery || window.jQuery;
                             var loc = jSE.parseLocation(id),
                                 sheetIndex = jSE.parseSheetLocation(sheet);
 
-                            jS.cellHandler.createDependency.apply(this, [sheetIndex, loc]);
+                            jS.cellHandler.createDependency.call(this, sheetIndex, loc);
 
                             return jS.updateCellValue(sheetIndex, loc.row, loc.col);
                         },
@@ -6872,8 +6869,8 @@ jQuery = jQuery || window.jQuery;
 
                                 jS.setDirty(true);
                                 jS.setChanged(true);
-                                jS.updateCellValue.apply(cell);
-                                jS.updateCellDependencies.apply(cell);
+                                jS.updateCellValue.call(cell);
+                                jS.updateCellDependencies.call(cell);
                                 jS.trigger('sheetCalculation', [
                                     {which:'cell', cell: cell}
                                 ]);
@@ -6887,8 +6884,8 @@ jQuery = jQuery || window.jQuery;
 
                             jS.setDirty(true);
                             jS.setChanged(true);
-                            jS.updateCellValue.apply(this);
-                            jS.updateCellDependencies.apply(this);
+                            jS.updateCellValue.call(this);
+                            jS.updateCellDependencies.call(this);
                             jS.trigger('sheetCalculation', [
                                 {which:'cell', cell: this}
                             ]);
@@ -7975,7 +7972,7 @@ jQuery = jQuery || window.jQuery;
                                 cell.td.attr('style', clone.style);
                                 cell.td.attr('class', clone.cl);
 
-                                jS.updateCellValue.apply(cell);
+                                jS.updateCellValue.call(cell);
                             }
                         }
                     },
@@ -8197,8 +8194,8 @@ jQuery = jQuery || window.jQuery;
                             cell = selected.pop();
                             cell.value = num[selected.length];
                             cell.calcLast = 0;
-                            jS.updateCellValue.apply(cell);
-                            jS.updateCellDependencies.apply(cell);
+                            jS.updateCellValue.call(cell);
+                            jS.updateCellDependencies.call(cell);
                         }
                     },
 
@@ -10269,7 +10266,7 @@ jQuery = jQuery || window.jQuery;
                 };
                 select.onchange = function () {
                     cell.value = this.value;
-                    jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
+                    jS.calcDependencies.call(cell, cell.calcDependenciesLast);
                 };
 
                 jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
@@ -10345,7 +10342,7 @@ jQuery = jQuery || window.jQuery;
                         input.value = v[i];
                         input.onchange = function() {
                             cell.value = jQuery(this).val();
-                            jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
+                            jS.calcDependencies.call(cell, cell.calcDependenciesLast);
                         };
 
                         inputs.push(input);
@@ -10421,7 +10418,7 @@ jQuery = jQuery || window.jQuery;
                     } else {
                         cell.value = '';
                     }
-                    jS.calcDependencies.apply(cell, [cell.calcDependenciesLast]);
+                    jS.calcDependencies.call(cell, cell.calcDependenciesLast);
                 };
 
                 if (!jS.s.editable) {
@@ -10467,12 +10464,12 @@ jQuery = jQuery || window.jQuery;
          */
         BARCHART:function (values, legend, title) {
             var result = new String('');
-            result.html = jSE.chart.apply(this, [{
+            result.html = jSE.chart.call(this, {
                 type:'bar',
                 data:values,
                 legend:legend,
                 title:title
-            }]);
+            });
             return result;
         },
         /**
@@ -10485,12 +10482,12 @@ jQuery = jQuery || window.jQuery;
          */
         HBARCHART:function (values, legend, title) {
             var result = new String('');
-            result.html = jSE.chart.apply(this, [{
+            result.html = jSE.chart.call(this, {
                 type:'hbar',
                 data:values,
                 legend:legend,
                 title:title
-            }]);
+            });
             return result;
         },
         /**
@@ -10502,7 +10499,7 @@ jQuery = jQuery || window.jQuery;
          */
         LINECHART:function (valuesX, valuesY) {
             var result = new String('');
-            result.html = jSE.chart.apply(this, [{
+            result.html = jSE.chart.call(this, {
                 type:'line',
                 x:{
                     data:valuesX
@@ -10511,7 +10508,7 @@ jQuery = jQuery || window.jQuery;
                     data:valuesY
                 },
                 title:""
-            }]);
+            });
             return result;
         },
         /**
@@ -10524,12 +10521,12 @@ jQuery = jQuery || window.jQuery;
          */
         PIECHART:function (values, legend, title) {
             var result = new String('');
-            result.html = jSE.chart.apply(this, [{
+            result.html = jSE.chart.call(this, {
                 type:'pie',
                 data:values,
                 legend:legend,
                 title:title
-            }]);
+            });
             return result;
         },
         /**
@@ -10545,7 +10542,7 @@ jQuery = jQuery || window.jQuery;
          */
         DOTCHART:function (valuesX, valuesY, values, legendX, legendY, title) {
             var result = new String('');
-            result.html = jSE.chart.apply(this, [{
+            result.html = jSE.chart.call(this, {
                 type:'dot',
                 data:(values ? values : valuesX),
                 x:{
@@ -10557,7 +10554,7 @@ jQuery = jQuery || window.jQuery;
                     legend:(legendY ? legendY : legendX)
                 },
                 title:title
-            }]);
+            });
             return result;
         },
         /**
@@ -10594,7 +10591,7 @@ jQuery = jQuery || window.jQuery;
          */
         HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
             var jS = this.jS,
-                lookupTable = this.jS.cellLookup.apply(this),
+                lookupTable = this.jS.cellLookup.call(this),
                 result = {html: '#N/A', value:''};
 
             indexNumber = indexNumber || 1;
@@ -10630,7 +10627,7 @@ jQuery = jQuery || window.jQuery;
          */
         VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
             var jS = this.jS,
-                lookupTable = this.jS.cellLookup.apply(this),
+                lookupTable = this.jS.cellLookup.call(this),
                 result = {html: '#N/A', value:''};
 
             notExactMatch = notExactMatch !== undefined ? notExactMatch : true;

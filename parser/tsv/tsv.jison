@@ -261,18 +261,21 @@ string :
 ;
 
 %%
+if (typeof GLOBAL !== 'undefined') {
+    GLOBAL.window = GLOBAL;
+}
 if (!window.tsvLoaded) {
     window.tsvLoaded = true;
     var parse = parser.parse;
     parser.parse = function(input) {
         var setInput = this.lexer.setInput;
         this.lexer.setInput = function(input) {
-            setInput.apply(this, [input]);
+            setInput.call(this, input);
             this.begin('BOF');
             return this;
         };
 
         this.parse = parse;
-        return parse.apply(this, [input]);
+        return parse.call(this, input);
     };
 }
