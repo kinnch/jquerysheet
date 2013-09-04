@@ -11049,7 +11049,7 @@ jQuery = jQuery || window.jQuery;
         }
     };
 
-    var times = {
+    var times = win.times = {
         math: Math,
         fromMath:function (time) {
             var result = {}, me = this;
